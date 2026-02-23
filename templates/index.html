@@ -8,21 +8,25 @@
     <script>tailwind.config = { darkMode: 'class' }</script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s; }
-        .glass-card { background: #1E293B; border: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); }
-        .menu-ativo { background: #334155; color: white; border-left: 4px solid #3B82F6; }
-        .menu-inativo { color: #94A3B8; border-left: 4px solid transparent; }
-        .menu-inativo:hover { background: #1E293B; color: white; }
+        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
+        .glass-card { background: white; border: 1px solid #E2E8F0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
+        .dark .glass-card { background: #1E293B; border-color: #334155; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); }
+        .menu-ativo { background: #F1F5F9; color: #0F172A; border-left: 4px solid #3B82F6; }
+        .dark .menu-ativo { background: #334155; color: white; border-left: 4px solid #3B82F6; }
+        .menu-inativo { color: #64748B; border-left: 4px solid transparent; }
+        .dark .menu-inativo { color: #94A3B8; }
+        .menu-inativo:hover { background: #F8FAFC; color: #0F172A; }
+        .dark .menu-inativo:hover { background: #1E293B; color: white; }
     </style>
 </head>
-<body class="flex h-screen overflow-hidden bg-slate-900 text-slate-100">
+<body class="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors">
 
     <div id="tela-login" class="flex w-full h-full items-center justify-center hidden">
         <div class="glass-card p-10 rounded-2xl w-full max-w-md text-center">
             <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-indigo-500 mb-2">Irving.</h1>
-            <input type="email" id="email" placeholder="E-mail" class="w-full mb-4 p-3 rounded-lg bg-slate-800 border border-slate-700 outline-none">
-            <input type="password" id="senha" placeholder="Senha" class="w-full mb-6 p-3 rounded-lg bg-slate-800 border border-slate-700 outline-none">
-            <button onclick="fazerLogin()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 font-bold rounded-lg transition">Entrar</button>
+            <input type="email" id="email" placeholder="E-mail" class="w-full mb-4 p-3 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 outline-none">
+            <input type="password" id="senha" placeholder="Senha" class="w-full mb-6 p-3 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 outline-none">
+            <button onclick="fazerLogin()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition">Entrar</button>
             <p id="msg-erro" class="text-red-500 text-sm mt-4 hidden"></p>
         </div>
     </div>
@@ -35,7 +39,7 @@
     </div>
 
     <div id="tela-dashboard" class="flex w-full h-full hidden">
-        <aside class="w-64 bg-slate-800 border-r border-slate-700 flex flex-col justify-between hidden md:flex">
+        <aside class="w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col justify-between hidden md:flex transition-colors">
             <div>
                 <div class="p-6 pb-2">
                     <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-indigo-500 mb-6">Irving.</h1>
@@ -46,65 +50,65 @@
                 </nav>
             </div>
             <div class="p-6">
-                <button onclick="sair()" class="w-full py-2.5 bg-slate-700 text-white rounded-lg text-sm hover:bg-slate-600 transition">Sair da Conta</button>
+                <button onclick="sair()" class="w-full py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-white rounded-lg text-sm hover:bg-slate-200 dark:hover:bg-slate-600 transition">Sair da Conta</button>
             </div>
         </aside>
 
         <main class="flex-1 overflow-y-auto p-8 relative">
-            <header class="mb-8 flex justify-between items-end border-b border-slate-700 pb-4">
+            <header class="mb-8 flex justify-between items-end border-b border-slate-200 dark:border-slate-700 pb-4">
                 <div>
-                    <h2 class="text-2xl font-bold text-white" id="titulo-pagina">Visão Geral da Operação</h2>
-                    <p class="text-slate-400 text-sm mt-1" id="lbl-periodo">Analisando...</p>
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white" id="titulo-pagina">Visão Geral da Operação</h2>
+                    <p class="text-slate-500 dark:text-slate-400 text-sm mt-1" id="lbl-periodo">Analisando...</p>
                 </div>
-                <select id="seletor-data" onchange="carregarDados()" class="bg-slate-800 border border-slate-600 rounded-lg p-2.5 outline-none">
-                    <option value="7">Últimos 7 dias</option><option value="15">Últimos 15 dias</option><option value="30" selected>Últimos 30 dias</option>
-                </select>
+                <div class="flex items-center gap-4">
+                    <select id="seletor-data" onchange="carregarDados()" class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 outline-none text-sm">
+                        <option value="7">Últimos 7 dias</option><option value="15">Últimos 15 dias</option><option value="30" selected>Últimos 30 dias</option>
+                    </select>
+                    <button onclick="toggleDarkMode()" class="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+                        <svg id="theme-icon" class="w-5 h-5 text-slate-700 dark:text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    </button>
+                </div>
             </header>
 
             <div id="aba-visao_geral">
                 <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
                     <div class="glass-card rounded-2xl p-5"><p class="text-xs font-bold text-slate-500 uppercase mb-2">Unidades</p><h3 class="text-2xl font-extrabold" id="kpi-unidades">...</h3></div>
                     <div class="glass-card rounded-2xl p-5"><p class="text-xs font-bold text-slate-500 uppercase mb-2">Faturamento</p><h3 class="text-2xl font-extrabold" id="kpi-fat">...</h3></div>
-                    <div class="glass-card rounded-2xl p-5"><p class="text-xs font-bold text-slate-500 uppercase mb-2">Lucro Real</p><h3 class="text-2xl font-extrabold text-emerald-400" id="kpi-lucro">...</h3></div>
+                    <div class="glass-card rounded-2xl p-5"><p class="text-xs font-bold text-slate-500 uppercase mb-2">Lucro Real</p><h3 class="text-2xl font-extrabold text-emerald-500 dark:text-emerald-400" id="kpi-lucro">...</h3></div>
                     <div class="glass-card rounded-2xl p-5"><p class="text-xs font-bold text-slate-500 uppercase mb-2">Gasto ADS</p><h3 class="text-2xl font-extrabold" id="kpi-ads">...</h3></div>
-                    <div class="glass-card rounded-2xl p-5 border-l-4 border-l-red-500"><p class="text-xs font-bold text-slate-500 uppercase mb-2">Urgente</p><h3 class="text-2xl font-extrabold text-red-400" id="kpi-alertas">...</h3></div>
+                    <div class="glass-card rounded-2xl p-5 border-l-4 border-red-500"><p class="text-xs font-bold text-slate-500 uppercase mb-2">Urgente</p><h3 class="text-2xl font-extrabold text-red-500 dark:text-red-400" id="kpi-alertas">...</h3></div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                    <div class="lg:col-span-3 glass-card rounded-2xl p-6">
-                        <h3 class="text-lg font-bold mb-6">Diagnóstico de Vendas</h3>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left text-sm whitespace-nowrap">
-                                <thead>
-                                    <tr class="text-slate-500 border-b border-slate-700">
-                                        <th class="pb-3 font-semibold">Produto</th><th class="pb-3">Giro</th><th class="pb-3">Margem / un</th><th class="pb-3">Status</th><th class="pb-3">Espaço Promo</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tabela-corpo"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="space-y-4">
-                        <div class="p-4 rounded-xl bg-red-900/20 border border-red-800/30 text-red-400 text-sm">
-                            <strong class="block mb-1 font-bold">⚠️ Suspensão (ML)</strong> Não adicione link nas perguntas dos anúncios.
-                        </div>
-                        <div class="p-4 rounded-xl bg-blue-900/20 border border-blue-800/30 text-blue-400 text-sm">
-                            <strong class="block mb-1 font-bold">🌎 Logística CBT</strong> O custo da Argentina é de graça. A margem já reflete essa regra.
-                        </div>
+                <div class="glass-card rounded-2xl p-6 mb-8">
+                    <h3 class="text-lg font-bold mb-6">Raio-X de Vendas e Custos</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm whitespace-nowrap">
+                            <thead>
+                                <tr class="text-slate-500 border-b border-slate-200 dark:border-slate-700">
+                                    <th class="pb-3 font-semibold">Produto</th>
+                                    <th class="pb-3 font-semibold">Faturamento (Giro)</th>
+                                    <th class="pb-3 font-semibold">Preço (Ticket)</th>
+                                    <th class="pb-3 font-semibold">Custos por Unidade</th>
+                                    <th class="pb-3 font-semibold">Margem Líquida</th>
+                                    <th class="pb-3 font-semibold">Status</th>
+                                    <th class="pb-3 font-semibold">Espaço Promo</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-corpo"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
             <div id="aba-custos" class="hidden">
-                
-                <div class="glass-card rounded-2xl p-6 mb-8 max-w-4xl flex justify-between items-center bg-blue-900/10 border-blue-800/30">
+                <div class="glass-card rounded-2xl p-6 mb-8 max-w-4xl flex justify-between items-center bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800/30">
                     <div>
-                        <h3 class="text-lg font-bold text-blue-400">Configuração Tributária</h3>
-                        <p class="text-sm text-slate-400">Defina a alíquota em massa (Ex: Simples Nacional). Isso será descontado automaticamente de todas as vendas.</p>
+                        <h3 class="text-lg font-bold text-blue-600 dark:text-blue-400">Configuração Tributária</h3>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Defina a alíquota em massa (Ex: Simples Nacional). Será descontado de todas as vendas.</p>
                     </div>
                     <div class="flex gap-2 items-center">
-                        <input type="number" id="input-imposto" placeholder="Ex: 6.0" step="0.1" class="w-24 p-2 rounded bg-slate-800 border border-slate-600 text-white outline-none focus:border-blue-500">
-                        <span class="text-slate-400">%</span>
+                        <input type="number" id="input-imposto" placeholder="Ex: 6.0" step="0.1" class="w-24 p-2 rounded bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 outline-none focus:border-blue-500">
+                        <span class="text-slate-500 dark:text-slate-400">%</span>
                         <button onclick="salvarImposto()" id="btn-imposto" class="ml-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-bold transition">Salvar Alíquota</button>
                     </div>
                 </div>
@@ -112,12 +116,12 @@
                 <div class="glass-card rounded-2xl p-6 max-w-4xl">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-lg font-bold">Custos dos Produtos (CMV)</h3>
-                        <span class="text-sm text-amber-400 bg-amber-400/10 px-3 py-1 rounded-full">Sem o CMV, a rentabilidade não é calculada.</span>
+                        <span class="text-sm text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-400/10 px-3 py-1 rounded-full">Sem o CMV, a rentabilidade não é calculada.</span>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-sm whitespace-nowrap">
                             <thead>
-                                <tr class="text-slate-500 border-b border-slate-700">
+                                <tr class="text-slate-500 border-b border-slate-200 dark:border-slate-700">
                                     <th class="pb-3 font-semibold">Produto (SKU)</th><th class="pb-3 w-48">Seu Custo de Compra (R$)</th><th class="pb-3 w-32">Ação</th>
                                 </tr>
                             </thead>
@@ -133,6 +137,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
+        // COLOQUE SUAS CHAVES AQUI
         const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", authDomain: "irving-blm.firebaseapp.com", projectId: "irving-blm", storageBucket: "irving-blm.firebasestorage.app", messagingSenderId: "209820833777", appId: "1:209820833777:web:809fd74f0abcbd8b1d5650" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -155,6 +160,15 @@
         window.fazerLogin = () => { signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('senha').value); };
         window.sair = () => signOut(auth);
         window.iniciarAuthML = () => window.location.href = `/conectar-ml?uid=${usuarioGlobal.uid}`;
+
+        window.toggleDarkMode = () => {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            const icon = document.getElementById('theme-icon');
+            icon.innerHTML = isDark 
+                ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>' 
+                : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>';
+        };
 
         window.mudarAba = (aba) => {
             document.getElementById('aba-visao_geral').classList.add('hidden');
@@ -184,6 +198,12 @@
             setTimeout(() => { btn.innerText = "Salvar Alíquota"; carregarDados(); }, 1000);
         };
 
+        window.formatarTrend = (v) => {
+            if(v > 0) return `<span class="text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/10 px-1 py-0.5 rounded">↑ ${v}%</span>`;
+            if(v < 0) return `<span class="text-[10px] text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-500/10 px-1 py-0.5 rounded">↓ ${Math.abs(v)}%</span>`;
+            return '';
+        };
+
         window.carregarDados = async () => {
             if (!usuarioGlobal) return;
             const token = await usuarioGlobal.getIdToken();
@@ -197,8 +217,6 @@
 
             document.getElementById('tela-conectar-ml').classList.add('hidden');
             document.getElementById('tela-dashboard').classList.remove('hidden');
-
-            // Carrega o imposto salvo no input
             document.getElementById('input-imposto').value = data.kpis.imposto_padrao;
 
             document.getElementById('lbl-periodo').textContent = "Analisando: " + data.kpis.periodo_nome;
@@ -213,18 +231,37 @@
             tbody.innerHTML = ''; 
             
             dadosAPI.forEach(row => {
-                let statusColor = row.Status.includes('🔴') || row.Status.includes('⚠️') ? 'text-red-400 font-bold' : 'text-emerald-400 font-bold';
-                if(row.Status.includes('🔵')) statusColor = 'text-blue-400 font-bold';
+                let statusColor = row.Status.includes('🔴') || row.Status.includes('⚠️') ? 'text-red-500 dark:text-red-400 font-bold' : 'text-emerald-600 dark:text-emerald-400 font-bold';
+                if(row.Status.includes('🔵')) statusColor = 'text-blue-600 dark:text-blue-400 font-bold';
                 
                 const p = row.Desconto_Max_Grafico;
                 const cor = p > 15 ? 'bg-emerald-500' : (p > 5 ? 'bg-amber-400' : 'bg-red-500');
-                const espacoPromo = row.Sem_Custo ? `<span class="text-xs text-slate-500">-</span>` : `<div class="flex items-center gap-2"><div class="w-full bg-slate-700 rounded-full h-1.5"><div class="${cor} h-1.5 rounded-full" style="width: ${Math.min(p, 100)}%"></div></div><span class="text-[11px] font-bold">${p.toFixed(1)}%</span></div>`;
-                const margemValor = row.Sem_Custo ? `<span class="text-slate-500 text-xs">Aguardando Custo</span>` : `<span class="font-medium">R$ ${row.Margem_Contribuicao.toFixed(2)}</span>`;
+                const espacoPromo = row.Sem_Custo ? `<span class="text-xs text-slate-500">-</span>` : `<div class="flex items-center gap-2"><div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5"><div class="${cor} h-1.5 rounded-full" style="width: ${Math.min(p, 100)}%"></div></div><span class="text-[11px] font-bold">${p.toFixed(1)}%</span></div>`;
+                
+                const margemValor = row.Sem_Custo ? `<span class="text-slate-500 text-xs">Aguardando CMV</span>` : `<span class="font-bold text-base">R$ ${row.Margem_Contribuicao.toFixed(2)}</span>`;
+
+                // Cálculo dos custos unitários para mostrar no Raio-X
+                const freteUn = (row.Custo_Frete / row.Giro).toFixed(2);
+                const comissaoUn = (row.Custo_Comissao / row.Giro).toFixed(2);
+                const impostoUn = (row.Custo_Imposto / row.Giro).toFixed(2);
+                const adsUn = row.Giro > 0 ? (row.Custo_ADS / row.Giro).toFixed(2) : '0.00';
+
+                const custosHTML = `
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
+                        <span class="font-semibold text-slate-700 dark:text-slate-300">CMV:</span> R$ ${row.Custo_CMV.toFixed(2)} &nbsp;|&nbsp;
+                        <span class="font-semibold text-slate-700 dark:text-slate-300">ML:</span> R$ ${comissaoUn} <br>
+                        <span class="font-semibold text-slate-700 dark:text-slate-300">Frete:</span> R$ ${freteUn} &nbsp;|&nbsp;
+                        <span class="font-semibold text-slate-700 dark:text-slate-300">Imp:</span> R$ ${impostoUn} <br>
+                        <span class="font-semibold text-slate-700 dark:text-slate-300">ADS:</span> R$ ${adsUn}
+                    </div>
+                `;
 
                 tbody.innerHTML += `
-                    <tr class="border-b border-slate-800 hover:bg-slate-800/50">
-                        <td class="py-4"><p class="font-bold w-64 truncate" title="${row.Produto}">${row.Produto}</p><p class="text-[11px] text-slate-400">${row.ID}</p></td>
-                        <td class="py-4"><span class="font-medium">${row.Giro} un</span></td>
+                    <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                        <td class="py-4"><p class="font-bold w-48 truncate text-slate-800 dark:text-white" title="${row.Produto}">${row.Produto}</p><p class="text-[11px] text-slate-400">${row.ID}</p></td>
+                        <td class="py-4"><span class="font-bold text-slate-800 dark:text-white">R$ ${row.Faturamento.toFixed(2)}</span><br><span class="text-xs text-slate-500">${row.Giro} vendas ${formatarTrend(row.Giro_Trend)}</span></td>
+                        <td class="py-4 font-medium text-slate-800 dark:text-slate-300">R$ ${row.Ticket_Medio.toFixed(2)}</td>
+                        <td class="py-4">${custosHTML}</td>
                         <td class="py-4">${margemValor}</td>
                         <td class="py-4 ${statusColor}">${row.Status}</td>
                         <td class="py-4 w-32">${espacoPromo}</td>
@@ -237,12 +274,12 @@
             const tbody = document.getElementById('tabela-custos');
             tbody.innerHTML = '';
             dadosAPI.forEach(row => {
-                const borderClass = row.Sem_Custo ? 'border-amber-500/50 bg-amber-500/5' : 'border-slate-600 bg-slate-800';
+                const borderClass = row.Sem_Custo ? 'border-amber-500/50 bg-amber-50 dark:bg-amber-500/5' : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800';
                 tbody.innerHTML += `
-                    <tr class="border-b border-slate-800">
-                        <td class="py-4"><p class="font-bold w-64 truncate" title="${row.Produto}">${row.Produto}</p><p class="text-[11px] text-slate-400">${row.ID}</p></td>
-                        <td class="py-4"><input type="number" id="custo-${row.ID}" value="${row.Custo_CMV}" step="0.01" class="w-32 p-2 rounded ${borderClass} text-white outline-none focus:border-blue-500 transition"></td>
-                        <td class="py-4"><button onclick="salvarCusto('${row.ID}')" id="btn-salvar-${row.ID}" class="px-4 py-2 bg-slate-700 hover:bg-blue-600 text-white rounded text-sm transition">Salvar CMV</button></td>
+                    <tr class="border-b border-slate-100 dark:border-slate-800">
+                        <td class="py-4"><p class="font-bold w-64 truncate text-slate-800 dark:text-white" title="${row.Produto}">${row.Produto}</p><p class="text-[11px] text-slate-400">${row.ID}</p></td>
+                        <td class="py-4"><input type="number" id="custo-${row.ID}" value="${row.Custo_CMV}" step="0.01" class="w-32 p-2 rounded ${borderClass} text-slate-900 dark:text-white outline-none focus:border-blue-500 transition shadow-sm"></td>
+                        <td class="py-4"><button onclick="salvarCusto('${row.ID}')" id="btn-salvar-${row.ID}" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-blue-600 dark:hover:bg-blue-600 text-slate-800 dark:text-white hover:text-white rounded text-sm transition font-medium">Salvar CMV</button></td>
                     </tr>`;
             });
         };
@@ -255,7 +292,7 @@
             btn.innerText = "Salvando...";
             await fetch('/api/salvar_custo', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ item_id: itemId, custo: custo }) });
             btn.innerText = "Salvo ✔";
-            btn.classList.replace("bg-slate-700", "bg-emerald-600");
+            btn.className = "px-4 py-2 bg-emerald-500 text-white rounded text-sm transition font-medium";
             setTimeout(() => carregarDados(), 1000); 
         };
     </script>

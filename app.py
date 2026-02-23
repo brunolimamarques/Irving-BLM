@@ -97,7 +97,6 @@ def api_dados():
     # 2. BUSCA O TOKEN DO ML DO USUÁRIO NO BANCO DE DADOS
     user_doc = db.collection('usuarios').document(uid).get().to_dict()
     
-    # Se o cliente não conectou o ML ainda, retorna erro para a tela pedir a conexão
     if not user_doc or 'ml_access_token' not in user_doc:
         return jsonify({"erro": "ml_nao_conectado"}), 403
 
@@ -116,28 +115,68 @@ def api_dados():
         resposta_ml = requests.get(url_vendas, headers=headers).json()
         resultados = resposta_ml.get('results', [])
         
-        # Aqui você processaria os "resultados" reais para extrair giro, faturamento, etc.
-        # Para evitar que o sistema quebre enquanto você não tem vendas reais, 
-        # mantivemos a simulação do Pandas abaixo, mas a conexão REAL já está acontecendo!
-        
+        if not resultados:
+            # Retorna uma tabela vazia se não houver vendas no período para não quebrar o layout
+            return jsonify({"kpis": {"faturamento": "R$ 0,00", "lucro": "R$ 0,00", "ads": "R$ 0,00", "unidades": "0", "alertas_criticos": 0, "periodo_nome": f"Últimos {periodo_dias} dias"}, "tabela": []})
+
+        # --- PROCESSAMENTO DOS DADOS REAIS (O "Motor" de Agrupamento) ---
+        agrupado = {}
+        for order in resultados:
+            # Identifica o país de destino para aplicar a regra de custo logístico
+            destino = order.get('shipping', {}).get('receiver_address', {}).get('country', {}).get('id', 'BR')
+            # Custo de envio estimado (zera se for Argentina)
+            custo_envio = 0 if destino == 'AR' else 18.00 
+            
+            for item in order.get('order_items', []):
+                item_id = item['item']['id']
+                title = item['item']['title']
+                qty = item['quantity']
+                price = item['unit_price']
+                
+                if item_id not in agrupado:
+                    agrupado[item_id] = {
+                        'Produto': title,
+                        'Giro': 0,
+                        'Ticket_Medio': price,
+                        'Investimento_ADS': 0, # Requer integração com a API de Advertising futuramente
+                        'Custo_Envio_Total': 0,
+                        'Margem_Contribuicao': 0
+                    }
+                
+                agrupado[item_id]['Giro'] += qty
+                agrupado[item_id]['Custo_Envio_Total'] += (custo_envio * qty)
+                
+                # Simulação de Custo do Produto (CMV) em 40% do valor de venda para não quebrar a matemática.
+                # O próximo passo será puxar esse custo real do Firebase!
+                custo_produto = price * 0.40
+                lucro_unitario = price - custo_produto - custo_envio
+                agrupado[item_id]['Margem_Contribuicao'] = lucro_unitario
+
+        # Transforma o dicionário agrupado nas listas para o Pandas
+        dados_reais = {
+            'ID': [], 'Produto': [], 'Ticket_Medio': [], 'Giro': [], 
+            'Giro_Ant': [], 'Investimento_ADS': [], 'Investimento_ADS_Ant': [],
+            'Margem_Contribuicao': [], 'Margem_Contribuicao_Ant': []
+        }
+
+        for item_id, dados in agrupado.items():
+            dados_reais['ID'].append(item_id)
+            dados_reais['Produto'].append(dados['Produto'])
+            dados_reais['Ticket_Medio'].append(dados['Ticket_Medio'])
+            dados_reais['Giro'].append(dados['Giro'])
+            dados_reais['Giro_Ant'].append(int(dados['Giro'] * 0.85)) # Simula dados do mês passado
+            dados_reais['Investimento_ADS'].append(dados['Investimento_ADS'])
+            dados_reais['Investimento_ADS_Ant'].append(0)
+            dados_reais['Margem_Contribuicao'].append(dados['Margem_Contribuicao'])
+            dados_reais['Margem_Contribuicao_Ant'].append(dados['Margem_Contribuicao'] * 0.9)
+
+        df = pd.DataFrame(dados_reais)
+
     except Exception as e:
-        print(f"Erro na API do ML: {e}")
+        print(f"Erro ao processar API do ML: {e}")
+        return jsonify({"erro": "Falha na leitura dos dados."}), 500
 
-    # --- O MOTOR LÓGICO DE RENTABILIDADE ---
-    # (Este é o mesmo código perfeito de Pandas que você já validou)
-    dados_api = {
-        'ID': ['MLB123', 'MLB456', 'MLB789', 'MLB000'],
-        'Produto': ['Fone Bluetooth XT', 'Cabo USB-C Tático', 'Suporte Notebook', 'Câmera IP Wi-Fi'],
-        'Ticket_Medio': [100.00, 80.00, 50.00, 200.00],
-        'Giro': [150, 45, 12, 89],
-        'Giro_Ant': [120, 50, 10, 89],
-        'Investimento_ADS': [0, 450.50, 0, 120.00],
-        'Investimento_ADS_Ant': [0, 300.00, 0, 150.00],
-        'Margem_Contribuicao': [25.50, -15.00, -5.00, 45.00],
-        'Margem_Contribuicao_Ant': [20.00, -10.00, -2.00, 40.00],
-    }
-    df = pd.DataFrame(dados_api)
-
+    # --- CÁLCULOS DE TENDÊNCIA E STATUS ---
     def calc_trend(atual, anterior):
         if anterior == 0 and atual == 0: return 0
         if anterior == 0: return 100
@@ -159,6 +198,7 @@ def api_dados():
     df['Desconto_Max'] = ((df['Margem_Contribuicao'] / df['Ticket_Medio']) * 100).round(2)
     df['Desconto_Max_Grafico'] = df['Desconto_Max'].apply(lambda x: x if x > 0 else 0)
 
+    # Consolida os KPIs
     kpis = {
         "faturamento": f"R$ {float((df['Giro'] * df['Ticket_Medio']).sum()):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
         "lucro": f"R$ {float((df['Giro'] * df['Margem_Contribuicao']).sum()):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),

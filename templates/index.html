@@ -209,65 +209,85 @@
             const token = await usuarioGlobal.getIdToken();
             const periodo = document.getElementById('seletor-data').value;
             
-            const res = await fetch('/api/dados?periodo=' + periodo, { headers: { 'Authorization': 'Bearer ' + token } });
-            const data = await res.json();
-            
-            if (res.status === 403) { document.getElementById('tela-conectar-ml').classList.remove('hidden'); return; }
-            if (data.erro === "vazio") return;
-
-            document.getElementById('tela-conectar-ml').classList.add('hidden');
-            document.getElementById('tela-dashboard').classList.remove('hidden');
-            document.getElementById('input-imposto').value = data.kpis.imposto_padrao;
-
-            document.getElementById('lbl-periodo').textContent = "Analisando: " + data.kpis.periodo_nome;
-            document.getElementById('kpi-unidades').textContent = data.kpis.unidades;
-            document.getElementById('kpi-fat').textContent = data.kpis.faturamento;
-            document.getElementById('kpi-lucro').textContent = data.kpis.lucro;
-            document.getElementById('kpi-ads').textContent = data.kpis.ads;
-            document.getElementById('kpi-alertas').textContent = data.kpis.alertas_criticos;
-
-            dadosAPI = data.tabela;
-            const tbody = document.getElementById('tabela-corpo');
-            tbody.innerHTML = ''; 
-            
-            dadosAPI.forEach(row => {
-                let statusColor = row.Status.includes('🔴') || row.Status.includes('⚠️') ? 'text-red-500 dark:text-red-400 font-bold' : 'text-emerald-600 dark:text-emerald-400 font-bold';
-                if(row.Status.includes('🔵')) statusColor = 'text-blue-600 dark:text-blue-400 font-bold';
+            try {
+                const res = await fetch('/api/dados?periodo=' + periodo, { headers: { 'Authorization': 'Bearer ' + token } });
+                const data = await res.json();
                 
-                const p = row.Desconto_Max_Grafico;
-                const cor = p > 15 ? 'bg-emerald-500' : (p > 5 ? 'bg-amber-400' : 'bg-red-500');
-                const espacoPromo = row.Sem_Custo ? `<span class="text-xs text-slate-500">-</span>` : `<div class="flex items-center gap-2"><div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5"><div class="${cor} h-1.5 rounded-full" style="width: ${Math.min(p, 100)}%"></div></div><span class="text-[11px] font-bold">${p.toFixed(1)}%</span></div>`;
+                // Se o Mercado Livre não estiver conectado, mostra a tela do Raio
+                if (res.status === 403) { 
+                    document.getElementById('tela-conectar-ml').classList.remove('hidden'); 
+                    return; 
+                }
+
+                // Remove a tela do Raio e MOSTRA O DASHBOARD independentemente de ter vendas ou não
+                document.getElementById('tela-conectar-ml').classList.add('hidden');
+                document.getElementById('tela-dashboard').classList.remove('hidden');
+
+                // Se a API retornar que não houve vendas no período
+                if (data.erro === "vazio") {
+                    document.getElementById('lbl-periodo').textContent = "Nenhuma venda neste período";
+                    document.getElementById('kpi-unidades').textContent = "0";
+                    document.getElementById('kpi-fat').textContent = "R$ 0,00";
+                    document.getElementById('kpi-lucro').textContent = "R$ 0,00";
+                    document.getElementById('kpi-ads').textContent = "R$ 0,00";
+                    document.getElementById('kpi-alertas').textContent = "0";
+                    document.getElementById('tabela-corpo').innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-500">Nenhum dado de venda encontrado para os últimos ${periodo} dias.</td></tr>`;
+                    if (data.imposto_padrao !== undefined) document.getElementById('input-imposto').value = data.imposto_padrao;
+                    return;
+                }
+
+                document.getElementById('input-imposto').value = data.kpis.imposto_padrao;
+                document.getElementById('lbl-periodo').textContent = "Analisando: " + data.kpis.periodo_nome;
+                document.getElementById('kpi-unidades').textContent = data.kpis.unidades;
+                document.getElementById('kpi-fat').textContent = data.kpis.faturamento;
+                document.getElementById('kpi-lucro').textContent = data.kpis.lucro;
+                document.getElementById('kpi-ads').textContent = data.kpis.ads;
+                document.getElementById('kpi-alertas').textContent = data.kpis.alertas_criticos;
+
+                dadosAPI = data.tabela;
+                const tbody = document.getElementById('tabela-corpo');
+                tbody.innerHTML = ''; 
                 
-                const margemValor = row.Sem_Custo ? `<span class="text-slate-500 text-xs">Aguardando CMV</span>` : `<span class="font-bold text-base">R$ ${row.Margem_Contribuicao.toFixed(2)}</span>`;
+                dadosAPI.forEach(row => {
+                    let statusColor = row.Status.includes('🔴') || row.Status.includes('⚠️') ? 'text-red-500 dark:text-red-400 font-bold' : 'text-emerald-600 dark:text-emerald-400 font-bold';
+                    if(row.Status.includes('🔵')) statusColor = 'text-blue-600 dark:text-blue-400 font-bold';
+                    
+                    const p = row.Desconto_Max_Grafico;
+                    const cor = p > 15 ? 'bg-emerald-500' : (p > 5 ? 'bg-amber-400' : 'bg-red-500');
+                    const espacoPromo = row.Sem_Custo ? `<span class="text-xs text-slate-500">-</span>` : `<div class="flex items-center gap-2"><div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5"><div class="${cor} h-1.5 rounded-full" style="width: ${Math.min(p, 100)}%"></div></div><span class="text-[11px] font-bold">${p.toFixed(1)}%</span></div>`;
+                    
+                    const margemValor = row.Sem_Custo ? `<span class="text-slate-500 text-xs">Aguardando CMV</span>` : `<span class="font-bold text-base">R$ ${row.Margem_Contribuicao.toFixed(2)}</span>`;
 
-                // Cálculo dos custos unitários para mostrar no Raio-X
-                const freteUn = (row.Custo_Frete / row.Giro).toFixed(2);
-                const comissaoUn = (row.Custo_Comissao / row.Giro).toFixed(2);
-                const impostoUn = (row.Custo_Imposto / row.Giro).toFixed(2);
-                const adsUn = row.Giro > 0 ? (row.Custo_ADS / row.Giro).toFixed(2) : '0.00';
+                    const freteUn = (row.Custo_Frete / row.Giro).toFixed(2);
+                    const comissaoUn = (row.Custo_Comissao / row.Giro).toFixed(2);
+                    const impostoUn = (row.Custo_Imposto / row.Giro).toFixed(2);
+                    const adsUn = row.Giro > 0 ? (row.Custo_ADS / row.Giro).toFixed(2) : '0.00';
 
-                const custosHTML = `
-                    <div class="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
-                        <span class="font-semibold text-slate-700 dark:text-slate-300">CMV:</span> R$ ${row.Custo_CMV.toFixed(2)} &nbsp;|&nbsp;
-                        <span class="font-semibold text-slate-700 dark:text-slate-300">ML:</span> R$ ${comissaoUn} <br>
-                        <span class="font-semibold text-slate-700 dark:text-slate-300">Frete:</span> R$ ${freteUn} &nbsp;|&nbsp;
-                        <span class="font-semibold text-slate-700 dark:text-slate-300">Imp:</span> R$ ${impostoUn} <br>
-                        <span class="font-semibold text-slate-700 dark:text-slate-300">ADS:</span> R$ ${adsUn}
-                    </div>
-                `;
+                    const custosHTML = `
+                        <div class="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
+                            <span class="font-semibold text-slate-700 dark:text-slate-300">CMV:</span> R$ ${row.Custo_CMV.toFixed(2)} &nbsp;|&nbsp;
+                            <span class="font-semibold text-slate-700 dark:text-slate-300">ML:</span> R$ ${comissaoUn} <br>
+                            <span class="font-semibold text-slate-700 dark:text-slate-300">Frete:</span> R$ ${freteUn} &nbsp;|&nbsp;
+                            <span class="font-semibold text-slate-700 dark:text-slate-300">Imp:</span> R$ ${impostoUn} <br>
+                            <span class="font-semibold text-slate-700 dark:text-slate-300">ADS:</span> R$ ${adsUn}
+                        </div>
+                    `;
 
-                tbody.innerHTML += `
-                    <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                        <td class="py-4"><p class="font-bold w-48 truncate text-slate-800 dark:text-white" title="${row.Produto}">${row.Produto}</p><p class="text-[11px] text-slate-400">${row.ID}</p></td>
-                        <td class="py-4"><span class="font-bold text-slate-800 dark:text-white">R$ ${row.Faturamento.toFixed(2)}</span><br><span class="text-xs text-slate-500">${row.Giro} vendas ${formatarTrend(row.Giro_Trend)}</span></td>
-                        <td class="py-4 font-medium text-slate-800 dark:text-slate-300">R$ ${row.Ticket_Medio.toFixed(2)}</td>
-                        <td class="py-4">${custosHTML}</td>
-                        <td class="py-4">${margemValor}</td>
-                        <td class="py-4 ${statusColor}">${row.Status}</td>
-                        <td class="py-4 w-32">${espacoPromo}</td>
-                    </tr>`;
-            });
-            if(!document.getElementById('aba-custos').classList.contains('hidden')) renderTabelaCustos();
+                    tbody.innerHTML += `
+                        <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                            <td class="py-4"><p class="font-bold w-48 truncate text-slate-800 dark:text-white" title="${row.Produto}">${row.Produto}</p><p class="text-[11px] text-slate-400">${row.ID}</p></td>
+                            <td class="py-4"><span class="font-bold text-slate-800 dark:text-white">R$ ${row.Faturamento.toFixed(2)}</span><br><span class="text-xs text-slate-500">${row.Giro} vendas ${formatarTrend(row.Giro_Trend)}</span></td>
+                            <td class="py-4 font-medium text-slate-800 dark:text-slate-300">R$ ${row.Ticket_Medio.toFixed(2)}</td>
+                            <td class="py-4">${custosHTML}</td>
+                            <td class="py-4">${margemValor}</td>
+                            <td class="py-4 ${statusColor}">${row.Status}</td>
+                            <td class="py-4 w-32">${espacoPromo}</td>
+                        </tr>`;
+                });
+                if(!document.getElementById('aba-custos').classList.contains('hidden')) renderTabelaCustos();
+            } catch (error) {
+                console.error("Erro na comunicação com a Vercel: ", error);
+            }
         }
 
         window.renderTabelaCustos = () => {
@@ -298,4 +318,5 @@
     </script>
 </body>
 </html>
+
 

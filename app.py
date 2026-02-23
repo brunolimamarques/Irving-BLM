@@ -25,9 +25,9 @@ except Exception as e:
     print(f"Aviso Firebase: {e}")
 
 # --- 2. CREDENCIAIS DO MERCADO LIVRE (Coloque as suas aqui depois) ---
-ML_APP_ID = "COLOQUE_SEU_APP_ID_AQUI"
-ML_SECRET_KEY = "COLOQUE_SUA_SECRET_KEY_AQUI"
-REDIRECT_URI = "https://irving.vercel.app/callback" # Mude para a sua URL real
+ML_APP_ID = "1096855357952882"
+ML_SECRET_KEY = "vzOhLT31AxYEqS4JJ9qfuoYGZtsbg1AM"
+REDIRECT_URI = "https://irving-blm.vercel.app/callback" # Mude para a sua URL real
 
 # --- 3. MIDDLEWARE DE SEGURANÇA (A Trava do Cofre) ---
 def verificar_token(req):

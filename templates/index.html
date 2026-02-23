@@ -6,19 +6,13 @@
     <title>Irving | Inteligência ML</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = {
-            darkMode: 'class',
-        }
+        tailwind.config = { darkMode: 'class', }
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
-        .glass-card { 
-            background: white; border: 1px solid #E2E8F0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); transition: all 0.2s ease; 
-        }
-        .dark .glass-card { 
-            background: #1E293B; border-color: #334155; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); 
-        }
+        .glass-card { background: white; border: 1px solid #E2E8F0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); transition: all 0.2s ease; }
+        .dark .glass-card { background: #1E293B; border-color: #334155; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); }
         .glass-card:hover { transform: translateY(-2px); }
         .progress-bar { transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
     </style>
@@ -29,7 +23,6 @@
         <div class="p-6">
             <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 tracking-tight mb-1">Irving.</h1>
             <p class="text-xs text-slate-500 dark:text-slate-400 font-medium mb-8">Workspace de <b>Brunão</b></p>
-            
             <div class="bg-slate-50 dark:bg-slate-900 rounded-lg p-3 flex items-center gap-3 border border-slate-100 dark:border-slate-700">
                 <div class="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></div>
                 <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">API Conectada</span>
@@ -41,175 +34,107 @@
     </aside>
 
     <main class="flex-1 overflow-y-auto p-8 relative">
-        
         <header class="mb-8 flex justify-between items-end border-b border-slate-200 dark:border-slate-700 pb-4">
             <div>
                 <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Visão Geral da Operação</h2>
                 <p class="text-slate-500 dark:text-slate-400 text-sm mt-1" id="lbl-periodo">Analisando: Últimos 30 dias</p>
             </div>
-            
             <div class="flex items-center gap-4">
-                <select id="seletor-data" onchange="carregarDados()" class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 shadow-sm outline-none transition-colors">
+                <select id="seletor-data" onchange="carregarDados()" class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none transition-colors">
                     <option value="7">Últimos 7 dias</option>
                     <option value="15">Últimos 15 dias</option>
                     <option value="30" selected>Últimos 30 dias</option>
-                    <option value="custom">Personalizado...</option>
                 </select>
-
-                <button onclick="toggleDarkMode()" class="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition shadow-sm">
+                <button onclick="toggleDarkMode()" class="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition">
                     <svg id="theme-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
                 </button>
             </div>
         </header>
 
         <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-            <div class="glass-card rounded-2xl p-5 relative overflow-hidden">
-                <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Unidades (Giro)</p>
-                <h3 class="text-2xl font-extrabold text-slate-900 dark:text-white mb-2" id="kpi-unidades">...</h3>
-            </div>
-            <div class="glass-card rounded-2xl p-5 relative overflow-hidden">
-                <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Faturamento</p>
-                <h3 class="text-2xl font-extrabold text-slate-900 dark:text-white mb-2" id="kpi-fat">...</h3>
-            </div>
-            <div class="glass-card rounded-2xl p-5">
-                <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Lucro Real</p>
-                <h3 class="text-2xl font-extrabold text-slate-900 dark:text-white mb-2" id="kpi-lucro">...</h3>
-            </div>
-            <div class="glass-card rounded-2xl p-5">
-                <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Gasto ADS</p>
-                <h3 class="text-2xl font-extrabold text-slate-900 dark:text-white mb-2" id="kpi-ads">...</h3>
-            </div>
-            <div class="glass-card rounded-2xl p-5 border-l-4 border-l-red-500">
-                <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Urgente (SKUs)</p>
-                <h3 class="text-2xl font-extrabold text-red-600 dark:text-red-400 mb-2" id="kpi-alertas">...</h3>
-            </div>
+            <div class="glass-card rounded-2xl p-5"><p class="text-xs font-bold text-slate-400 uppercase mb-2">Unidades (Giro)</p><h3 class="text-2xl font-extrabold mb-2" id="kpi-unidades">...</h3></div>
+            <div class="glass-card rounded-2xl p-5"><p class="text-xs font-bold text-slate-400 uppercase mb-2">Faturamento</p><h3 class="text-2xl font-extrabold mb-2" id="kpi-fat">...</h3></div>
+            <div class="glass-card rounded-2xl p-5"><p class="text-xs font-bold text-slate-400 uppercase mb-2">Lucro Real</p><h3 class="text-2xl font-extrabold mb-2" id="kpi-lucro">...</h3></div>
+            <div class="glass-card rounded-2xl p-5"><p class="text-xs font-bold text-slate-400 uppercase mb-2">Gasto ADS</p><h3 class="text-2xl font-extrabold mb-2" id="kpi-ads">...</h3></div>
+            <div class="glass-card rounded-2xl p-5 border-l-4 border-l-red-500"><p class="text-xs font-bold text-slate-400 uppercase mb-2">Urgente (SKUs)</p><h3 class="text-2xl font-extrabold text-red-600 mb-2" id="kpi-alertas">...</h3></div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
             <div class="lg:col-span-3 glass-card rounded-2xl p-6 overflow-hidden">
-                <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-6">Detalhamento e Crescimento</h3>
+                <h3 class="text-lg font-bold mb-6">Detalhamento e Crescimento</h3>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm whitespace-nowrap">
                         <thead>
                             <tr class="text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-700">
-                                <th class="pb-3 font-semibold">Produto</th>
-                                <th class="pb-3 font-semibold">Giro (Var%)</th>
-                                <th class="pb-3 font-semibold">Ads (Var%)</th>
-                                <th class="pb-3 font-semibold">Margem (Var%)</th>
-                                <th class="pb-3 font-semibold">Status</th>
-                                <th class="pb-3 font-semibold w-32">Espaço Promo</th>
+                                <th class="pb-3 font-semibold">Produto</th><th class="pb-3 font-semibold">Giro (Var%)</th><th class="pb-3 font-semibold">Ads (Var%)</th><th class="pb-3 font-semibold">Margem (Var%)</th><th class="pb-3 font-semibold">Status</th><th class="pb-3 font-semibold w-32">Espaço Promo</th>
                             </tr>
                         </thead>
-                        <tbody id="tabela-corpo" class="text-slate-700 dark:text-slate-300">
-                            </tbody>
+                        <tbody id="tabela-corpo"></tbody>
                     </table>
                 </div>
             </div>
 
             <div class="space-y-4">
-                <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">System Alerts</h3>
-                
+                <h3 class="text-lg font-bold mb-2">System Alerts</h3>
                 <div class="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 text-red-800 dark:text-red-400 text-sm">
-                    <strong class="block mb-1 font-bold text-red-900 dark:text-red-300 flex items-center gap-2">⚠️ Suspensão (ML)</strong>
-                    Não adicione link nas perguntas dos anúncios para evitar suspensão.
+                    <strong class="block mb-1 font-bold flex items-center gap-2">⚠️ Suspensão (ML)</strong>
+                    Não adicione link nas perguntas dos anúncios para evitar suspensão permanente. O sistema bloqueia essas ações automaticamente.
                 </div>
-
                 <div class="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 text-blue-800 dark:text-blue-400 text-sm">
-                    <strong class="block mb-1 font-bold text-blue-900 dark:text-blue-300 flex items-center gap-2">🌎 Logística CBT</strong>
-                    Vendas para a Argentina estão com simulação otimizada (Custo logístico zero).
+                    <strong class="block mb-1 font-bold flex items-center gap-2">🌎 Logística CBT</strong>
+                    Na Argentina o custo é de graça. As simulações de margem já desconsideram taxas de envio para lá.
                 </div>
             </div>
         </div>
     </main>
 
     <script>
-        // Lógica de Dark Mode
         function toggleDarkMode() {
             document.documentElement.classList.toggle('dark');
             const isDark = document.documentElement.classList.contains('dark');
             const icon = document.getElementById('theme-icon');
-            
-            if(isDark) {
-                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>';
-            } else {
-                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>';
-            }
+            icon.innerHTML = isDark 
+                ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>' 
+                : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>';
         }
 
-        // Função geradora de Badges de Tendência (Verde, Vermelho, Cinza)
-        function formatarTrend(trendValue) {
-            if(trendValue > 0) return `<span class="text-[10px] font-bold text-emerald-500 bg-emerald-100 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded ml-1">↑ ${trendValue}%</span>`;
-            if(trendValue < 0) return `<span class="text-[10px] font-bold text-red-500 bg-red-100 dark:bg-red-500/10 px-1.5 py-0.5 rounded ml-1">↓ ${Math.abs(trendValue)}%</span>`;
+        function formatarTrend(valor) {
+            if(valor > 0) return `<span class="text-[10px] font-bold text-emerald-500 bg-emerald-100 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded ml-1">↑ ${valor}%</span>`;
+            if(valor < 0) return `<span class="text-[10px] font-bold text-red-500 bg-red-100 dark:bg-red-500/10 px-1.5 py-0.5 rounded ml-1">↓ ${Math.abs(valor)}%</span>`;
             return `<span class="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded ml-1">- 0%</span>`;
         }
 
-        // Chama a API em Python e atualiza a tela
         function carregarDados() {
             const periodo = document.getElementById('seletor-data').value;
-            if(periodo === 'custom') {
-                alert("Aqui abriria um calendário para selecionar a data inicial e final.");
-                return;
-            }
+            fetch('/api/dados?periodo=' + periodo).then(res => res.json()).then(data => {
+                document.getElementById('lbl-periodo').textContent = "Analisando: " + data.kpis.periodo_nome;
+                document.getElementById('kpi-unidades').textContent = data.kpis.unidades;
+                document.getElementById('kpi-fat').textContent = data.kpis.faturamento;
+                document.getElementById('kpi-lucro').textContent = data.kpis.lucro;
+                document.getElementById('kpi-ads').textContent = data.kpis.ads;
+                document.getElementById('kpi-alertas').textContent = data.kpis.alertas_criticos;
 
-            fetch('/api/dados?periodo=' + periodo)
-                .then(response => response.json())
-                .then(data => {
-                    // Atualiza KPIs
-                    document.getElementById('lbl-periodo').textContent = "Analisando: " + data.kpis.periodo_nome;
-                    document.getElementById('kpi-unidades').textContent = data.kpis.unidades;
-                    document.getElementById('kpi-fat').textContent = data.kpis.faturamento;
-                    document.getElementById('kpi-lucro').textContent = data.kpis.lucro;
-                    document.getElementById('kpi-ads').textContent = data.kpis.ads;
-                    document.getElementById('kpi-alertas').textContent = data.kpis.alertas_criticos;
+                const tbody = document.getElementById('tabela-corpo');
+                tbody.innerHTML = ''; 
+                
+                data.tabela.forEach(row => {
+                    let statusColor = row.Status.includes('🔴') || row.Status.includes('⚠️') ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-emerald-600 dark:text-emerald-400 font-semibold';
+                    if(row.Status.includes('🔵')) statusColor = 'text-blue-600 dark:text-blue-400 font-semibold';
+                    const p = row.Desconto_Max_Grafico;
+                    const cor = p > 15 ? 'bg-emerald-500' : (p > 5 ? 'bg-amber-400' : 'bg-red-500');
 
-                    // Atualiza Tabela
-                    const tbody = document.getElementById('tabela-corpo');
-                    tbody.innerHTML = ''; // Limpa a tabela atual
-                    
-                    data.tabela.forEach(row => {
-                        let statusColor = row.Status.includes('🔴') || row.Status.includes('⚠️') ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-emerald-600 dark:text-emerald-400 font-semibold';
-                        if(row.Status.includes('🔵')) statusColor = 'text-blue-600 dark:text-blue-400 font-semibold';
-
-                        const promoPercent = row.Desconto_Max_Grafico;
-                        const barraCor = promoPercent > 15 ? 'bg-emerald-500' : (promoPercent > 5 ? 'bg-amber-400' : 'bg-red-500');
-
-                        const tr = document.createElement('tr');
-                        tr.className = "border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition";
-                        
-                        // Montando a linha HTML cruzando o dado com o "Trend"
-                        tr.innerHTML = `
-                            <td class="py-4">
-                                <p class="font-bold text-slate-900 dark:text-white">${row.Produto}</p>
-                                <p class="text-[11px] text-slate-400">${row.ID}</p>
-                            </td>
-                            <td class="py-4">
-                                <span class="font-medium">${row.Giro} un</span><br>
-                                ${formatarTrend(row.Giro_Trend)}
-                            </td>
-                            <td class="py-4">
-                                <span class="font-medium">R$ ${row.Investimento_ADS.toFixed(2)}</span><br>
-                                ${formatarTrend(row.ADS_Trend)}
-                            </td>
-                            <td class="py-4">
-                                <span class="font-medium">R$ ${row.Margem_Contribuicao.toFixed(2)}</span><br>
-                                ${formatarTrend(row.MC_Trend)}
-                            </td>
+                    tbody.innerHTML += `
+                        <tr class="border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                            <td class="py-4"><p class="font-bold">${row.Produto}</p><p class="text-[11px] text-slate-400">${row.ID}</p></td>
+                            <td class="py-4"><span class="font-medium">${row.Giro} un</span><br>${formatarTrend(row.Giro_Trend)}</td>
+                            <td class="py-4"><span class="font-medium">R$ ${row.Investimento_ADS.toFixed(2)}</span><br>${formatarTrend(row.ADS_Trend)}</td>
+                            <td class="py-4"><span class="font-medium">R$ ${row.Margem_Contribuicao.toFixed(2)}</span><br>${formatarTrend(row.MC_Trend)}</td>
                             <td class="py-4 ${statusColor}">${row.Status}</td>
-                            <td class="py-4">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5">
-                                        <div class="${barraCor} h-1.5 rounded-full progress-bar" style="width: ${Math.min(promoPercent, 100)}%"></div>
-                                    </div>
-                                    <span class="text-[11px] font-bold text-slate-600 dark:text-slate-400">${promoPercent.toFixed(1)}%</span>
-                                </div>
-                            </td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
+                            <td class="py-4"><div class="flex items-center gap-2"><div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5"><div class="${cor} h-1.5 rounded-full" style="width: ${Math.min(p, 100)}%"></div></div><span class="text-[11px] font-bold">${p.toFixed(1)}%</span></div></td>
+                        </tr>`;
                 });
+            });
         }
-
-        // Carrega os dados na inicialização
         carregarDados();
     </script>
 </body>

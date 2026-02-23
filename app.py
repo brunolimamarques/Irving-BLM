@@ -1,99 +1,87 @@
-from flask import Flask, render_template, request, jsonify, redirect
+import os
+import json
+from flask import Flask, render_template, request, jsonify
 import firebase_admin
 from firebase_admin import credentials, firestore
-import requests
-import os
+import pandas as pd
 
 app = Flask(__name__)
 
-# 1. INICIALIZA O FIREBASE (Banco de Dados)
-# Você vai colocar aquele arquivo .json que baixou na mesma pasta do projeto
-cred = credentials.Certificate("firebase-chave.json")
-firebase_admin.initialize_app(cred)
-db = firestore.client()
+# --- 1. CONFIGURAÇÃO DE SEGURANÇA DO FIREBASE ---
+firebase_cred_string = os.environ.get("FIREBASE_JSON")
 
-# Credenciais do Mercado Livre (Pegue no Dev Center do ML)
-ML_APP_ID = "SEU_APP_ID"
-ML_SECRET_KEY = "SUA_SECRET_KEY"
-REDIRECT_URI = "https://irving-app.onrender.com/callback" # URL que teremos após subir pro ar
+try:
+    if firebase_cred_string:
+        # Lê a chave secreta direto do cofre da Vercel
+        cred_dict = json.loads(firebase_cred_string)
+        cred = credentials.Certificate(cred_dict)
+    else:
+        # Se você for testar no seu PC, ele procura o arquivo físico (Opcional)
+        cred = credentials.Certificate("firebase-chave.json")
+        
+    # Inicializa sem duplicar
+    if not firebase_admin._apps:
+        firebase_admin.initialize_app(cred)
+        
+    db = firestore.client()
+except Exception as e:
+    print(f"Aviso: Não foi possível conectar ao Firebase no momento. {e}")
 
+# --- 2. ROTAS DA APLICAÇÃO ---
 @app.route('/')
 def home():
     return render_template('index.html')
 
-# ---------------------------------------------------------
-# ROTA 1: O VENDEDOR AUTORIZA O IRVING NO MERCADO LIVRE
-# ---------------------------------------------------------
-@app.route('/conectar-ml/<user_id>')
-def conectar_ml(user_id):
-    # Redireciona o cliente para a tela oficial de permissão do ML
-    url_auth = f"https://auth.mercadolivre.com.br/authorization?response_type=code&client_id={ML_APP_ID}&redirect_uri={REDIRECT_URI}&state={user_id}"
-    return redirect(url_auth)
-
-# ---------------------------------------------------------
-# ROTA 2: O RETORNO DO MERCADO LIVRE (Salvando o Token)
-# ---------------------------------------------------------
-@app.route('/callback')
-def callback():
-    # O ML devolve um código e o ID do seu usuário (state)
-    code = request.args.get('code')
-    user_id = request.args.get('state')
-    
-    # Trocamos o código pelo Access Token real
-    url_token = "https://api.mercadolibre.com/oauth/token"
-    payload = {
-        "grant_type": "authorization_code",
-        "client_id": ML_APP_ID,
-        "client_secret": ML_SECRET_KEY,
-        "code": code,
-        "redirect_uri": REDIRECT_URI
-    }
-    
-    resposta = requests.post(url_token, data=payload).json()
-    
-    if "access_token" in resposta:
-        # Salva o token do cliente no Firebase!
-        db.collection('usuarios').document(user_id).set({
-            'ml_access_token': resposta['access_token'],
-            'ml_refresh_token': resposta['refresh_token'],
-            'status': 'conectado'
-        }, merge=True)
-        
-        return "Conexão com Mercado Livre realizada com sucesso! Volte para o painel."
-    return "Erro ao conectar."
-
-# ---------------------------------------------------------
-# ROTA 3: PUXANDO VENDAS E CUSTOS REAIS (A Mágica)
-# ---------------------------------------------------------
 @app.route('/api/dados')
 def api_dados():
-    user_id = request.args.get('user_id')
+    periodo = request.args.get('periodo', '30')
     
-    # 1. Pega o token do vendedor no Banco de Dados
-    user_doc = db.collection('usuarios').document(user_id).get()
-    if not user_doc.exists:
-        return jsonify({"erro": "Usuário não encontrado"}), 404
-        
-    token = user_doc.to_dict().get('ml_access_token')
-    
-    # 2. Puxa as vendas da API do ML (Exemplo)
-    headers = {"Authorization": f"Bearer {token}"}
-    vendas = requests.get(f"https://api.mercadolibre.com/orders/search?seller={user_id}&order.status=paid", headers=headers).json()
-    
-    # 3. Puxa os custos do produto cadastrados pelo vendedor no Firebase
-    custos_db = db.collection('custos_produtos').document(user_id).get().to_dict() or {}
-    
-    # AQUI ENTRA O SEU MOTOR LOGICO DO PANDAS (Exatamente como estava antes)
-    # Você processará 'vendas' e 'custos_db' usando as regras estabelecidas.
-    
-    # Nota de Segurança do Sistema:
-    # Lembre-se de implementar o bloqueio nas rotas que respondem perguntas de compradores.
-    # Qualquer resposta gerada que contenha "http" ou "www" deve ser barrada antes de ir para a API do ML
-    # para evitar a suspensão da conta do vendedor.
-    
-    return jsonify({"status": "Dados processados"})
+    # Simulação dos dados que virão da API do Mercado Livre
+    dados_api = {
+        'ID': ['MLB123', 'MLB456', 'MLB789', 'MLB000', 'MLB555'],
+        'Produto': ['Fone Bluetooth XT', 'Cabo USB-C Tático', 'Suporte Notebook', 'Câmera IP Wi-Fi', 'Kit Ferramentas'],
+        'Ticket_Medio': [100.00, 80.00, 50.00, 200.00, 85.00],
+        'Giro': [150, 45, 12, 89, 210],
+        'Giro_Ant': [120, 50, 10, 89, 150],
+        'Investimento_ADS': [0, 450.50, 0, 120.00, 50.00],
+        'Investimento_ADS_Ant': [0, 300.00, 0, 150.00, 40.00],
+        'Margem_Contribuicao': [25.50, -15.00, -5.00, 45.00, 18.00],
+        'Margem_Contribuicao_Ant': [20.00, -10.00, -2.00, 40.00, 20.00],
+    }
+    df = pd.DataFrame(dados_api)
 
-if __name__ == '__main__':
-    # A porta é definida pelo servidor (Render) quando for pro ar
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    # Motor de Tendência e Regras
+    def calc_trend(atual, anterior):
+        if anterior == 0 and atual == 0: return 0
+        if anterior == 0: return 100
+        return round(((atual - anterior) / anterior) * 100, 1)
+
+    df['Giro_Trend'] = df.apply(lambda x: calc_trend(x['Giro'], x['Giro_Ant']), axis=1)
+    df['ADS_Trend'] = df.apply(lambda x: calc_trend(x['Investimento_ADS'], x['Investimento_ADS_Ant']), axis=1)
+    df['MC_Trend'] = df.apply(lambda x: calc_trend(x['Margem_Contribuicao'], x['Margem_Contribuicao_Ant']), axis=1)
+
+    def gerar_status(row):
+        mc = row['Margem_Contribuicao']
+        ads = row['Investimento_ADS']
+        if mc < 0 and ads > 0: return "🔴 Pausar ADS"
+        elif mc < 0 and ads <= 0: return "⚠️ Revisar Preço"
+        elif mc > 0 and ads > 0: return "🟢 Escalar ADS"
+        else: return "🔵 Orgânico Saudável"
+        
+    df['Status'] = df.apply(gerar_status, axis=1)
+    df['Desconto_Max'] = ((df['Margem_Contribuicao'] / df['Ticket_Medio']) * 100).round(2)
+    df['Desconto_Max_Grafico'] = df['Desconto_Max'].apply(lambda x: x if x > 0 else 0)
+
+    # KPIs Totais
+    kpis = {
+        "faturamento": f"R$ {float((df['Giro'] * df['Ticket_Medio']).sum()):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+        "lucro": f"R$ {float((df['Giro'] * df['Margem_Contribuicao']).sum()):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+        "ads": f"R$ {float(df['Investimento_ADS'].sum()):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+        "unidades": str(int(df['Giro'].sum())),
+        "alertas_criticos": int(len(df[df['Margem_Contribuicao'] < 0])),
+        "periodo_nome": f"Últimos {periodo} dias" if periodo != "custom" else "Personalizado"
+    }
+
+    return jsonify({"kpis": kpis, "tabela": df.to_dict(orient='records')})
+
+# (Na Vercel, o 'app.run' não é necessário, o servidor gerencia isso)

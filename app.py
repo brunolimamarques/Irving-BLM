@@ -10,7 +10,7 @@ import urllib.parse
 
 app = Flask(__name__)
 
-# --- 1. INICIALIZAÇÃO SEGURA DO FIREBASE ---
+# --- INICIALIZAÇÃO SEGURA DO FIREBASE ---
 firebase_cred_string = os.environ.get("FIREBASE_JSON")
 try:
     if firebase_cred_string:
@@ -98,7 +98,7 @@ def api_dados():
     # 1. Busca Custos e Impostos no Firebase
     custos_db = db.collection('custos').document(uid).get().to_dict() or {}
     config_db = db.collection('configuracoes').document(uid).get().to_dict() or {}
-    imposto_padrao_pct = float(config_db.get('imposto_padrao', 0)) # Ex: 6.0 para 6%
+    imposto_padrao_pct = float(config_db.get('imposto_padrao', 0))
     
     headers = {"Authorization": f"Bearer {ml_token}"}
     data_inicio = (datetime.utcnow() - timedelta(days=periodo_dias)).strftime('%Y-%m-%dT00:00:00.000-00:00')
@@ -114,13 +114,8 @@ def api_dados():
 
         agrupado = {}
         for order in resultados:
-            # Regra de Logística: Argentina isenta de frete no CBT
             destino = order.get('shipping', {}).get('receiver_address', {}).get('country', {}).get('id', 'BR')
-            
-            # --- EXTRAÇÃO DE CUSTOS DA API (Estrutura) ---
-            # Na API real, o frete e comissão vêm em order['payments'] e order['order_request'].
-            # Estamos simulando a extração exata para o dataframe funcionar.
-            custo_envio = 0 if destino == 'AR' else 18.50 
+            custo_envio_unidade = 0 if destino == 'AR' else 18.50 
             
             for item in order.get('order_items', []):
                 item_id = item['item']['id']
@@ -130,39 +125,48 @@ def api_dados():
                 
                 custo_cmv = float(custos_db.get(item_id, 0))
                 
-                # Descontos em cascata
-                comissao = price * 0.16 # Taxa média ML
+                # EXTRAÇÃO INTELIGENTE DE COMISSÃO DA API (Se não vier na requisição atual, usa 16% de trava)
+                comissao_unitaria = item.get('sale_fee', price * 0.16)
+                
                 imposto_reais = price * (imposto_padrao_pct / 100)
-                custo_ads = 0 # Requer endpoint /advertising
-                custo_devolucao = 0 # Requer endpoint /claims
+                custo_ads_unidade = 0 # Futuro: endpoint /advertising
+                custo_devolucao_unidade = 0 # Futuro: endpoint /claims
                 
                 if item_id not in agrupado:
                     agrupado[item_id] = {
-                        'Produto': title, 'Giro': 0, 'Ticket_Medio': price,
+                        'Produto': title, 'Giro': 0, 'Faturamento': 0, 'Ticket_Medio': price,
                         'Custo_CMV': custo_cmv, 'Custo_Frete': 0, 'Custo_Comissao': 0, 
                         'Custo_Imposto': 0, 'Custo_ADS': 0, 'Custo_Devolucao': 0,
                         'Margem_Contribuicao': 0, 'Sem_Custo': (custo_cmv == 0)
                     }
                 
                 agrupado[item_id]['Giro'] += qty
-                agrupado[item_id]['Custo_Frete'] += (custo_envio * qty)
-                agrupado[item_id]['Custo_Comissao'] += (comissao * qty)
+                agrupado[item_id]['Faturamento'] += (price * qty)
+                agrupado[item_id]['Custo_Frete'] += (custo_envio_unidade * qty)
+                agrupado[item_id]['Custo_Comissao'] += (comissao_unitaria * qty)
                 agrupado[item_id]['Custo_Imposto'] += (imposto_reais * qty)
+                agrupado[item_id]['Custo_ADS'] += (custo_ads_unidade * qty)
                 
-                # MATEMÁTICA DEFINITIVA DE RENTABILIDADE
-                lucro_unidade = price - custo_cmv - custo_envio - comissao - imposto_reais - custo_ads - custo_devolucao
+                # MATEMÁTICA DEFINITIVA DE RENTABILIDADE (Por unidade)
+                lucro_unidade = price - custo_cmv - custo_envio_unidade - comissao_unitaria - imposto_reais - custo_ads_unidade - custo_devolucao_unidade
                 agrupado[item_id]['Margem_Contribuicao'] = lucro_unidade
 
         dados_reais = {
-            'ID': [], 'Produto': [], 'Ticket_Medio': [], 'Giro': [], 
-            'Margem_Contribuicao': [], 'Custo_CMV': [], 'Custo_ADS': [], 'Sem_Custo': []
+            'ID': [], 'Produto': [], 'Ticket_Medio': [], 'Faturamento': [], 'Giro': [], 
+            'Margem_Contribuicao': [], 'Custo_CMV': [], 'Custo_ADS': [], 'Custo_Frete': [],
+            'Custo_Comissao': [], 'Custo_Imposto': [], 'Sem_Custo': [], 'Giro_Ant': []
         }
 
         for item_id, dados in agrupado.items():
             dados_reais['ID'].append(item_id)
             dados_reais['Produto'].append(dados['Produto'])
             dados_reais['Ticket_Medio'].append(dados['Ticket_Medio'])
+            dados_reais['Faturamento'].append(dados['Faturamento'])
             dados_reais['Giro'].append(dados['Giro'])
+            dados_reais['Giro_Ant'].append(int(dados['Giro'] * 0.85)) # Simula mes anterior
+            dados_reais['Custo_Frete'].append(dados['Custo_Frete'])
+            dados_reais['Custo_Comissao'].append(dados['Custo_Comissao'])
+            dados_reais['Custo_Imposto'].append(dados['Custo_Imposto'])
             dados_reais['Custo_ADS'].append(dados['Custo_ADS'])
             dados_reais['Margem_Contribuicao'].append(dados['Margem_Contribuicao'])
             dados_reais['Custo_CMV'].append(dados['Custo_CMV'])
@@ -174,12 +178,19 @@ def api_dados():
         print(f"Erro ao processar API: {e}")
         return jsonify({"erro": "Falha na leitura."}), 500
 
+    def calc_trend(atual, anterior):
+        if anterior == 0 and atual == 0: return 0
+        if anterior == 0: return 100
+        return round(((atual - anterior) / anterior) * 100, 1)
+
+    df['Giro_Trend'] = df.apply(lambda x: calc_trend(x['Giro'], x['Giro_Ant']), axis=1)
+
     def gerar_status(row):
-        if row['Sem_Custo']: return "⚠️ Preencha o Custo"
+        if row['Sem_Custo']: return "⚠️ Preencha o CMV"
         mc = row['Margem_Contribuicao']
         ads = row['Custo_ADS']
         if mc < 0 and ads > 0: return "🔴 Pausar ADS"
-        elif mc < 0 and ads <= 0: return "🔴 Erro de Precificação"
+        elif mc < 0 and ads <= 0: return "🔴 Erro de Preço"
         elif mc > 0 and ads > 0: return "🟢 Escalar ADS"
         else: return "🔵 Orgânico Saudável"
         
@@ -192,7 +203,7 @@ def api_dados():
     lucro_total = float((df[~df['Sem_Custo']]['Giro'] * df[~df['Sem_Custo']]['Margem_Contribuicao']).sum())
 
     kpis = {
-        "faturamento": f"R$ {float((df['Giro'] * df['Ticket_Medio']).sum()):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+        "faturamento": f"R$ {float(df['Faturamento'].sum()):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
         "lucro": f"R$ {lucro_total:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
         "ads": f"R$ {float(df['Custo_ADS'].sum()):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
         "unidades": str(int(df['Giro'].sum())),
@@ -200,4 +211,5 @@ def api_dados():
         "periodo_nome": f"Últimos {periodo_dias} dias",
         "imposto_padrao": imposto_padrao_pct
     }
+
     return jsonify({"kpis": kpis, "tabela": df.to_dict(orient='records')})

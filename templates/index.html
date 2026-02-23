@@ -77,7 +77,7 @@
                             <table class="w-full text-left text-sm whitespace-nowrap">
                                 <thead>
                                     <tr class="text-slate-500 border-b border-slate-700">
-                                        <th class="pb-3 font-semibold">Produto</th><th class="pb-3">Giro</th><th class="pb-3">Ads</th><th class="pb-3">Margem / un</th><th class="pb-3">Status</th><th class="pb-3">Espaço Promo</th>
+                                        <th class="pb-3 font-semibold">Produto</th><th class="pb-3">Giro</th><th class="pb-3">Margem / un</th><th class="pb-3">Status</th><th class="pb-3">Espaço Promo</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tabela-corpo"></tbody>
@@ -86,26 +86,39 @@
                     </div>
                     <div class="space-y-4">
                         <div class="p-4 rounded-xl bg-red-900/20 border border-red-800/30 text-red-400 text-sm">
-                            <strong class="block mb-1 font-bold">⚠️ Suspensão (ML)</strong> Não adicione link nas perguntas dos anúncios. Risco de banimento.
+                            <strong class="block mb-1 font-bold">⚠️ Suspensão (ML)</strong> Não adicione link nas perguntas dos anúncios.
                         </div>
                         <div class="p-4 rounded-xl bg-blue-900/20 border border-blue-800/30 text-blue-400 text-sm">
-                            <strong class="block mb-1 font-bold">🌎 Logística CBT</strong> Custos de envio para Argentina estão isentos nesta análise.
+                            <strong class="block mb-1 font-bold">🌎 Logística CBT</strong> O custo da Argentina é de graça. A margem já reflete essa regra.
                         </div>
                     </div>
                 </div>
             </div>
 
             <div id="aba-custos" class="hidden">
+                
+                <div class="glass-card rounded-2xl p-6 mb-8 max-w-4xl flex justify-between items-center bg-blue-900/10 border-blue-800/30">
+                    <div>
+                        <h3 class="text-lg font-bold text-blue-400">Configuração Tributária</h3>
+                        <p class="text-sm text-slate-400">Defina a alíquota em massa (Ex: Simples Nacional). Isso será descontado automaticamente de todas as vendas.</p>
+                    </div>
+                    <div class="flex gap-2 items-center">
+                        <input type="number" id="input-imposto" placeholder="Ex: 6.0" step="0.1" class="w-24 p-2 rounded bg-slate-800 border border-slate-600 text-white outline-none focus:border-blue-500">
+                        <span class="text-slate-400">%</span>
+                        <button onclick="salvarImposto()" id="btn-imposto" class="ml-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-bold transition">Salvar Alíquota</button>
+                    </div>
+                </div>
+
                 <div class="glass-card rounded-2xl p-6 max-w-4xl">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-lg font-bold">Custos dos Produtos (CMV)</h3>
-                        <span class="text-sm text-amber-400 bg-amber-400/10 px-3 py-1 rounded-full border border-amber-400/20">Sem o custo, a rentabilidade não é calculada.</span>
+                        <span class="text-sm text-amber-400 bg-amber-400/10 px-3 py-1 rounded-full">Sem o CMV, a rentabilidade não é calculada.</span>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-sm whitespace-nowrap">
                             <thead>
                                 <tr class="text-slate-500 border-b border-slate-700">
-                                    <th class="pb-3 font-semibold">Produto (SKU)</th><th class="pb-3">Ticket Médio</th><th class="pb-3 w-48">Seu Custo de Compra (R$)</th><th class="pb-3 w-32">Ação</th>
+                                    <th class="pb-3 font-semibold">Produto (SKU)</th><th class="pb-3 w-48">Seu Custo de Compra (R$)</th><th class="pb-3 w-32">Ação</th>
                                 </tr>
                             </thead>
                             <tbody id="tabela-custos"></tbody>
@@ -120,13 +133,12 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // COLOQUE SUAS CHAVES AQUI
         const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", authDomain: "irving-blm.firebaseapp.com", projectId: "irving-blm", storageBucket: "irving-blm.firebasestorage.app", messagingSenderId: "209820833777", appId: "1:209820833777:web:809fd74f0abcbd8b1d5650" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         
         let usuarioGlobal = null;
-        let dadosAPI = []; // Guarda os dados em memória
+        let dadosAPI = []; 
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -137,7 +149,6 @@
                 usuarioGlobal = null;
                 document.getElementById('tela-login').classList.remove('hidden');
                 document.getElementById('tela-dashboard').classList.add('hidden');
-                document.getElementById('tela-conectar-ml').classList.add('hidden');
             }
         });
 
@@ -154,14 +165,23 @@
             document.getElementById(`aba-${aba}`).classList.remove('hidden');
             document.getElementById(`btn-${aba.split('_')[0]}`).className = "menu-ativo text-left px-6 py-3 font-semibold transition";
             
-            document.getElementById('titulo-pagina').innerText = aba === 'visao_geral' ? "Visão Geral da Operação" : "Gestão de Custos e CMV";
+            document.getElementById('titulo-pagina').innerText = aba === 'visao_geral' ? "Visão Geral da Operação" : "Gestão de Custos e Tributos";
             if(aba === 'custos') renderTabelaCustos();
         };
 
-        window.formatarTrend = (v) => {
-            if(v > 0) return `<span class="text-[10px] text-emerald-500 bg-emerald-500/10 px-1 py-0.5 rounded">↑ ${v}%</span>`;
-            if(v < 0) return `<span class="text-[10px] text-red-500 bg-red-500/10 px-1 py-0.5 rounded">↓ ${Math.abs(v)}%</span>`;
-            return '';
+        window.salvarImposto = async () => {
+            const btn = document.getElementById('btn-imposto');
+            const imposto = document.getElementById('input-imposto').value;
+            const token = await usuarioGlobal.getIdToken();
+            
+            btn.innerText = "Salvando...";
+            await fetch('/api/salvar_imposto', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify({ imposto: imposto })
+            });
+            btn.innerText = "Salvo ✔";
+            setTimeout(() => { btn.innerText = "Salvar Alíquota"; carregarDados(); }, 1000);
         };
 
         window.carregarDados = async () => {
@@ -173,8 +193,13 @@
             const data = await res.json();
             
             if (res.status === 403) { document.getElementById('tela-conectar-ml').classList.remove('hidden'); return; }
+            if (data.erro === "vazio") return;
+
             document.getElementById('tela-conectar-ml').classList.add('hidden');
             document.getElementById('tela-dashboard').classList.remove('hidden');
+
+            // Carrega o imposto salvo no input
+            document.getElementById('input-imposto').value = data.kpis.imposto_padrao;
 
             document.getElementById('lbl-periodo').textContent = "Analisando: " + data.kpis.periodo_nome;
             document.getElementById('kpi-unidades').textContent = data.kpis.unidades;
@@ -183,7 +208,7 @@
             document.getElementById('kpi-ads').textContent = data.kpis.ads;
             document.getElementById('kpi-alertas').textContent = data.kpis.alertas_criticos;
 
-            dadosAPI = data.tabela; // Salva para usar na aba de Custos
+            dadosAPI = data.tabela;
             const tbody = document.getElementById('tabela-corpo');
             tbody.innerHTML = ''; 
             
@@ -194,13 +219,12 @@
                 const p = row.Desconto_Max_Grafico;
                 const cor = p > 15 ? 'bg-emerald-500' : (p > 5 ? 'bg-amber-400' : 'bg-red-500');
                 const espacoPromo = row.Sem_Custo ? `<span class="text-xs text-slate-500">-</span>` : `<div class="flex items-center gap-2"><div class="w-full bg-slate-700 rounded-full h-1.5"><div class="${cor} h-1.5 rounded-full" style="width: ${Math.min(p, 100)}%"></div></div><span class="text-[11px] font-bold">${p.toFixed(1)}%</span></div>`;
-                const margemValor = row.Sem_Custo ? `<span class="text-slate-500 text-xs">Aguardando Custo</span>` : `<span class="font-medium">R$ ${row.Margem_Contribuicao.toFixed(2)}</span><br>${formatarTrend(row.MC_Trend)}`;
+                const margemValor = row.Sem_Custo ? `<span class="text-slate-500 text-xs">Aguardando Custo</span>` : `<span class="font-medium">R$ ${row.Margem_Contribuicao.toFixed(2)}</span>`;
 
                 tbody.innerHTML += `
                     <tr class="border-b border-slate-800 hover:bg-slate-800/50">
                         <td class="py-4"><p class="font-bold w-64 truncate" title="${row.Produto}">${row.Produto}</p><p class="text-[11px] text-slate-400">${row.ID}</p></td>
-                        <td class="py-4"><span class="font-medium">${row.Giro} un</span><br>${formatarTrend(row.Giro_Trend)}</td>
-                        <td class="py-4"><span class="font-medium">R$ ${row.Investimento_ADS.toFixed(2)}</span></td>
+                        <td class="py-4"><span class="font-medium">${row.Giro} un</span></td>
                         <td class="py-4">${margemValor}</td>
                         <td class="py-4 ${statusColor}">${row.Status}</td>
                         <td class="py-4 w-32">${espacoPromo}</td>
@@ -217,13 +241,8 @@
                 tbody.innerHTML += `
                     <tr class="border-b border-slate-800">
                         <td class="py-4"><p class="font-bold w-64 truncate" title="${row.Produto}">${row.Produto}</p><p class="text-[11px] text-slate-400">${row.ID}</p></td>
-                        <td class="py-4 text-slate-400">R$ ${row.Ticket_Medio.toFixed(2)}</td>
-                        <td class="py-4">
-                            <input type="number" id="custo-${row.ID}" value="${row.Custo_Unitario}" step="0.01" class="w-32 p-2 rounded ${borderClass} text-white outline-none focus:border-blue-500 transition">
-                        </td>
-                        <td class="py-4">
-                            <button onclick="salvarCusto('${row.ID}')" id="btn-salvar-${row.ID}" class="px-4 py-2 bg-slate-700 hover:bg-blue-600 text-white rounded text-sm transition">Salvar</button>
-                        </td>
+                        <td class="py-4"><input type="number" id="custo-${row.ID}" value="${row.Custo_CMV}" step="0.01" class="w-32 p-2 rounded ${borderClass} text-white outline-none focus:border-blue-500 transition"></td>
+                        <td class="py-4"><button onclick="salvarCusto('${row.ID}')" id="btn-salvar-${row.ID}" class="px-4 py-2 bg-slate-700 hover:bg-blue-600 text-white rounded text-sm transition">Salvar CMV</button></td>
                     </tr>`;
             });
         };
@@ -234,19 +253,10 @@
             const token = await usuarioGlobal.getIdToken();
             
             btn.innerText = "Salvando...";
-            btn.classList.add("bg-amber-500");
-            
-            await fetch('/api/salvar_custo', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                body: JSON.stringify({ item_id: itemId, custo: custo })
-            });
-            
+            await fetch('/api/salvar_custo', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ item_id: itemId, custo: custo }) });
             btn.innerText = "Salvo ✔";
-            btn.classList.remove("bg-amber-500", "bg-slate-700");
-            btn.classList.add("bg-emerald-600");
-            
-            setTimeout(() => carregarDados(), 1000); // Recarrega os dados para atualizar as margens
+            btn.classList.replace("bg-slate-700", "bg-emerald-600");
+            setTimeout(() => carregarDados(), 1000); 
         };
     </script>
 </body>

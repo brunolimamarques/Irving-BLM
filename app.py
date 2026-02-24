@@ -25,7 +25,6 @@ try:
 except Exception as e:
     print(f"Erro Firebase: {e}")
 
-# --- 2. CREDENCIAIS ML ---
 ML_APP_ID = "1096855357952882"
 ML_SECRET_KEY = "vzOhLT31AxYEqS4JJ9qfuoYGZtsbg1AM"
 REDIRECT_URI = "https://irving-blm.vercel.app/callback"
@@ -33,29 +32,21 @@ REDIRECT_URI = "https://irving-blm.vercel.app/callback"
 def verificar_token(req):
     auth_header = req.headers.get('Authorization')
     if not auth_header or not auth_header.startswith('Bearer '): return None
-    try:
-        return auth.verify_id_token(auth_header.split(' ')[1])['uid']
-    except:
-        return None
+    try: return auth.verify_id_token(auth_header.split(' ')[1])['uid']
+    except: return None
 
-# --- 3. LÓGICA DE AUTO-REFRESH ---
+# --- 2. AUTO-REFRESH DO TOKEN ML ---
 def gerenciar_token_ml(uid, user_doc):
     ml_token = user_doc.get('ml_access_token')
     refresh_token = user_doc.get('ml_refresh_token')
     
-    # Tenta uma chamada simples para ver se o token está ativo
     teste_url = "https://api.mercadolibre.com/users/me"
     res = requests.get(teste_url, headers={"Authorization": f"Bearer {ml_token}"})
     
-    if res.status_code == 401: # Token Expirado!
+    if res.status_code == 401: 
         print(f"Token expirado para {uid}. Renovando...")
         url_refresh = "https://api.mercadolibre.com/oauth/token"
-        payload = {
-            "grant_type": "refresh_token",
-            "client_id": ML_APP_ID,
-            "client_secret": ML_SECRET_KEY,
-            "refresh_token": refresh_token
-        }
+        payload = {"grant_type": "refresh_token", "client_id": ML_APP_ID, "client_secret": ML_SECRET_KEY, "refresh_token": refresh_token}
         refresh_res = requests.post(url_refresh, data=payload).json()
         
         if "access_token" in refresh_res:
@@ -64,13 +55,11 @@ def gerenciar_token_ml(uid, user_doc):
                 'ml_access_token': ml_token,
                 'ml_refresh_token': refresh_res.get('refresh_token', refresh_token)
             })
-            return ml_token
     return ml_token
 
-# --- 4. ROTAS ---
+# --- 3. ROTAS BÁSICAS ---
 @app.route('/')
-def home():
-    return render_template('index.html')
+def home(): return render_template('index.html')
 
 @app.route('/conectar-ml')
 def conectar_ml():
@@ -83,15 +72,12 @@ def conectar_ml():
 def callback():
     code = request.args.get('code')
     uid = request.args.get('state')
-    url_token = "https://api.mercadolibre.com/oauth/token"
     payload = {"grant_type": "authorization_code", "client_id": ML_APP_ID, "client_secret": ML_SECRET_KEY, "code": code, "redirect_uri": REDIRECT_URI}
-    resposta = requests.post(url_token, data=payload).json()
+    resposta = requests.post("https://api.mercadolibre.com/oauth/token", data=payload).json()
     if "access_token" in resposta:
         db.collection('usuarios').document(uid).set({
-            'ml_access_token': resposta['access_token'],
-            'ml_refresh_token': resposta.get('refresh_token'),
-            'ml_user_id': resposta.get('user_id'),
-            'status_ml': 'conectado'
+            'ml_access_token': resposta['access_token'], 'ml_refresh_token': resposta.get('refresh_token'),
+            'ml_user_id': resposta.get('user_id'), 'status_ml': 'conectado'
         }, merge=True)
         return redirect('/?status=sucesso')
     return "Erro ao conectar."
@@ -100,18 +86,17 @@ def callback():
 def salvar_custo():
     uid = verificar_token(request)
     if not uid: return jsonify({"erro": "Acesso Negado"}), 401
-    dados = request.json
-    db.collection('custos').document(uid).set({dados.get('item_id'): float(dados.get('custo', 0))}, merge=True)
+    db.collection('custos').document(uid).set({request.json.get('item_id'): float(request.json.get('custo', 0))}, merge=True)
     return jsonify({"status": "sucesso"})
 
 @app.route('/api/salvar_imposto', methods=['POST'])
 def salvar_imposto():
     uid = verificar_token(request)
     if not uid: return jsonify({"erro": "Acesso Negado"}), 401
-    imposto = float(request.json.get('imposto', 0))
-    db.collection('configuracoes').document(uid).set({'imposto_padrao': imposto}, merge=True)
+    db.collection('configuracoes').document(uid).set({'imposto_padrao': float(request.json.get('imposto', 0))}, merge=True)
     return jsonify({"status": "sucesso"})
 
+# --- 4. MOTOR FINANCEIRO E GRÁFICO ---
 @app.route('/api/dados')
 def api_dados():
     uid = verificar_token(request)
@@ -121,7 +106,6 @@ def api_dados():
     user_doc = db.collection('usuarios').document(uid).get().to_dict()
     if not user_doc or 'ml_access_token' not in user_doc: return jsonify({"erro": "ml_nao_conectado"}), 403
 
-    # --- AUTO-REFRESH EM AÇÃO ---
     ml_token = gerenciar_token_ml(uid, user_doc)
     ml_seller_id = user_doc['ml_user_id']
     
@@ -131,8 +115,6 @@ def api_dados():
     
     headers = {"Authorization": f"Bearer {ml_token}"}
     data_inicio = (datetime.utcnow() - timedelta(days=periodo_dias)).strftime('%Y-%m-%dT00:00:00.000-00:00')
-    
-    # URL de Busca Ampla (Recent) para garantir que traga dados
     url_vendas = f"https://api.mercadolibre.com/orders/search?seller={ml_seller_id}&order.date_created.from={data_inicio}"
     
     try:
@@ -142,9 +124,16 @@ def api_dados():
         if not resultados: return jsonify({"erro": "vazio", "imposto_padrao": imposto_padrao_pct})
 
         agrupado = {}
+        timeline = {} # Para o Gráfico de Crescimento
+
         for order in resultados:
             destino = order.get('shipping', {}).get('receiver_address', {}).get('country', {}).get('id', 'BR')
             custo_envio_unidade = 0 if destino == 'AR' else 18.50 
+            
+            # Pega a data da venda (YYYY-MM-DD)
+            data_venda = order.get('date_created', '')[:10]
+            if data_venda not in timeline:
+                timeline[data_venda] = {'faturamento': 0, 'lucro': 0}
             
             for item in order.get('order_items', []):
                 item_id = item['item']['id']
@@ -156,6 +145,13 @@ def api_dados():
                 comissao_unitaria = item.get('sale_fee', price * 0.16)
                 imposto_reais = price * (imposto_padrao_pct / 100)
                 
+                lucro_unidade = price - custo_cmv - custo_envio_unidade - comissao_unitaria - imposto_reais
+                
+                # Alimenta o Gráfico
+                timeline[data_venda]['faturamento'] += (price * qty)
+                if custo_cmv > 0: timeline[data_venda]['lucro'] += (lucro_unidade * qty)
+
+                # Alimenta a Tabela
                 if item_id not in agrupado:
                     agrupado[item_id] = {
                         'Produto': title, 'Giro': 0, 'Faturamento': 0, 'Ticket_Medio': price,
@@ -168,34 +164,51 @@ def api_dados():
                 agrupado[item_id]['Custo_Frete'] += (custo_envio_unidade * qty)
                 agrupado[item_id]['Custo_Comissao'] += (comissao_unitaria * qty)
                 agrupado[item_id]['Custo_Imposto'] += (imposto_reais * qty)
-                
-                lucro_unidade = price - custo_cmv - custo_envio_unidade - comissao_unitaria - imposto_reais
                 agrupado[item_id]['Margem_Contribuicao'] = lucro_unidade
 
         dados_reais = []
         for item_id, dados in agrupado.items():
             dados_reais.append({
-                'ID': item_id,
-                'Produto': dados['Produto'],
-                'Ticket_Medio': dados['Ticket_Medio'],
-                'Faturamento': dados['Faturamento'],
-                'Giro': dados['Giro'],
-                'Custo_Frete': dados['Custo_Frete'],
-                'Custo_Comissao': dados['Custo_Comissao'],
-                'Custo_Imposto': dados['Custo_Imposto'],
-                'Custo_ADS': 0,
-                'Margem_Contribuicao': dados['Margem_Contribuicao'],
-                'Custo_CMV': dados['Custo_CMV'],
+                'ID': item_id, 'Produto': dados['Produto'], 'Ticket_Medio': dados['Ticket_Medio'],
+                'Faturamento': dados['Faturamento'], 'Giro': dados['Giro'], 'Custo_Frete': dados['Custo_Frete'],
+                'Custo_Comissao': dados['Custo_Comissao'], 'Custo_Imposto': dados['Custo_Imposto'], 'Custo_ADS': 0,
+                'Margem_Contribuicao': dados['Margem_Contribuicao'], 'Custo_CMV': dados['Custo_CMV'],
                 'Sem_Custo': dados['Sem_Custo'],
-                'Giro_Ant': int(dados['Giro'] * 0.9),
-                'Status': "⚠️ Preencha o CMV" if dados['Sem_Custo'] else ("🔴 Erro de Preço" if dados['Margem_Contribuicao'] < 0 else "🟢 Saudável")
+                'Giro_Ant': int(dados['Giro'] * 0.85), 'Margem_Ant': dados['Margem_Contribuicao'] * 0.9 # Simuladores de Tendência
             })
 
         df = pd.DataFrame(dados_reais)
         
-        # Cálculos de KPI
+        # RESTAURANDO TODAS AS FUNÇÕES DE TENDÊNCIA E STATUS
+        def calc_trend(atual, anterior):
+            if anterior == 0 and atual == 0: return 0
+            if anterior == 0: return 100
+            return round(((atual - anterior) / anterior) * 100, 1)
+
+        df['Giro_Trend'] = df.apply(lambda x: calc_trend(x['Giro'], x['Giro_Ant']), axis=1)
+        df['MC_Trend'] = df.apply(lambda x: calc_trend(x['Margem_Contribuicao'], x['Margem_Ant']), axis=1)
+
+        def gerar_status(row):
+            if row['Sem_Custo']: return "⚠️ Preencha o CMV"
+            mc = row['Margem_Contribuicao']
+            if mc < 0: return "🔴 Erro de Preço"
+            elif mc > 0 and row['Custo_ADS'] > 0: return "🟢 Escalar ADS"
+            else: return "🔵 Saudável"
+            
+        df['Status'] = df.apply(gerar_status, axis=1)
+        df['Desconto_Max'] = ((df['Margem_Contribuicao'] / df['Ticket_Medio']) * 100).round(2)
+        df['Desconto_Max_Grafico'] = df['Desconto_Max'].apply(lambda x: x if x > 0 else 0)
+
         lucro_total = float((df[~df['Sem_Custo']]['Giro'] * df[~df['Sem_Custo']]['Margem_Contribuicao']).sum())
         
+        # Processando dados do Gráfico (Ordenando por data)
+        timeline_ordenada = dict(sorted(timeline.items()))
+        grafico_dados = {
+            "labels": list(timeline_ordenada.keys()),
+            "faturamento": [v['faturamento'] for v in timeline_ordenada.values()],
+            "lucro": [v['lucro'] for v in timeline_ordenada.values()]
+        }
+
         kpis = {
             "faturamento": f"R$ {float(df['Faturamento'].sum()):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
             "lucro": f"R$ {lucro_total:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
@@ -206,7 +219,7 @@ def api_dados():
             "imposto_padrao": imposto_padrao_pct
         }
 
-        return jsonify({"kpis": kpis, "tabela": df.to_dict(orient='records')})
+        return jsonify({"kpis": kpis, "tabela": df.to_dict(orient='records'), "grafico": grafico_dados})
 
     except Exception as e:
         return jsonify({"erro": str(e)}), 500

@@ -91,7 +91,7 @@
             <div id="aba-visao_geral">
                 <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
                     <div class="glass-card rounded-2xl p-5"><p class="text-xs font-bold text-slate-500 uppercase mb-2">Faturamento</p><h3 class="text-2xl font-extrabold" id="kpi-fat">...</h3></div>
-                    <div class="glass-card rounded-2xl p-5"><p class="text-xs font-bold text-slate-500 uppercase mb-2">Lucro Real</p><h3 class="text-2xl font-extrabold text-emerald-500 dark:text-emerald-400" id="kpi-lucro">...</h3></div>
+                    <div class="glass-card rounded-2xl p-5"><p class="text-xs font-bold text-slate-500 uppercase mb-2">Lucro Bruto</p><h3 class="text-2xl font-extrabold text-emerald-500 dark:text-emerald-400" id="kpi-lucro">...</h3></div>
                     <div class="glass-card rounded-2xl p-5"><p class="text-xs font-bold text-slate-500 uppercase mb-2">Unidades</p><h3 class="text-2xl font-extrabold" id="kpi-unidades">...</h3></div>
                     <div class="glass-card rounded-2xl p-5 border-l-4 border-red-500"><p class="text-xs font-bold text-slate-500 uppercase mb-2">Avisos CMV</p><h3 class="text-2xl font-extrabold text-red-500 dark:text-red-400" id="kpi-alertas">...</h3></div>
                     <div class="glass-card rounded-2xl p-5"><p class="text-xs font-bold text-slate-500 uppercase mb-2">Gasto ADS</p><h3 class="text-2xl font-extrabold" id="kpi-ads">...</h3></div>
@@ -111,7 +111,7 @@
                                     <tr class="text-slate-500 border-b border-slate-200 dark:border-slate-700">
                                         <th class="pb-3 font-semibold">Produto</th><th class="pb-3 font-semibold">Faturamento (Giro)</th>
                                         <th class="pb-3 font-semibold">Preço (Ticket)</th><th class="pb-3 font-semibold">Custos Unitários</th>
-                                        <th class="pb-3 font-semibold">Margem Líquida</th><th class="pb-3 font-semibold">Status</th><th class="pb-3 font-semibold">Espaço Promo</th>
+                                        <th class="pb-3 font-semibold">Margem de Contribuição</th><th class="pb-3 font-semibold">Status</th><th class="pb-3 font-semibold">Espaço Promo</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tabela-corpo"></tbody>
@@ -126,8 +126,8 @@
                             Não adicione link nas perguntas dos anúncios para evitar suspensão permanente.
                         </div>
                         <div class="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 text-blue-800 dark:text-blue-400 text-sm">
-                            <strong class="block mb-1 font-bold flex items-center gap-2">🌎 Logística CBT</strong>
-                            Vendas para Argentina simuladas com custo de envio R$ 0,00 para proteger a sua margem.
+                            <strong class="block mb-1 font-bold flex items-center gap-2">🚚 Frete Grátis</strong>
+                            Tenha um cuidado extra na precificação quando oferecer Frete Grátis. O Mercado Livre cobra uma taxa de envio que pode variar bastante e impactar a sua margem.
                         </div>
                     </div>
                 </div>
@@ -171,7 +171,7 @@
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         // COLOQUE SUAS CHAVES AQUI
-const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", authDomain: "irving-blm.firebaseapp.com", projectId: "irving-blm", storageBucket: "irving-blm.firebasestorage.app", messagingSenderId: "209820833777", appId: "1:209820833777:web:809fd74f0abcbd8b1d5650" };
+        const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", authDomain: "irving-blm.firebaseapp.com", projectId: "irving-blm", storageBucket: "irving-blm.firebasestorage.app", messagingSenderId: "209820833777", appId: "1:209820833777:web:809fd74f0abcbd8b1d5650" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         
@@ -195,7 +195,6 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
         window.fazerLogin = () => { signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('senha').value); };
         window.sair = () => signOut(auth);
         
-        // BOTÃO DE RECONECTAR / INICIAR
         window.iniciarAuthML = () => window.location.href = `/conectar-ml?uid=${usuarioGlobal.uid}`;
 
         window.toggleDarkMode = () => {
@@ -261,7 +260,7 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
                             order: 2
                         },
                         {
-                            label: 'Lucro Líquido (R$)',
+                            label: 'Lucro Bruto (R$)', // ATUALIZADO
                             data: dadosGrafico.lucro,
                             type: 'line',
                             borderColor: '#10B981',

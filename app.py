@@ -44,7 +44,7 @@ def gerenciar_token_ml(uid, user_doc):
     res = requests.get(teste_url, headers={"Authorization": f"Bearer {ml_token}"})
     
     if res.status_code == 401: 
-        print(f"Token expirado para {uid}. Renovando...")
+        print(f"Token expirado para {uid}. A renovar...")
         url_refresh = "https://api.mercadolibre.com/oauth/token"
         payload = {"grant_type": "refresh_token", "client_id": ML_APP_ID, "client_secret": ML_SECRET_KEY, "refresh_token": refresh_token}
         refresh_res = requests.post(url_refresh, data=payload).json()
@@ -64,7 +64,7 @@ def home(): return render_template('index.html')
 @app.route('/conectar-ml')
 def conectar_ml():
     uid = request.args.get('uid')
-    if not uid: return "Usuário não identificado", 400
+    if not uid: return "Utilizador não identificado", 400
     parametros = {"response_type": "code", "client_id": ML_APP_ID, "redirect_uri": REDIRECT_URI, "state": uid, "prompt": "consent"}
     return redirect("https://auth.mercadolivre.com.br/authorization?" + urllib.parse.urlencode(parametros))
 
@@ -96,7 +96,7 @@ def salvar_imposto():
     db.collection('configuracoes').document(uid).set({'imposto_padrao': float(request.json.get('imposto', 0))}, merge=True)
     return jsonify({"status": "sucesso"})
 
-# --- 4. MOTOR FINANCEIRO E GRÁFICO ---
+# --- 4. MOTOR FINANCEIRO (AGORA COM API DE PUBLICIDADE) ---
 @app.route('/api/dados')
 def api_dados():
     uid = verificar_token(request)
@@ -114,7 +114,12 @@ def api_dados():
     imposto_padrao_pct = float(config_db.get('imposto_padrao', 0))
     
     headers = {"Authorization": f"Bearer {ml_token}"}
-    data_inicio = (datetime.utcnow() - timedelta(days=periodo_dias)).strftime('%Y-%m-%dT00:00:00.000-00:00')
+    data_inicio_obj = datetime.utcnow() - timedelta(days=periodo_dias)
+    data_inicio = data_inicio_obj.strftime('%Y-%m-%dT00:00:00.000-00:00')
+    data_fim_str = datetime.utcnow().strftime('%Y-%m-%d')
+    data_inicio_str = data_inicio_obj.strftime('%Y-%m-%d')
+    
+    # 1. Busca de Pedidos
     url_vendas = f"https://api.mercadolibre.com/orders/search?seller={ml_seller_id}&order.date_created.from={data_inicio}"
     
     try:
@@ -124,13 +129,14 @@ def api_dados():
         if not resultados: return jsonify({"erro": "vazio", "imposto_padrao": imposto_padrao_pct})
 
         agrupado = {}
-        timeline = {} # Para o Gráfico de Crescimento
+        timeline = {}
 
+        # 2. Processamento das Vendas e Custos Base
         for order in resultados:
+            # Regra de Logística Cross-Border aplicada: Argentina isenta
             destino = order.get('shipping', {}).get('receiver_address', {}).get('country', {}).get('id', 'BR')
             custo_envio_unidade = 0 if destino == 'AR' else 18.50 
             
-            # Pega a data da venda (YYYY-MM-DD)
             data_venda = order.get('date_created', '')[:10]
             if data_venda not in timeline:
                 timeline[data_venda] = {'faturamento': 0, 'lucro': 0}
@@ -145,13 +151,12 @@ def api_dados():
                 comissao_unitaria = item.get('sale_fee', price * 0.16)
                 imposto_reais = price * (imposto_padrao_pct / 100)
                 
-                lucro_unidade = price - custo_cmv - custo_envio_unidade - comissao_unitaria - imposto_reais
+                # O Lucro inicial ainda sem ADS
+                lucro_unidade_base = price - custo_cmv - custo_envio_unidade - comissao_unitaria - imposto_reais
                 
-                # Alimenta o Gráfico
                 timeline[data_venda]['faturamento'] += (price * qty)
-                if custo_cmv > 0: timeline[data_venda]['lucro'] += (lucro_unidade * qty)
+                if custo_cmv > 0: timeline[data_venda]['lucro'] += (lucro_unidade_base * qty)
 
-                # Alimenta a Tabela
                 if item_id not in agrupado:
                     agrupado[item_id] = {
                         'Produto': title, 'Giro': 0, 'Faturamento': 0, 'Ticket_Medio': price,
@@ -164,22 +169,54 @@ def api_dados():
                 agrupado[item_id]['Custo_Frete'] += (custo_envio_unidade * qty)
                 agrupado[item_id]['Custo_Comissao'] += (comissao_unitaria * qty)
                 agrupado[item_id]['Custo_Imposto'] += (imposto_reais * qty)
-                agrupado[item_id]['Margem_Contribuicao'] = lucro_unidade
+                agrupado[item_id]['Margem_Contribuicao'] += (lucro_unidade_base * qty) # Soma total do lucro base
 
+        # 3. Integração Direta com API Mercado Ads (Product Ads)
+        item_ids_list = list(agrupado.keys())
+        if item_ids_list:
+            # Dividir em lotes de 50 para respeitar o limite da API
+            for i in range(0, len(item_ids_list), 50):
+                lote_ids = item_ids_list[i:i+50]
+                ids_str = ",".join(lote_ids)
+                url_ads = f"https://api.mercadolibre.com/advertising/product_ads/metrics/items?date_from={data_inicio_str}&date_to={data_fim_str}&item_ids={ids_str}"
+                
+                try:
+                    res_ads = requests.get(url_ads, headers=headers)
+                    if res_ads.status_code == 200:
+                        dados_ads = res_ads.json()
+                        for ad_metric in dados_ads:
+                            id_anuncio = ad_metric.get('item_id')
+                            metricas = ad_metric.get('metrics', {})
+                            # Puxa o custo real exato gasto com a publicidade neste item
+                            custo_ads = float(metricas.get('cost', 0))
+                            
+                            if id_anuncio in agrupado:
+                                agrupado[id_anuncio]['Custo_ADS'] = custo_ads
+                except Exception as e:
+                    print(f"Aviso ao ler API de ADS: {e}")
+
+        # 4. Cálculo Final de Margens com ADS descontado
         dados_reais = []
         for item_id, dados in agrupado.items():
+            giro = dados['Giro']
+            custo_ads_total = dados['Custo_ADS']
+            
+            # Subtrai o custo total de ADS do lucro total do item
+            lucro_total_liquido = dados['Margem_Contribuicao'] - custo_ads_total
+            # Transforma novamente em Margem Unitária para mostrar no ecrã
+            margem_unitaria_final = lucro_total_liquido / giro if giro > 0 else 0
+
             dados_reais.append({
                 'ID': item_id, 'Produto': dados['Produto'], 'Ticket_Medio': dados['Ticket_Medio'],
-                'Faturamento': dados['Faturamento'], 'Giro': dados['Giro'], 'Custo_Frete': dados['Custo_Frete'],
-                'Custo_Comissao': dados['Custo_Comissao'], 'Custo_Imposto': dados['Custo_Imposto'], 'Custo_ADS': 0,
-                'Margem_Contribuicao': dados['Margem_Contribuicao'], 'Custo_CMV': dados['Custo_CMV'],
-                'Sem_Custo': dados['Sem_Custo'],
-                'Giro_Ant': int(dados['Giro'] * 0.85), 'Margem_Ant': dados['Margem_Contribuicao'] * 0.9 # Simuladores de Tendência
+                'Faturamento': dados['Faturamento'], 'Giro': giro, 'Custo_Frete': dados['Custo_Frete'],
+                'Custo_Comissao': dados['Custo_Comissao'], 'Custo_Imposto': dados['Custo_Imposto'], 
+                'Custo_ADS': custo_ads_total, 'Custo_CMV': dados['Custo_CMV'], 'Sem_Custo': dados['Sem_Custo'],
+                'Margem_Contribuicao': margem_unitaria_final, 
+                'Giro_Ant': int(giro * 0.85), 'Margem_Ant': margem_unitaria_final * 0.9 
             })
 
         df = pd.DataFrame(dados_reais)
         
-        # RESTAURANDO TODAS AS FUNÇÕES DE TENDÊNCIA E STATUS
         def calc_trend(atual, anterior):
             if anterior == 0 and atual == 0: return 0
             if anterior == 0: return 100
@@ -199,9 +236,10 @@ def api_dados():
         df['Desconto_Max'] = ((df['Margem_Contribuicao'] / df['Ticket_Medio']) * 100).round(2)
         df['Desconto_Max_Grafico'] = df['Desconto_Max'].apply(lambda x: x if x > 0 else 0)
 
+        # KPIs com Subtração de ADS Global
         lucro_total = float((df[~df['Sem_Custo']]['Giro'] * df[~df['Sem_Custo']]['Margem_Contribuicao']).sum())
+        ads_total = float(df['Custo_ADS'].sum())
         
-        # Processando dados do Gráfico (Ordenando por data)
         timeline_ordenada = dict(sorted(timeline.items()))
         grafico_dados = {
             "labels": list(timeline_ordenada.keys()),
@@ -212,7 +250,7 @@ def api_dados():
         kpis = {
             "faturamento": f"R$ {float(df['Faturamento'].sum()):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
             "lucro": f"R$ {lucro_total:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
-            "ads": "R$ 0,00",
+            "ads": f"R$ {ads_total:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
             "unidades": str(int(df['Giro'].sum())),
             "alertas_criticos": int(len(df[df['Sem_Custo'] == True])),
             "periodo_nome": f"Últimos {periodo_dias} dias",

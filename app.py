@@ -10,7 +10,13 @@ import urllib.parse
 
 app = Flask(__name__)
 
-# --- 1. INICIALIZAÇÃO FIREBASE ---
+# --- 1. CONFIGURAÇÕES PRINCIPAIS ---
+ADMIN_EMAIL = "brunolima.marques@gmail.com" # <--- COLOQUE AQUI O SEU E-MAIL DE LOGIN MASTER
+ML_APP_ID = "1096855357952882"
+ML_SECRET_KEY = "vzOhLT31AxYEqS4JJ9qfuoYGZtsbg1AM"
+REDIRECT_URI = "https://irving-blm.vercel.app/callback"
+
+# --- 2. INICIALIZAÇÃO FIREBASE ---
 firebase_cred_string = os.environ.get("FIREBASE_JSON")
 try:
     if firebase_cred_string:
@@ -25,17 +31,13 @@ try:
 except Exception as e:
     print(f"Erro Firebase: {e}")
 
-ML_APP_ID = "1096855357952882"
-ML_SECRET_KEY = "vzOhLT31AxYEqS4JJ9qfuoYGZtsbg1AM"
-REDIRECT_URI = "https://irving-blm.vercel.app/callback"
-
 def verificar_token(req):
     auth_header = req.headers.get('Authorization')
     if not auth_header or not auth_header.startswith('Bearer '): return None
     try: return auth.verify_id_token(auth_header.split(' ')[1])['uid']
     except: return None
 
-# --- 2. AUTO-REFRESH DO TOKEN ML ---
+# --- 3. AUTO-REFRESH DO TOKEN ML ---
 def gerenciar_token_ml(uid, user_doc):
     ml_token = user_doc.get('ml_access_token')
     refresh_token = user_doc.get('ml_refresh_token')
@@ -57,7 +59,7 @@ def gerenciar_token_ml(uid, user_doc):
             })
     return ml_token
 
-# --- 3. ROTAS BÁSICAS ---
+# --- 4. ROTAS BÁSICAS E ADMIN ---
 @app.route('/')
 def home(): return render_template('index.html')
 
@@ -82,10 +84,40 @@ def callback():
         return redirect('/?status=sucesso')
     return "Erro ao conectar."
 
+# ROTA EXCLUSIVA PARA O ADMIN VER CLIENTES
+@app.route('/api/clientes')
+def api_clientes():
+    uid = verificar_token(request)
+    if not uid: return jsonify({"erro": "Acesso Negado."}), 401
+    
+    try:
+        user_req = auth.get_user(uid)
+        if user_req.email != ADMIN_EMAIL: return jsonify({"erro": "Acesso Negado. Não é Admin."}), 403
+    except: return jsonify({"erro": "Erro auth"}), 403
+        
+    clientes = []
+    usuarios_ref = db.collection('usuarios').stream()
+    for doc in usuarios_ref:
+        try:
+            u = auth.get_user(doc.id)
+            if u.email != ADMIN_EMAIL: # Não lista o próprio admin como cliente
+                clientes.append({"uid": doc.id, "email": u.email})
+        except: pass
+            
+    return jsonify(clientes)
+
 @app.route('/api/salvar_custo', methods=['POST'])
 def salvar_custo():
     uid = verificar_token(request)
     if not uid: return jsonify({"erro": "Acesso Negado"}), 401
+    
+    # Se o Admin estiver a editar o custo de um cliente
+    client_uid = request.json.get('client_uid')
+    if client_uid:
+        try:
+            if auth.get_user(uid).email == ADMIN_EMAIL: uid = client_uid
+        except: pass
+
     db.collection('custos').document(uid).set({request.json.get('item_id'): float(request.json.get('custo', 0))}, merge=True)
     return jsonify({"status": "sucesso"})
 
@@ -93,14 +125,28 @@ def salvar_custo():
 def salvar_imposto():
     uid = verificar_token(request)
     if not uid: return jsonify({"erro": "Acesso Negado"}), 401
+    
+    client_uid = request.json.get('client_uid')
+    if client_uid:
+        try:
+            if auth.get_user(uid).email == ADMIN_EMAIL: uid = client_uid
+        except: pass
+
     db.collection('configuracoes').document(uid).set({'imposto_padrao': float(request.json.get('imposto', 0))}, merge=True)
     return jsonify({"status": "sucesso"})
 
-# --- 4. MOTOR FINANCEIRO (AGORA COM API DE PUBLICIDADE) ---
+# --- 5. MOTOR FINANCEIRO ---
 @app.route('/api/dados')
 def api_dados():
     uid = verificar_token(request)
     if not uid: return jsonify({"erro": "Acesso Negado."}), 401
+
+    # SE FOR ADMIN, ELE ASSUME A IDENTIDADE DO CLIENTE AQUI
+    client_uid = request.args.get('client_uid')
+    if client_uid:
+        try:
+            if auth.get_user(uid).email == ADMIN_EMAIL: uid = client_uid
+        except: pass
 
     periodo_dias = int(request.args.get('periodo', 30))
     user_doc = db.collection('usuarios').document(uid).get().to_dict()
@@ -119,7 +165,6 @@ def api_dados():
     data_fim_str = datetime.utcnow().strftime('%Y-%m-%d')
     data_inicio_str = data_inicio_obj.strftime('%Y-%m-%d')
     
-    # 1. Busca de Pedidos
     url_vendas = f"https://api.mercadolibre.com/orders/search?seller={ml_seller_id}&order.date_created.from={data_inicio}"
     
     try:
@@ -131,15 +176,12 @@ def api_dados():
         agrupado = {}
         timeline = {}
 
-        # 2. Processamento das Vendas e Custos Base
         for order in resultados:
-            # Regra de Logística Cross-Border aplicada: Argentina isenta
             destino = order.get('shipping', {}).get('receiver_address', {}).get('country', {}).get('id', 'BR')
             custo_envio_unidade = 0 if destino == 'AR' else 18.50 
             
             data_venda = order.get('date_created', '')[:10]
-            if data_venda not in timeline:
-                timeline[data_venda] = {'faturamento': 0, 'lucro': 0}
+            if data_venda not in timeline: timeline[data_venda] = {'faturamento': 0, 'lucro': 0}
             
             for item in order.get('order_items', []):
                 item_id = item['item']['id']
@@ -151,7 +193,6 @@ def api_dados():
                 comissao_unitaria = item.get('sale_fee', price * 0.16)
                 imposto_reais = price * (imposto_padrao_pct / 100)
                 
-                # O Lucro inicial ainda sem ADS
                 lucro_unidade_base = price - custo_cmv - custo_envio_unidade - comissao_unitaria - imposto_reais
                 
                 timeline[data_venda]['faturamento'] += (price * qty)
@@ -169,12 +210,10 @@ def api_dados():
                 agrupado[item_id]['Custo_Frete'] += (custo_envio_unidade * qty)
                 agrupado[item_id]['Custo_Comissao'] += (comissao_unitaria * qty)
                 agrupado[item_id]['Custo_Imposto'] += (imposto_reais * qty)
-                agrupado[item_id]['Margem_Contribuicao'] += (lucro_unidade_base * qty) # Soma total do lucro base
+                agrupado[item_id]['Margem_Contribuicao'] += (lucro_unidade_base * qty) 
 
-        # 3. Integração Direta com API Mercado Ads (Product Ads)
         item_ids_list = list(agrupado.keys())
         if item_ids_list:
-            # Dividir em lotes de 50 para respeitar o limite da API
             for i in range(0, len(item_ids_list), 50):
                 lote_ids = item_ids_list[i:i+50]
                 ids_str = ",".join(lote_ids)
@@ -183,27 +222,17 @@ def api_dados():
                 try:
                     res_ads = requests.get(url_ads, headers=headers)
                     if res_ads.status_code == 200:
-                        dados_ads = res_ads.json()
-                        for ad_metric in dados_ads:
+                        for ad_metric in res_ads.json():
                             id_anuncio = ad_metric.get('item_id')
-                            metricas = ad_metric.get('metrics', {})
-                            # Puxa o custo real exato gasto com a publicidade neste item
-                            custo_ads = float(metricas.get('cost', 0))
-                            
-                            if id_anuncio in agrupado:
-                                agrupado[id_anuncio]['Custo_ADS'] = custo_ads
-                except Exception as e:
-                    print(f"Aviso ao ler API de ADS: {e}")
+                            custo_ads = float(ad_metric.get('metrics', {}).get('cost', 0))
+                            if id_anuncio in agrupado: agrupado[id_anuncio]['Custo_ADS'] = custo_ads
+                except Exception as e: print(f"Aviso ADS: {e}")
 
-        # 4. Cálculo Final de Margens com ADS descontado
         dados_reais = []
         for item_id, dados in agrupado.items():
             giro = dados['Giro']
             custo_ads_total = dados['Custo_ADS']
-            
-            # Subtrai o custo total de ADS do lucro total do item
             lucro_total_liquido = dados['Margem_Contribuicao'] - custo_ads_total
-            # Transforma novamente em Margem Unitária para mostrar no ecrã
             margem_unitaria_final = lucro_total_liquido / giro if giro > 0 else 0
 
             dados_reais.append({
@@ -236,7 +265,6 @@ def api_dados():
         df['Desconto_Max'] = ((df['Margem_Contribuicao'] / df['Ticket_Medio']) * 100).round(2)
         df['Desconto_Max_Grafico'] = df['Desconto_Max'].apply(lambda x: x if x > 0 else 0)
 
-        # KPIs com Subtração de ADS Global
         lucro_total = float((df[~df['Sem_Custo']]['Giro'] * df[~df['Sem_Custo']]['Margem_Contribuicao']).sum())
         ads_total = float(df['Custo_ADS'].sum())
         

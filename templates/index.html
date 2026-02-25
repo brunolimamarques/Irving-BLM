@@ -36,6 +36,7 @@
         <div class="glass-card p-10 rounded-2xl w-full max-w-lg text-center">
             <div class="text-5xl mb-4">⚡</div><h2 class="text-2xl font-bold mb-6">Conecte sua Loja</h2>
             <button onclick="iniciarAuthML()" class="w-full py-4 bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold rounded-lg transition">Autorizar Mercado Livre</button>
+            <button onclick="voltarParaAdmin()" id="btn-voltar-conectar" class="hidden text-sm text-slate-500 hover:text-blue-500 mt-4 block mx-auto underline">← Voltar para Admin</button>
         </div>
     </div>
 
@@ -44,7 +45,10 @@
             <div>
                 <div class="p-6 pb-2">
                     <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-indigo-500 mb-1">Irving (BLM)</h1>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 font-medium mb-6">Workspace de <b>Brunão</b></p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 font-medium mb-1" id="workspace-nome">Workspace de <b>Brunão</b></p>
+                    <button onclick="voltarParaAdmin()" id="btn-voltar-admin" class="hidden text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1 mb-5">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg> Sair do Cliente
+                    </button>
                 </div>
                 
                 <div class="px-6 mb-4">
@@ -53,7 +57,7 @@
                             <div class="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
                             <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">API Conectada</span>
                         </div>
-                        <button onclick="iniciarAuthML()" title="Forçar a renovação do token de acesso" class="text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition flex items-center gap-1.5 w-full">
+                        <button onclick="iniciarAuthML()" title="Forçar a renovação do token" class="text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition flex items-center gap-1.5 w-full">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                             Reconectar API
                         </button>
@@ -63,6 +67,7 @@
                 <nav class="flex flex-col gap-1 mt-2">
                     <button onclick="mudarAba('visao_geral')" id="btn-visao" class="menu-ativo text-left px-6 py-3 font-semibold transition">📊 Visão Geral</button>
                     <button onclick="mudarAba('custos')" id="btn-custos" class="menu-inativo text-left px-6 py-3 font-semibold transition">💰 Gestão de Custos</button>
+                    <button onclick="mudarAba('clientes')" id="btn-clientes" class="hidden menu-inativo text-left px-6 py-3 font-semibold transition border-t border-slate-200 dark:border-slate-700 mt-2">👥 Clientes (Admin)</button>
                 </nav>
             </div>
             <div class="p-6">
@@ -109,29 +114,22 @@
                             <table class="w-full text-left text-sm whitespace-nowrap">
                                 <thead>
                                     <tr class="text-slate-500 border-b border-slate-200 dark:border-slate-700">
-                                        <th class="pb-4 font-semibold">Produto</th>
-                                        <th class="pb-4 font-semibold">Faturamento (Giro)</th>
-                                        <th class="pb-4 font-semibold">Preço (Ticket)</th>
-                                        <th class="pb-4 font-semibold">Custos Unitários</th>
-                                        <th class="pb-4 font-semibold">Margem de Contribuição</th>
-                                        <th class="pb-4 font-semibold">Status</th>
-                                        <th class="pb-4 font-semibold">Espaço Promo</th>
+                                        <th class="pb-4 font-semibold">Produto</th><th class="pb-4 font-semibold">Faturamento (Giro)</th>
+                                        <th class="pb-4 font-semibold">Preço (Ticket)</th><th class="pb-4 font-semibold">Custos Unitários</th>
+                                        <th class="pb-4 font-semibold">Margem de Contribuição</th><th class="pb-4 font-semibold">Status</th><th class="pb-4 font-semibold">Espaço Promo</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tabela-corpo"></tbody>
                             </table>
                         </div>
                     </div>
-                    
                     <div class="space-y-4">
                         <h3 class="text-lg font-bold mb-2">System Alerts</h3>
                         <div class="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 text-red-800 dark:text-red-400 text-sm">
-                            <strong class="block mb-2 font-bold flex items-center gap-2">⚠️ Suspensão (ML)</strong>
-                            Não adicione link nas perguntas dos anúncios para evitar suspensão permanente.
+                            <strong class="block mb-2 font-bold flex items-center gap-2">⚠️ Suspensão (ML)</strong> Não adicione link nas perguntas dos anúncios para evitar suspensão permanente.
                         </div>
                         <div class="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 text-blue-800 dark:text-blue-400 text-sm">
-                            <strong class="block mb-2 font-bold flex items-center gap-2">🚚 Frete Grátis</strong>
-                            Tenha um cuidado extra na precificação quando oferecer Frete Grátis. O Mercado Livre cobra uma taxa de envio que pode variar bastante e impactar a sua margem.
+                            <strong class="block mb-2 font-bold flex items-center gap-2">🚚 Frete Grátis</strong> Tenha um cuidado extra na precificação quando oferecer Frete Grátis. A taxa de envio varia e impacta a margem.
                         </div>
                     </div>
                 </div>
@@ -141,7 +139,7 @@
                 <div class="glass-card rounded-2xl p-6 mb-8 max-w-4xl flex justify-between items-center bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800/30">
                     <div>
                         <h3 class="text-lg font-bold text-blue-600 dark:text-blue-400">Configuração Tributária</h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Defina a alíquota em massa (Ex: Simples Nacional). Será descontado de todas as vendas.</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Defina a alíquota em massa (Ex: Simples Nacional).</p>
                     </div>
                     <div class="flex gap-3 items-center">
                         <input type="number" id="input-imposto" placeholder="Ex: 6.0" step="0.1" class="w-24 p-2.5 rounded bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 outline-none focus:border-blue-500">
@@ -159,7 +157,7 @@
                         <table class="w-full text-left text-sm whitespace-nowrap">
                             <thead>
                                 <tr class="text-slate-500 border-b border-slate-200 dark:border-slate-700">
-                                    <th class="pb-4 font-semibold">Produto (SKU)</th><th class="pb-4 w-48 font-semibold">Seu Custo de Compra (R$)</th><th class="pb-4 w-32 font-semibold">Ação</th>
+                                    <th class="pb-4 font-semibold">Produto (SKU)</th><th class="pb-4 w-48 font-semibold">Custo de Compra (R$)</th><th class="pb-4 w-32 font-semibold">Ação</th>
                                 </tr>
                             </thead>
                             <tbody id="tabela-custos"></tbody>
@@ -167,6 +165,28 @@
                     </div>
                 </div>
             </div>
+
+            <div id="aba-clientes" class="hidden">
+                <div class="glass-card rounded-2xl p-6 mb-8 w-full max-w-5xl">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold">Painel Administrativo - Clientes</h3>
+                        <button onclick="carregarClientes()" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-sm font-bold rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition">↻ Atualizar Lista</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm whitespace-nowrap">
+                            <thead>
+                                <tr class="text-slate-500 border-b border-slate-200 dark:border-slate-700">
+                                    <th class="pb-4 font-semibold">Email do Lojista</th>
+                                    <th class="pb-4 font-semibold">Status Integração ML</th>
+                                    <th class="pb-4 font-semibold">Ações de Gestão</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-clientes-corpo"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 
@@ -174,7 +194,8 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // COLOQUE SUAS CHAVES AQUI
+        // COLOQUE SUAS CHAVES AQUI E O SEU E-MAIL MASTER
+        const ADMIN_EMAIL = "brunolima.marques@gmail.com"; // <--- SEU EMAIL AQUI
 const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", authDomain: "irving-blm.firebaseapp.com", projectId: "irving-blm", storageBucket: "irving-blm.firebasestorage.app", messagingSenderId: "209820833777", appId: "1:209820833777:web:809fd74f0abcbd8b1d5650" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -182,15 +203,25 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
         let usuarioGlobal = null;
         let dadosAPI = []; 
         let graficoInstancia = null;
+        
+        // VARIÁVEIS DA PERSONIFICAÇÃO (ADMIN)
+        let uidClienteAtivo = null;
+        let emailClienteAtivo = null;
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 usuarioGlobal = user;
                 document.getElementById('tela-login').classList.add('hidden');
                 document.getElementById('tela-dashboard').classList.remove('hidden');
+                
+                // Liberta o botão Admin se o email bater certo
+                if(user.email === ADMIN_EMAIL) {
+                    document.getElementById('btn-clientes').classList.remove('hidden');
+                }
+                
                 carregarDados(); 
             } else {
-                usuarioGlobal = null;
+                usuarioGlobal = null; uidClienteAtivo = null; emailClienteAtivo = null;
                 document.getElementById('tela-login').classList.remove('hidden');
                 document.getElementById('tela-dashboard').classList.add('hidden');
             }
@@ -198,7 +229,6 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
 
         window.fazerLogin = () => { signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('senha').value); };
         window.sair = () => signOut(auth);
-        
         window.iniciarAuthML = () => window.location.href = `/conectar-ml?uid=${usuarioGlobal.uid}`;
 
         window.toggleDarkMode = () => {
@@ -207,32 +237,93 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
             document.getElementById('theme-icon').innerHTML = isDark 
                 ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>' 
                 : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>';
-            
             if(graficoInstancia) graficoInstancia.update();
         };
 
         window.mudarAba = (aba) => {
             document.getElementById('aba-visao_geral').classList.add('hidden');
             document.getElementById('aba-custos').classList.add('hidden');
+            document.getElementById('aba-clientes').classList.add('hidden');
+            
             document.getElementById('btn-visao').className = "menu-inativo text-left px-6 py-3 font-semibold transition";
             document.getElementById('btn-custos').className = "menu-inativo text-left px-6 py-3 font-semibold transition";
+            if(usuarioGlobal && usuarioGlobal.email === ADMIN_EMAIL) document.getElementById('btn-clientes').className = "menu-inativo text-left px-6 py-3 font-semibold transition border-t border-slate-200 dark:border-slate-700 mt-2";
             
             document.getElementById(`aba-${aba}`).classList.remove('hidden');
-            document.getElementById(`btn-${aba.split('_')[0]}`).className = "menu-ativo text-left px-6 py-3 font-semibold transition";
-            document.getElementById('titulo-pagina').innerText = aba === 'visao_geral' ? "Visão Geral da Operação" : "Gestão de Custos e Tributos";
-            if(aba === 'custos') renderTabelaCustos();
+            document.getElementById(`btn-${aba.split('_')[0]}`).classList.replace('menu-inativo', 'menu-ativo');
+            
+            if(aba === 'visao_geral') document.getElementById('titulo-pagina').innerText = "Visão Geral da Operação";
+            if(aba === 'custos') { document.getElementById('titulo-pagina').innerText = "Gestão de Custos e Tributos"; renderTabelaCustos(); }
+            if(aba === 'clientes') { document.getElementById('titulo-pagina').innerText = "Gestão de Clientes"; carregarClientes(); }
         };
 
+        // --- LÓGICA DO ADMIN ---
+        window.carregarClientes = async () => {
+            const token = await usuarioGlobal.getIdToken();
+            const res = await fetch('/api/clientes', { headers: { 'Authorization': 'Bearer ' + token } });
+            if(res.ok) {
+                const clientes = await res.json();
+                const tbody = document.getElementById('tabela-clientes-corpo');
+                tbody.innerHTML = '';
+                clientes.forEach(c => {
+                    tbody.innerHTML += `
+                        <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                            <td class="py-5 font-bold text-slate-800 dark:text-white">${c.email}</td>
+                            <td class="py-5"><span class="px-2.5 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 rounded text-xs font-bold">API Conectada</span></td>
+                            <td class="py-5"><button onclick="acessarCliente('${c.uid}', '${c.email}')" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-bold transition shadow-sm">Acessar Painel</button></td>
+                        </tr>`;
+                });
+            }
+        };
+
+        window.acessarCliente = (uid, email) => {
+            uidClienteAtivo = uid;
+            emailClienteAtivo = email;
+            document.getElementById('workspace-nome').innerHTML = `<span class="text-amber-500">Visualizando:</span> <b>${email}</b>`;
+            document.getElementById('btn-voltar-admin').classList.remove('hidden');
+            mudarAba('visao_geral');
+            carregarDados();
+        };
+
+        window.voltarParaAdmin = () => {
+            uidClienteAtivo = null;
+            emailClienteAtivo = null;
+            document.getElementById('workspace-nome').innerHTML = `Workspace de <b>Brunão</b>`;
+            document.getElementById('btn-voltar-admin').classList.add('hidden');
+            document.getElementById('tela-conectar-ml').classList.add('hidden');
+            document.getElementById('tela-dashboard').classList.remove('hidden');
+            mudarAba('clientes');
+        };
+
+        // --- SALVAR COM SUPORTE A ADMIN ---
         window.salvarImposto = async () => {
             const btn = document.getElementById('btn-imposto');
             const token = await usuarioGlobal.getIdToken();
             btn.innerText = "Salvando...";
+            
+            let payload = { imposto: document.getElementById('input-imposto').value };
+            if (uidClienteAtivo) payload.client_uid = uidClienteAtivo; // Diz ao Python que é o admin a editar
+            
             await fetch('/api/salvar_imposto', {
                 method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                body: JSON.stringify({ imposto: document.getElementById('input-imposto').value })
+                body: JSON.stringify(payload)
             });
             btn.innerText = "Salvo ✔";
             setTimeout(() => { btn.innerText = "Salvar Alíquota"; carregarDados(); }, 1000);
+        };
+
+        window.salvarCusto = async (itemId) => {
+            const btn = document.getElementById(`btn-salvar-${itemId}`);
+            const custo = document.getElementById(`custo-${itemId}`).value;
+            const token = await usuarioGlobal.getIdToken();
+            
+            btn.innerText = "Salvando...";
+            let payload = { item_id: itemId, custo: custo };
+            if (uidClienteAtivo) payload.client_uid = uidClienteAtivo;
+            
+            await fetch('/api/salvar_custo', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(payload) });
+            btn.innerText = "Salvo ✔";
+            btn.className = "px-5 py-2.5 bg-emerald-500 text-white rounded-lg text-sm transition font-bold";
         };
 
         window.formatarTrend = (v) => {
@@ -254,37 +345,11 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
                 data: {
                     labels: dadosGrafico.labels,
                     datasets: [
-                        {
-                            label: 'Faturamento (R$)',
-                            data: dadosGrafico.faturamento,
-                            backgroundColor: 'rgba(59, 130, 246, 0.5)',
-                            borderColor: '#3B82F6',
-                            borderWidth: 1,
-                            borderRadius: 4,
-                            order: 2
-                        },
-                        {
-                            label: 'Lucro Bruto (R$)',
-                            data: dadosGrafico.lucro,
-                            type: 'line',
-                            borderColor: '#10B981',
-                            backgroundColor: '#10B981',
-                            borderWidth: 2,
-                            tension: 0.3,
-                            pointRadius: 4,
-                            order: 1
-                        }
+                        { label: 'Faturamento (R$)', data: dadosGrafico.faturamento, backgroundColor: 'rgba(59, 130, 246, 0.5)', borderColor: '#3B82F6', borderWidth: 1, borderRadius: 4, order: 2 },
+                        { label: 'Lucro Bruto (R$)', data: dadosGrafico.lucro, type: 'line', borderColor: '#10B981', backgroundColor: '#10B981', borderWidth: 2, tension: 0.3, pointRadius: 4, order: 1 }
                     ]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } },
-                        x: { grid: { display: false }, ticks: { color: textColor } }
-                    },
-                    plugins: { legend: { labels: { color: textColor, font: { family: 'Inter' } } }, tooltip: { mode: 'index', intersect: false } }
-                }
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } }, x: { grid: { display: false }, ticks: { color: textColor } } }, plugins: { legend: { labels: { color: textColor, font: { family: 'Inter' } } }, tooltip: { mode: 'index', intersect: false } } }
             });
         }
 
@@ -296,13 +361,26 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
             btn.classList.add('opacity-75', 'cursor-not-allowed');
 
             const token = await usuarioGlobal.getIdToken();
-            const res = await fetch('/api/dados?periodo=' + document.getElementById('seletor-data').value, { headers: { 'Authorization': 'Bearer ' + token } });
+            
+            // Passa o ID do cliente na URL se o Admin estiver a bisbilhotar
+            let url = '/api/dados?periodo=' + document.getElementById('seletor-data').value;
+            if (uidClienteAtivo) url += '&client_uid=' + uidClienteAtivo;
+
+            const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
             const data = await res.json();
             
             btn.innerText = "Gerar Análise";
             btn.classList.remove('opacity-75', 'cursor-not-allowed');
 
-            if (res.status === 403) { document.getElementById('tela-conectar-ml').classList.remove('hidden'); return; }
+            if (res.status === 403) { 
+                if (uidClienteAtivo) {
+                    alert("Este cliente ainda não conectou o Mercado Livre.");
+                    voltarParaAdmin();
+                    return;
+                }
+                document.getElementById('tela-conectar-ml').classList.remove('hidden'); 
+                return; 
+            }
             document.getElementById('tela-conectar-ml').classList.add('hidden');
 
             if (data.erro === "vazio") {
@@ -340,7 +418,6 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
                 const impostoUn = (row.Custo_Imposto / row.Giro).toFixed(2);
                 const adsUn = row.Giro > 0 ? (row.Custo_ADS / row.Giro).toFixed(2) : '0.00';
 
-                // Novo espaçamento com blocos div para a coluna de Custos Unitários
                 const custosHTML = `
                     <div class="text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
                         <div><span class="font-semibold text-slate-700 dark:text-slate-300">CMV:</span> R$ ${row.Custo_CMV.toFixed(2)} &nbsp;|&nbsp; <span class="font-semibold text-slate-700 dark:text-slate-300">ML:</span> R$ ${comissaoUn}</div>
@@ -375,17 +452,6 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
                         <td class="py-5 align-middle"><button onclick="salvarCusto('${row.ID}')" id="btn-salvar-${row.ID}" class="px-5 py-2.5 bg-slate-200 dark:bg-slate-700 hover:bg-blue-600 dark:hover:bg-blue-600 text-slate-800 dark:text-white hover:text-white rounded-lg text-sm transition font-bold">Salvar CMV</button></td>
                     </tr>`;
             });
-        };
-
-        window.salvarCusto = async (itemId) => {
-            const btn = document.getElementById(`btn-salvar-${itemId}`);
-            const custo = document.getElementById(`custo-${itemId}`).value;
-            const token = await usuarioGlobal.getIdToken();
-            
-            btn.innerText = "Salvando...";
-            await fetch('/api/salvar_custo', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ item_id: itemId, custo: custo }) });
-            btn.innerText = "Salvo ✔";
-            btn.className = "px-5 py-2.5 bg-emerald-500 text-white rounded-lg text-sm transition font-bold";
         };
     </script>
 </body>

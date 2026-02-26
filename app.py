@@ -84,54 +84,57 @@ def callback():
         return redirect('/?status=sucesso')
     return "Erro ao conectar."
 
-# ROTA EXCLUSIVA PARA O ADMIN VER CLIENTES
 @app.route('/api/clientes')
 def api_clientes():
     uid = verificar_token(request)
     if not uid: return jsonify({"erro": "Acesso Negado."}), 401
-    
     try:
-        user_req = auth.get_user(uid)
-        if user_req.email != ADMIN_EMAIL: return jsonify({"erro": "Acesso Negado. Não é Admin."}), 403
+        if auth.get_user(uid).email != ADMIN_EMAIL: return jsonify({"erro": "Acesso Negado. Não é Admin."}), 403
     except: return jsonify({"erro": "Erro auth"}), 403
         
     clientes = []
-    usuarios_ref = db.collection('usuarios').stream()
-    for doc in usuarios_ref:
+    for doc in db.collection('usuarios').stream():
         try:
             u = auth.get_user(doc.id)
-            if u.email != ADMIN_EMAIL: # Não lista o próprio admin como cliente
-                clientes.append({"uid": doc.id, "email": u.email})
+            if u.email != ADMIN_EMAIL: clientes.append({"uid": doc.id, "email": u.email})
         except: pass
-            
     return jsonify(clientes)
 
 @app.route('/api/salvar_custo', methods=['POST'])
 def salvar_custo():
     uid = verificar_token(request)
     if not uid: return jsonify({"erro": "Acesso Negado"}), 401
-    
-    # Se o Admin estiver a editar o custo de um cliente
     client_uid = request.json.get('client_uid')
     if client_uid:
         try:
             if auth.get_user(uid).email == ADMIN_EMAIL: uid = client_uid
         except: pass
-
     db.collection('custos').document(uid).set({request.json.get('item_id'): float(request.json.get('custo', 0))}, merge=True)
+    return jsonify({"status": "sucesso"})
+
+@app.route('/api/salvar_custos_massa', methods=['POST'])
+def salvar_custos_massa():
+    uid = verificar_token(request)
+    if not uid: return jsonify({"erro": "Acesso Negado"}), 401
+    client_uid = request.json.get('client_uid')
+    if client_uid:
+        try:
+            if auth.get_user(uid).email == ADMIN_EMAIL: uid = client_uid
+        except: pass
+    custos_novos = request.json.get('custos', {})
+    custos_formatados = {k: float(v) for k, v in custos_novos.items()}
+    db.collection('custos').document(uid).set(custos_formatados, merge=True)
     return jsonify({"status": "sucesso"})
 
 @app.route('/api/salvar_imposto', methods=['POST'])
 def salvar_imposto():
     uid = verificar_token(request)
     if not uid: return jsonify({"erro": "Acesso Negado"}), 401
-    
     client_uid = request.json.get('client_uid')
     if client_uid:
         try:
             if auth.get_user(uid).email == ADMIN_EMAIL: uid = client_uid
         except: pass
-
     db.collection('configuracoes').document(uid).set({'imposto_padrao': float(request.json.get('imposto', 0))}, merge=True)
     return jsonify({"status": "sucesso"})
 
@@ -141,7 +144,6 @@ def api_dados():
     uid = verificar_token(request)
     if not uid: return jsonify({"erro": "Acesso Negado."}), 401
 
-    # SE FOR ADMIN, ELE ASSUME A IDENTIDADE DO CLIENTE AQUI
     client_uid = request.args.get('client_uid')
     if client_uid:
         try:
@@ -212,13 +214,13 @@ def api_dados():
                 agrupado[item_id]['Custo_Imposto'] += (imposto_reais * qty)
                 agrupado[item_id]['Margem_Contribuicao'] += (lucro_unidade_base * qty) 
 
+        # Processamento do ADS
         item_ids_list = list(agrupado.keys())
         if item_ids_list:
             for i in range(0, len(item_ids_list), 50):
                 lote_ids = item_ids_list[i:i+50]
                 ids_str = ",".join(lote_ids)
                 url_ads = f"https://api.mercadolibre.com/advertising/product_ads/metrics/items?date_from={data_inicio_str}&date_to={data_fim_str}&item_ids={ids_str}"
-                
                 try:
                     res_ads = requests.get(url_ads, headers=headers)
                     if res_ads.status_code == 200:
@@ -262,18 +264,43 @@ def api_dados():
             else: return "🔵 Saudável"
             
         df['Status'] = df.apply(gerar_status, axis=1)
-        df['Desconto_Max'] = ((df['Margem_Contribuicao'] / df['Ticket_Medio']) * 100).round(2)
+        
+        # --- CÁLCULO DA PROMOÇÃO MÁXIMA PRESERVANDO 15% ---
+        df['Desconto_Max'] = (((df['Margem_Contribuicao'] - (df['Ticket_Medio'] * 0.15)) / df['Ticket_Medio']) * 100).round(2)
         df['Desconto_Max_Grafico'] = df['Desconto_Max'].apply(lambda x: x if x > 0 else 0)
 
         lucro_total = float((df[~df['Sem_Custo']]['Giro'] * df[~df['Sem_Custo']]['Margem_Contribuicao']).sum())
         ads_total = float(df['Custo_ADS'].sum())
         
         timeline_ordenada = dict(sorted(timeline.items()))
-        grafico_dados = {
-            "labels": list(timeline_ordenada.keys()),
-            "faturamento": [v['faturamento'] for v in timeline_ordenada.values()],
-            "lucro": [v['lucro'] for v in timeline_ordenada.values()]
-        }
+        grafico_dados = { "labels": list(timeline_ordenada.keys()), "faturamento": [v['faturamento'] for v in timeline_ordenada.values()], "lucro": [v['lucro'] for v in timeline_ordenada.values()] }
+
+        # --- BUSCA DO ESTOQUE PARADO (SEM VENDAS NO PERÍODO) ---
+        url_itens_ativos = f"https://api.mercadolibre.com/users/{ml_seller_id}/items/search?status=active&limit=50"
+        estoque_parado = []
+        try:
+            res_itens = requests.get(url_itens_ativos, headers=headers).json()
+            todos_itens = res_itens.get('results', [])
+            
+            itens_parados_ids = [i for i in todos_itens if i not in agrupado]
+            if itens_parados_ids:
+                for i in range(0, len(itens_parados_ids), 20):
+                    lote = itens_parados_ids[i:i+20]
+                    ids_str = ",".join(lote)
+                    url_detalhes = f"https://api.mercadolibre.com/items?ids={ids_str}"
+                    res_detalhes = requests.get(url_detalhes, headers=headers).json()
+                    for item_obj in res_detalhes:
+                        if item_obj.get('code') == 200:
+                            body = item_obj['body']
+                            estoque_parado.append({
+                                'ID': body.get('id'),
+                                'Produto': body.get('title'),
+                                'Preco': body.get('price'),
+                                'Disponivel': body.get('available_quantity', 0),
+                                'Link': body.get('permalink', '#')
+                            })
+        except Exception as e:
+            print("Aviso Estoque Parado:", e)
 
         kpis = {
             "faturamento": f"R$ {float(df['Faturamento'].sum()):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
@@ -285,7 +312,7 @@ def api_dados():
             "imposto_padrao": imposto_padrao_pct
         }
 
-        return jsonify({"kpis": kpis, "tabela": df.to_dict(orient='records'), "grafico": grafico_dados})
+        return jsonify({"kpis": kpis, "tabela": df.to_dict(orient='records'), "grafico": grafico_dados, "estoque_parado": estoque_parado})
 
     except Exception as e:
         return jsonify({"erro": str(e)}), 500

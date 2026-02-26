@@ -10,20 +10,14 @@
             darkMode: 'class',
             theme: {
                 extend: {
-                    animation: {
-                        'fade-in': 'fadeIn 0.5s ease-out forwards',
-                        'slide-up': 'slideUp 0.6s ease-out forwards',
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                    },
-                    keyframes: {
-                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
-                        slideUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }
-                    }
+                    animation: { 'fade-in': 'fadeIn 0.5s ease-out forwards', 'slide-up': 'slideUp 0.6s ease-out forwards', 'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite' },
+                    keyframes: { fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } }, slideUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } } }
                 }
             }
         }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; transition: background-color 0.4s ease, color 0.4s ease; }
@@ -42,8 +36,8 @@
     <div id="tela-login" class="flex w-full h-full items-center justify-center hidden animate-fade-in">
         <div class="glass-card p-10 rounded-2xl w-full max-w-md text-center hover:shadow-xl hover:-translate-y-1">
             <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-indigo-500 mb-6 tracking-tight">Irving (BLM)</h1>
-            <input type="email" id="email" placeholder="E-mail" class="w-full mb-4 p-3 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 outline-none transition duration-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-            <input type="password" id="senha" placeholder="Senha" class="w-full mb-6 p-3 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 outline-none transition duration-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <input type="email" id="email" placeholder="E-mail" class="w-full mb-4 p-3 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 outline-none transition duration-300 focus:ring-2 focus:ring-blue-500">
+            <input type="password" id="senha" placeholder="Senha" class="w-full mb-6 p-3 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 outline-none transition duration-300 focus:ring-2 focus:ring-blue-500">
             <button onclick="fazerLogin()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-all duration-200 active:scale-95 shadow-md hover:shadow-lg">Entrar</button>
             <p id="msg-erro" class="text-red-500 text-sm mt-4 hidden"></p>
         </div>
@@ -52,7 +46,7 @@
     <div id="tela-conectar-ml" class="flex w-full h-full items-center justify-center hidden animate-fade-in">
         <div class="glass-card p-10 rounded-2xl w-full max-w-lg text-center hover:shadow-xl hover:-translate-y-1">
             <div class="text-5xl mb-4 animate-bounce">⚡</div><h2 class="text-2xl font-bold mb-6">Conecte sua Loja</h2>
-            <button onclick="iniciarAuthML()" class="w-full py-4 bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold rounded-lg transition-all duration-200 active:scale-95 shadow-md hover:shadow-lg">Autorizar Mercado Livre</button>
+            <button onclick="iniciarAuthML()" class="w-full py-4 bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold rounded-lg transition-all duration-200 active:scale-95 shadow-md">Autorizar Mercado Livre</button>
             <button onclick="voltarParaAdmin()" id="btn-voltar-conectar" class="hidden text-sm text-slate-500 hover:text-blue-500 mt-4 block mx-auto underline transition-colors">← Voltar para Admin</button>
         </div>
     </div>
@@ -75,8 +69,7 @@
                             <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">API Conectada</span>
                         </div>
                         <button onclick="iniciarAuthML()" title="Forçar a renovação do token de acesso" class="text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all flex items-center gap-1.5 w-full active:scale-95">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                            Reconectar API
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Reconectar API
                         </button>
                     </div>
                 </div>
@@ -84,6 +77,7 @@
                 <nav class="flex flex-col gap-1 mt-2">
                     <button onclick="mudarAba('visao_geral')" id="btn-visao" class="menu-ativo text-left px-6 py-3 font-semibold transition-all duration-200">📊 Visão Geral</button>
                     <button onclick="mudarAba('custos')" id="btn-custos" class="menu-inativo text-left px-6 py-3 font-semibold transition-all duration-200">💰 Gestão de Custos</button>
+                    <button onclick="mudarAba('estoque')" id="btn-estoque" class="menu-inativo text-left px-6 py-3 font-semibold transition-all duration-200">📦 Estoque Parado</button>
                     <button onclick="mudarAba('clientes')" id="btn-clientes" class="hidden menu-inativo text-left px-6 py-3 font-semibold transition-all duration-200 border-t border-slate-200 dark:border-slate-700 mt-2">👥 Clientes (Admin)</button>
                 </nav>
             </div>
@@ -102,8 +96,7 @@
                     <select id="seletor-data" class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 outline-none text-sm transition-all focus:ring-2 focus:ring-blue-500 cursor-pointer hover:border-blue-400">
                         <option value="7">Últimos 7 dias</option><option value="15">Últimos 15 dias</option><option value="30" selected>Últimos 30 dias</option>
                     </select>
-                    <button onclick="carregarDados()" id="btn-gerar" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-95 active:translate-y-0">Gerar Análise</button>
-                    
+                    <button onclick="carregarDados()" id="btn-gerar" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg active:scale-95">Gerar Análise</button>
                     <button onclick="toggleDarkMode()" class="p-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 active:scale-95 group">
                         <svg id="theme-icon" class="w-5 h-5 text-slate-700 dark:text-slate-200 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                     </button>
@@ -135,7 +128,7 @@
                                         <tr class="text-slate-500 border-b border-slate-200 dark:border-slate-700">
                                             <th class="pb-4 font-semibold">Produto</th><th class="pb-4 font-semibold">Faturamento (Giro)</th>
                                             <th class="pb-4 font-semibold">Preço (Ticket)</th><th class="pb-4 font-semibold">Custos Unitários</th>
-                                            <th class="pb-4 font-semibold">Margem de Contribuição</th><th class="pb-4 font-semibold">Status</th><th class="pb-4 font-semibold">Espaço Promo</th>
+                                            <th class="pb-4 font-semibold">Margem de Contribuição</th><th class="pb-4 font-semibold">Status</th><th class="pb-4 font-semibold">Espaço Promo (+15%)</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tabela-corpo"></tbody>
@@ -145,17 +138,31 @@
                         <div class="space-y-4">
                             <h3 class="text-lg font-bold mb-2">System Alerts</h3>
                             <div class="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 text-red-800 dark:text-red-400 text-sm hover:scale-[1.02] transition-transform cursor-default">
-                                <strong class="block mb-2 font-bold flex items-center gap-2">⚠️ Suspensão (ML)</strong> Não adicione link nas perguntas dos anúncios para evitar suspensão permanente.
+                                <strong class="block mb-2 font-bold flex items-center gap-2">⚠️ Suspensão (ML)</strong> Não adicione link nas perguntas dos anúncios para evitar suspensão.
                             </div>
                             <div class="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 text-blue-800 dark:text-blue-400 text-sm hover:scale-[1.02] transition-transform cursor-default">
-                                <strong class="block mb-2 font-bold flex items-center gap-2">🚚 Frete Grátis</strong> Tenha um cuidado extra na precificação quando oferecer Frete Grátis. A taxa de envio varia e impacta a margem.
+                                <strong class="block mb-2 font-bold flex items-center gap-2">🚚 Frete Grátis</strong> Tenha cuidado na precificação quando oferecer Frete Grátis.
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div id="aba-custos" class="hidden w-full">
-                    <div class="glass-card rounded-2xl p-6 mb-8 max-w-4xl flex justify-between items-center bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800/30 animate-slide-up">
+                    <div class="glass-card rounded-2xl p-6 mb-8 w-full flex flex-col md:flex-row justify-between items-center gap-6 animate-slide-up border-emerald-200 dark:border-emerald-800/30 bg-emerald-50/50 dark:bg-emerald-900/10">
+                        <div>
+                            <h3 class="text-lg font-bold text-emerald-600 dark:text-emerald-400">Atualização em Massa (Excel)</h3>
+                            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Envie uma planilha simples com as colunas <b>ID</b> (ex: MLB123) e <b>Custo</b> para preencher tudo de uma vez.</p>
+                        </div>
+                        <div class="flex gap-3 w-full md:w-auto">
+                            <button onclick="baixarModeloExcel()" class="px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg text-sm font-bold transition-all duration-200 active:scale-95 shadow-sm whitespace-nowrap">Baixar Modelo</button>
+                            <label class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold transition-all duration-200 active:scale-95 shadow-md hover:shadow-lg cursor-pointer whitespace-nowrap text-center flex-1">
+                                Enviar Planilha
+                                <input type="file" id="upload-excel" accept=".xlsx, .xls, .csv" class="hidden" onchange="processarPlanilha(event)">
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-2xl p-6 mb-8 max-w-4xl flex justify-between items-center bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800/30 animate-slide-up" style="animation-delay: 0.1s;">
                         <div>
                             <h3 class="text-lg font-bold text-blue-600 dark:text-blue-400">Configuração Tributária</h3>
                             <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Defina a alíquota em massa (Ex: Simples Nacional).</p>
@@ -163,14 +170,14 @@
                         <div class="flex gap-3 items-center">
                             <input type="number" id="input-imposto" placeholder="Ex: 6.0" step="0.1" class="w-24 p-2.5 rounded bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 outline-none focus:ring-2 focus:ring-blue-500 transition-shadow">
                             <span class="text-slate-500 dark:text-slate-400 font-bold">%</span>
-                            <button onclick="salvarImposto()" id="btn-imposto" class="ml-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-all duration-200 active:scale-95 shadow-md hover:shadow-lg">Salvar Alíquota</button>
+                            <button onclick="salvarImposto()" id="btn-imposto" class="ml-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-all duration-200 active:scale-95 shadow-md">Salvar Alíquota</button>
                         </div>
                     </div>
 
-                    <div class="glass-card rounded-2xl p-6 max-w-4xl animate-slide-up" style="animation-delay: 0.1s;">
+                    <div class="glass-card rounded-2xl p-6 max-w-4xl animate-slide-up" style="animation-delay: 0.2s;">
                         <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-lg font-bold">Custos dos Produtos (CMV)</h3>
-                            <span class="text-sm text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-400/10 px-3 py-1 rounded-full font-medium shadow-sm cursor-default hover:scale-105 transition-transform">Sem o CMV, a rentabilidade não é calculada.</span>
+                            <h3 class="text-lg font-bold">Custos Editáveis (CMV)</h3>
+                            <span class="text-sm text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-400/10 px-3 py-1 rounded-full font-medium shadow-sm">Edição manual item a item</span>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left text-sm whitespace-nowrap">
@@ -180,6 +187,30 @@
                                     </tr>
                                 </thead>
                                 <tbody id="tabela-custos"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="aba-estoque" class="hidden w-full">
+                    <div class="glass-card rounded-2xl p-6 mb-8 w-full max-w-5xl animate-slide-up">
+                        <div class="flex justify-between items-center mb-6">
+                            <div>
+                                <h3 class="text-xl font-bold">Estoque Parado</h3>
+                                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Anúncios ativos que não tiveram giro no período selecionado. Avalie criar campanhas ou promoções.</p>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm whitespace-nowrap">
+                                <thead>
+                                    <tr class="text-slate-500 border-b border-slate-200 dark:border-slate-700">
+                                        <th class="pb-4 font-semibold">Produto (SKU)</th>
+                                        <th class="pb-4 font-semibold">Preço Atual</th>
+                                        <th class="pb-4 font-semibold">Disponível</th>
+                                        <th class="pb-4 font-semibold text-center">Ação</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabela-estoque-corpo"></tbody>
                             </table>
                         </div>
                     </div>
@@ -218,7 +249,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // COLOQUE SUAS CHAVES AQUI E O SEU E-MAIL MASTER
 const ADMIN_EMAIL = "brunolima.marques@gmail.com"; // <--- SEU EMAIL AQUI
 const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", authDomain: "irving-blm.firebaseapp.com", projectId: "irving-blm", storageBucket: "irving-blm.firebasestorage.app", messagingSenderId: "209820833777", appId: "1:209820833777:web:809fd74f0abcbd8b1d5650" };
         const app = initializeApp(firebaseConfig);
@@ -226,8 +256,8 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
         
         let usuarioGlobal = null;
         let dadosAPI = []; 
+        let dadosEstoque = [];
         let graficoInstancia = null;
-        
         let uidClienteAtivo = null;
         let emailClienteAtivo = null;
 
@@ -237,17 +267,12 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
                 document.getElementById('tela-login').classList.add('hidden');
                 document.getElementById('tela-dashboard').classList.remove('hidden');
                 document.getElementById('tela-dashboard').classList.add('animate-fade-in');
-                
-                if(user.email === ADMIN_EMAIL) {
-                    document.getElementById('btn-clientes').classList.remove('hidden');
-                }
-                
+                if(user.email === ADMIN_EMAIL) document.getElementById('btn-clientes').classList.remove('hidden');
                 carregarDados(); 
             } else {
                 usuarioGlobal = null; uidClienteAtivo = null; emailClienteAtivo = null;
                 document.getElementById('tela-login').classList.remove('hidden');
                 document.getElementById('tela-dashboard').classList.add('hidden');
-                document.getElementById('tela-dashboard').classList.remove('animate-fade-in');
             }
         });
 
@@ -267,10 +292,12 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
         window.mudarAba = (aba) => {
             document.getElementById('aba-visao_geral').classList.add('hidden');
             document.getElementById('aba-custos').classList.add('hidden');
+            document.getElementById('aba-estoque').classList.add('hidden');
             document.getElementById('aba-clientes').classList.add('hidden');
             
             document.getElementById('btn-visao').className = "menu-inativo text-left px-6 py-3 font-semibold transition-all duration-200";
             document.getElementById('btn-custos').className = "menu-inativo text-left px-6 py-3 font-semibold transition-all duration-200";
+            document.getElementById('btn-estoque').className = "menu-inativo text-left px-6 py-3 font-semibold transition-all duration-200";
             if(usuarioGlobal && usuarioGlobal.email === ADMIN_EMAIL) document.getElementById('btn-clientes').className = "menu-inativo text-left px-6 py-3 font-semibold transition-all duration-200 border-t border-slate-200 dark:border-slate-700 mt-2";
             
             document.getElementById(`aba-${aba}`).classList.remove('hidden');
@@ -278,7 +305,53 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
             
             if(aba === 'visao_geral') document.getElementById('titulo-pagina').innerText = "Visão Geral da Operação";
             if(aba === 'custos') { document.getElementById('titulo-pagina').innerText = "Gestão de Custos e Tributos"; renderTabelaCustos(); }
+            if(aba === 'estoque') { document.getElementById('titulo-pagina').innerText = "Estoque Parado (Sem Vendas)"; renderEstoqueParado(); }
             if(aba === 'clientes') { document.getElementById('titulo-pagina').innerText = "Gestão de Clientes"; carregarClientes(); }
+        };
+
+        window.baixarModeloExcel = () => {
+            const ws = XLSX.utils.json_to_sheet([{ "ID": "MLB123456789", "Custo": 45.50 }, { "ID": "MLB987654321", "Custo": 12.90 }]);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Custos");
+            XLSX.writeFile(wb, "Modelo_CMV_Irving.xlsx");
+        };
+
+        window.processarPlanilha = (event) => {
+            const file = event.target.files[0]; if (!file) return;
+            const btnUpload = event.target.parentElement;
+            const originalText = btnUpload.innerHTML;
+            btnUpload.innerHTML = "A processar..."; btnUpload.classList.add('opacity-80', 'cursor-wait');
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                    
+                    let custosMassa = {};
+                    json.forEach(row => {
+                        const mlb = row['ID'] || row['id'] || row['MLB'];
+                        const custo = row['Custo'] || row['CUSTO'] || row['CMV'];
+                        if(mlb && custo !== undefined) custosMassa[mlb.toString().trim()] = parseFloat(custo);
+                    });
+                    
+                    if(Object.keys(custosMassa).length === 0) {
+                        alert("Erro: Não encontrámos as colunas 'ID' e 'Custo'. Baixe o modelo para ver o formato correto.");
+                        btnUpload.innerHTML = originalText; btnUpload.classList.remove('opacity-80', 'cursor-wait'); return;
+                    }
+                    
+                    const token = await usuarioGlobal.getIdToken();
+                    let payload = { custos: custosMassa };
+                    if (uidClienteAtivo) payload.client_uid = uidClienteAtivo;
+
+                    await fetch('/api/salvar_custos_massa', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(payload) });
+                    alert(`Sucesso! ${Object.keys(custosMassa).length} custos atualizados.`);
+                    btnUpload.innerHTML = originalText; btnUpload.classList.remove('opacity-80', 'cursor-wait');
+                    carregarDados(); 
+                } catch (error) { alert("Erro ao ler o ficheiro Excel."); btnUpload.innerHTML = originalText; btnUpload.classList.remove('opacity-80', 'cursor-wait'); }
+            };
+            reader.readAsArrayBuffer(file);
         };
 
         window.carregarClientes = async () => {
@@ -286,8 +359,7 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
             const res = await fetch('/api/clientes', { headers: { 'Authorization': 'Bearer ' + token } });
             if(res.ok) {
                 const clientes = await res.json();
-                const tbody = document.getElementById('tabela-clientes-corpo');
-                tbody.innerHTML = '';
+                const tbody = document.getElementById('tabela-clientes-corpo'); tbody.innerHTML = '';
                 clientes.forEach(c => {
                     tbody.innerHTML += `
                         <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
@@ -299,58 +371,25 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
             }
         };
 
-        window.acessarCliente = (uid, email) => {
-            uidClienteAtivo = uid;
-            emailClienteAtivo = email;
-            document.getElementById('workspace-nome').innerHTML = `<span class="text-amber-500">Visualizando:</span> <b>${email}</b>`;
-            document.getElementById('btn-voltar-admin').classList.remove('hidden');
-            mudarAba('visao_geral');
-            carregarDados();
-        };
-
-        window.voltarParaAdmin = () => {
-            uidClienteAtivo = null;
-            emailClienteAtivo = null;
-            document.getElementById('workspace-nome').innerHTML = `Workspace de <b>Brunão</b>`;
-            document.getElementById('btn-voltar-admin').classList.add('hidden');
-            document.getElementById('tela-conectar-ml').classList.add('hidden');
-            document.getElementById('tela-dashboard').classList.remove('hidden');
-            mudarAba('clientes');
-        };
+        window.acessarCliente = (uid, email) => { uidClienteAtivo = uid; emailClienteAtivo = email; document.getElementById('workspace-nome').innerHTML = `<span class="text-amber-500">Visualizando:</span> <b>${email}</b>`; document.getElementById('btn-voltar-admin').classList.remove('hidden'); mudarAba('visao_geral'); carregarDados(); };
+        window.voltarParaAdmin = () => { uidClienteAtivo = null; emailClienteAtivo = null; document.getElementById('workspace-nome').innerHTML = `Workspace de <b>Brunão</b>`; document.getElementById('btn-voltar-admin').classList.add('hidden'); document.getElementById('tela-conectar-ml').classList.add('hidden'); document.getElementById('tela-dashboard').classList.remove('hidden'); mudarAba('clientes'); };
 
         window.salvarImposto = async () => {
-            const btn = document.getElementById('btn-imposto');
-            const token = await usuarioGlobal.getIdToken();
-            btn.innerText = "A guardar...";
-            btn.classList.add('opacity-80', 'cursor-wait');
-            
+            const btn = document.getElementById('btn-imposto'); const token = await usuarioGlobal.getIdToken();
+            btn.innerText = "A guardar..."; btn.classList.add('opacity-80', 'cursor-wait');
             let payload = { imposto: document.getElementById('input-imposto').value };
             if (uidClienteAtivo) payload.client_uid = uidClienteAtivo; 
-            
-            await fetch('/api/salvar_imposto', {
-                method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                body: JSON.stringify(payload)
-            });
-            btn.innerText = "Salvo ✔";
-            btn.classList.replace('bg-blue-600', 'bg-emerald-500');
-            btn.classList.remove('opacity-80', 'cursor-wait');
+            await fetch('/api/salvar_imposto', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(payload) });
+            btn.innerText = "Salvo ✔"; btn.classList.replace('bg-blue-600', 'bg-emerald-500'); btn.classList.remove('opacity-80', 'cursor-wait');
             setTimeout(() => { btn.innerText = "Salvar Alíquota"; btn.classList.replace('bg-emerald-500', 'bg-blue-600'); carregarDados(); }, 1200);
         };
 
         window.salvarCusto = async (itemId) => {
-            const btn = document.getElementById(`btn-salvar-${itemId}`);
-            const custo = document.getElementById(`custo-${itemId}`).value;
-            const token = await usuarioGlobal.getIdToken();
-            
-            btn.innerText = "A guardar...";
-            btn.classList.add('opacity-80', 'cursor-wait');
-            
-            let payload = { item_id: itemId, custo: custo };
-            if (uidClienteAtivo) payload.client_uid = uidClienteAtivo;
-            
+            const btn = document.getElementById(`btn-salvar-${itemId}`); const custo = document.getElementById(`custo-${itemId}`).value; const token = await usuarioGlobal.getIdToken();
+            btn.innerText = "A guardar..."; btn.classList.add('opacity-80', 'cursor-wait');
+            let payload = { item_id: itemId, custo: custo }; if (uidClienteAtivo) payload.client_uid = uidClienteAtivo;
             await fetch('/api/salvar_custo', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(payload) });
-            btn.innerText = "Salvo ✔";
-            btn.className = "px-5 py-2.5 bg-emerald-500 text-white rounded-lg text-sm transition-all duration-300 font-bold shadow-md";
+            btn.innerText = "Salvo ✔"; btn.className = "px-5 py-2.5 bg-emerald-500 text-white rounded-lg text-sm transition-all duration-300 font-bold shadow-md";
         };
 
         window.formatarTrend = (v) => {
@@ -362,10 +401,7 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
         function atualizarGrafico(dadosGrafico) {
             const ctx = document.getElementById('graficoCrescimento').getContext('2d');
             if (graficoInstancia) graficoInstancia.destroy(); 
-
-            const isDark = document.documentElement.classList.contains('dark');
-            const gridColor = isDark ? '#334155' : '#E2E8F0';
-            const textColor = isDark ? '#94A3B8' : '#64748B';
+            const isDark = document.documentElement.classList.contains('dark'); const gridColor = isDark ? '#334155' : '#E2E8F0'; const textColor = isDark ? '#94A3B8' : '#64748B';
 
             graficoInstancia = new Chart(ctx, {
                 type: 'bar',
@@ -376,24 +412,12 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
                         { label: 'Lucro Bruto (R$)', data: dadosGrafico.lucro, type: 'line', borderColor: '#10B981', backgroundColor: '#10B981', borderWidth: 3, tension: 0.4, pointRadius: 4, pointHoverRadius: 6, pointBackgroundColor: '#fff', order: 1 }
                     ]
                 },
-                options: { 
-                    responsive: true, maintainAspectRatio: false, 
-                    interaction: { mode: 'index', intersect: false },
-                    scales: { 
-                        y: { beginAtZero: true, grid: { color: gridColor, drawBorder: false }, ticks: { color: textColor, padding: 10 } }, 
-                        x: { grid: { display: false, drawBorder: false }, ticks: { color: textColor, padding: 10 } } 
-                    }, 
-                    plugins: { 
-                        legend: { labels: { color: textColor, font: { family: 'Inter', weight: '500' }, usePointStyle: true, boxWidth: 8 } }, 
-                        tooltip: { backgroundColor: isDark ? '#1E293B' : '#ffffff', titleColor: isDark ? '#f8fafc' : '#0f172a', bodyColor: isDark ? '#cbd5e1' : '#475569', borderColor: isDark ? '#334155' : '#e2e8f0', borderWidth: 1, padding: 12, boxPadding: 6, usePointStyle: true } 
-                    } 
-                }
+                options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, scales: { y: { beginAtZero: true, grid: { color: gridColor, drawBorder: false }, ticks: { color: textColor, padding: 10 } }, x: { grid: { display: false, drawBorder: false }, ticks: { color: textColor, padding: 10 } } }, plugins: { legend: { labels: { color: textColor, font: { family: 'Inter', weight: '500' }, usePointStyle: true, boxWidth: 8 } }, tooltip: { backgroundColor: isDark ? '#1E293B' : '#ffffff', titleColor: isDark ? '#f8fafc' : '#0f172a', bodyColor: isDark ? '#cbd5e1' : '#475569', borderColor: isDark ? '#334155' : '#e2e8f0', borderWidth: 1, padding: 12, boxPadding: 6, usePointStyle: true } } }
             });
         }
 
         window.carregarDados = async () => {
             if (!usuarioGlobal) return;
-            
             const btn = document.getElementById('btn-gerar');
             btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> A analisar...`;
             btn.classList.add('opacity-80', 'cursor-wait');
@@ -405,20 +429,17 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
             const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
             const data = await res.json();
             
-            btn.innerText = "Gerar Análise";
-            btn.classList.remove('opacity-80', 'cursor-wait');
+            btn.innerText = "Gerar Análise"; btn.classList.remove('opacity-80', 'cursor-wait');
 
             if (res.status === 403) { 
                 if (uidClienteAtivo) { alert("Este cliente ainda não conectou o Mercado Livre."); voltarParaAdmin(); return; }
-                document.getElementById('tela-conectar-ml').classList.remove('hidden'); 
-                return; 
+                document.getElementById('tela-conectar-ml').classList.remove('hidden'); return; 
             }
             document.getElementById('tela-conectar-ml').classList.add('hidden');
 
             if (data.erro === "vazio") {
                 document.getElementById('tabela-corpo').innerHTML = "<tr><td colspan='7' class='py-16 text-center text-slate-500 font-medium'>Nenhuma venda encontrada para o período selecionado.</td></tr>";
-                if (graficoInstancia) graficoInstancia.destroy();
-                return;
+                if (graficoInstancia) graficoInstancia.destroy(); return;
             }
 
             document.getElementById('input-imposto').value = data.kpis.imposto_padrao;
@@ -432,35 +453,29 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
             atualizarGrafico(data.grafico);
 
             dadosAPI = data.tabela;
-            const tbody = document.getElementById('tabela-corpo');
-            tbody.innerHTML = ''; 
+            dadosEstoque = data.estoque_parado || []; // Salva o estoque parado
+            
+            const tbody = document.getElementById('tabela-corpo'); tbody.innerHTML = ''; 
             
             dadosAPI.forEach((row, index) => {
                 let statusColor = row.Status.includes('🔴') || row.Status.includes('⚠️') ? 'text-red-500 dark:text-red-400 font-bold' : 'text-emerald-600 dark:text-emerald-400 font-bold';
                 if(row.Status.includes('🔵')) statusColor = 'text-blue-600 dark:text-blue-400 font-bold';
                 
-                const p = row.Desconto_Max_Grafico;
-                const cor = p > 15 ? 'bg-emerald-500' : (p > 5 ? 'bg-amber-400' : 'bg-red-500');
+                const p = row.Desconto_Max_Grafico; const cor = p > 15 ? 'bg-emerald-500' : (p > 5 ? 'bg-amber-400' : 'bg-red-500');
                 const espacoPromo = row.Sem_Custo ? `<span class="text-xs text-slate-500">-</span>` : `<div class="flex items-center gap-3"><div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 shadow-inner"><div class="${cor} h-2 rounded-full transition-all duration-1000 ease-out" style="width: ${Math.min(p, 100)}%"></div></div><span class="text-[11px] font-bold">${p.toFixed(1)}%</span></div>`;
-                
                 const margemValor = row.Sem_Custo ? `<span class="text-slate-500 text-xs">Aguardando CMV</span>` : `<span class="font-bold text-base block">R$ ${row.Margem_Contribuicao.toFixed(2)}</span><span class="inline-block mt-1">${formatarTrend(row.MC_Trend)}</span>`;
 
-                const freteUn = (row.Custo_Frete / row.Giro).toFixed(2);
-                const comissaoUn = (row.Custo_Comissao / row.Giro).toFixed(2);
-                const impostoUn = (row.Custo_Imposto / row.Giro).toFixed(2);
-                const adsUn = row.Giro > 0 ? (row.Custo_ADS / row.Giro).toFixed(2) : '0.00';
+                const freteUn = (row.Custo_Frete / row.Giro).toFixed(2); const comissaoUn = (row.Custo_Comissao / row.Giro).toFixed(2);
+                const impostoUn = (row.Custo_Imposto / row.Giro).toFixed(2); const adsUn = row.Giro > 0 ? (row.Custo_ADS / row.Giro).toFixed(2) : '0.00';
 
                 const custosHTML = `
                     <div class="text-[11px] text-slate-500 dark:text-slate-400 space-y-1.5">
                         <div class="flex justify-between w-40"><span class="font-semibold text-slate-700 dark:text-slate-300">CMV:</span> <span>R$ ${row.Custo_CMV.toFixed(2)}</span> <span class="text-slate-300 dark:text-slate-600">|</span> <span class="font-semibold text-slate-700 dark:text-slate-300">ML:</span> <span>R$ ${comissaoUn}</span></div>
                         <div class="flex justify-between w-40"><span class="font-semibold text-slate-700 dark:text-slate-300">Frete:</span> <span>R$ ${freteUn}</span> <span class="text-slate-300 dark:text-slate-600">|</span> <span class="font-semibold text-slate-700 dark:text-slate-300">Imp:</span> <span>R$ ${impostoUn}</span></div>
                         <div class="flex justify-between w-40"><span class="font-semibold text-slate-700 dark:text-slate-300">ADS:</span> <span class="font-medium text-slate-600 dark:text-slate-300">R$ ${adsUn}</span></div>
-                    </div>
-                `;
+                    </div>`;
 
-                // Animação de entrada em cascata para as linhas
                 const animDelay = index * 0.05;
-
                 tbody.innerHTML += `
                     <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors animate-slide-up opacity-0" style="animation-delay: ${animDelay}s; animation-fill-mode: forwards;">
                         <td class="py-5 align-middle"><p class="font-bold w-48 truncate text-slate-800 dark:text-white" title="${row.Produto}">${row.Produto}</p><p class="text-[11px] text-slate-400 mt-1.5">ID: <span class="select-all">${row.ID}</span></p></td>
@@ -473,20 +488,37 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
                     </tr>`;
             });
             if(!document.getElementById('aba-custos').classList.contains('hidden')) renderTabelaCustos();
+            if(!document.getElementById('aba-estoque').classList.contains('hidden')) renderEstoqueParado();
         }
 
         window.renderTabelaCustos = () => {
-            const tbody = document.getElementById('tabela-custos');
-            tbody.innerHTML = '';
+            const tbody = document.getElementById('tabela-custos'); tbody.innerHTML = '';
             dadosAPI.forEach((row, index) => {
                 const borderClass = row.Sem_Custo ? 'border-amber-500/50 bg-amber-50 dark:bg-amber-500/5 ring-1 ring-amber-500/30' : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent';
                 const animDelay = index * 0.05;
-                
                 tbody.innerHTML += `
                     <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors animate-slide-up opacity-0" style="animation-delay: ${animDelay}s; animation-fill-mode: forwards;">
                         <td class="py-5 align-middle"><p class="font-bold w-64 truncate text-slate-800 dark:text-white" title="${row.Produto}">${row.Produto}</p><p class="text-[11px] text-slate-400 mt-1.5">ID: <span class="select-all">${row.ID}</span></p></td>
                         <td class="py-5 align-middle"><input type="number" id="custo-${row.ID}" value="${row.Custo_CMV}" step="0.01" class="w-32 p-2.5 rounded-lg border ${borderClass} text-slate-900 dark:text-white outline-none transition-all shadow-sm"></td>
                         <td class="py-5 align-middle"><button onclick="salvarCusto('${row.ID}')" id="btn-salvar-${row.ID}" class="px-5 py-2.5 bg-slate-200 dark:bg-slate-700 hover:bg-blue-600 dark:hover:bg-blue-600 text-slate-800 dark:text-white hover:text-white rounded-lg text-sm transition-all duration-200 active:scale-95 font-bold shadow-sm hover:shadow-md">Salvar CMV</button></td>
+                    </tr>`;
+            });
+        };
+
+        window.renderEstoqueParado = () => {
+            const tbody = document.getElementById('tabela-estoque-corpo'); tbody.innerHTML = '';
+            if(dadosEstoque.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='4' class='py-12 text-center text-slate-500 font-medium'>Nenhum estoque parado encontrado. Ótimo trabalho!</td></tr>";
+                return;
+            }
+            dadosEstoque.forEach((row, index) => {
+                const animDelay = index * 0.05;
+                tbody.innerHTML += `
+                    <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors animate-slide-up opacity-0" style="animation-delay: ${animDelay}s; animation-fill-mode: forwards;">
+                        <td class="py-5 align-middle"><p class="font-bold w-64 truncate text-slate-800 dark:text-white" title="${row.Produto}">${row.Produto}</p><p class="text-[11px] text-slate-400 mt-1.5">ID: <span class="select-all">${row.ID}</span></p></td>
+                        <td class="py-5 align-middle font-medium text-slate-800 dark:text-slate-300">R$ ${row.Preco.toFixed(2)}</td>
+                        <td class="py-5 align-middle"><span class="px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded text-xs font-bold shadow-sm">${row.Disponivel} un</span></td>
+                        <td class="py-5 align-middle text-center"><a href="${row.Link}" target="_blank" class="px-5 py-2.5 bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-500/30 rounded-lg text-sm transition-all duration-200 font-bold shadow-sm inline-block">Ver Anúncio</a></td>
                     </tr>`;
             });
         };

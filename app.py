@@ -180,7 +180,6 @@ def api_dados():
 
         for order in resultados:
             destino = order.get('shipping', {}).get('receiver_address', {}).get('country', {}).get('id', 'BR')
-            custo_envio_unidade = 0 if destino == 'AR' else 18.50 
             
             data_venda = order.get('date_created', '')[:10]
             if data_venda not in timeline: timeline[data_venda] = {'faturamento': 0, 'lucro': 0}
@@ -190,6 +189,14 @@ def api_dados():
                 title = item['item']['title']
                 qty = item['quantity']
                 price = item['unit_price']
+                
+                # --- CORREÇÃO DO CÁLCULO DE FRETE ---
+                custo_envio_unidade = 0
+                if destino != 'AR':
+                    if price >= 79:
+                        custo_envio_unidade = 18.50 # Média cobrada do vendedor (Frete Grátis)
+                    else:
+                        custo_envio_unidade = 0.00 # Pago pelo comprador
                 
                 custo_cmv = float(custos_db.get(item_id, 0))
                 comissao_unitaria = item.get('sale_fee', price * 0.16)
@@ -275,7 +282,7 @@ def api_dados():
         timeline_ordenada = dict(sorted(timeline.items()))
         grafico_dados = { "labels": list(timeline_ordenada.keys()), "faturamento": [v['faturamento'] for v in timeline_ordenada.values()], "lucro": [v['lucro'] for v in timeline_ordenada.values()] }
 
-        # --- BUSCA DO ESTOQUE PARADO (SEM VENDAS NO PERÍODO) ---
+        # --- BUSCA DO ESTOQUE PARADO ---
         url_itens_ativos = f"https://api.mercadolibre.com/users/{ml_seller_id}/items/search?status=active&limit=50"
         estoque_parado = []
         try:

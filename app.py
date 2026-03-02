@@ -138,7 +138,7 @@ def salvar_imposto():
     db.collection('configuracoes').document(uid).set({'imposto_padrao': float(request.json.get('imposto', 0))}, merge=True)
     return jsonify({"status": "sucesso"})
 
-# --- 5. MOTOR FINANCEIRO (COM FRETE EXATO) ---
+# --- 5. MOTOR FINANCEIRO ---
 @app.route('/api/dados')
 def api_dados():
     uid = verificar_token(request)
@@ -175,7 +175,7 @@ def api_dados():
         
         if not resultados: return jsonify({"erro": "vazio", "imposto_padrao": imposto_padrao_pct})
 
-        # --- BUSCA EXATA DOS FRETES (NOVA INTELIGÊNCIA) ---
+        # --- BUSCA EXATA DOS FRETES ---
         shipping_ids = [str(o.get('shipping', {}).get('id')) for o in resultados if o.get('shipping', {}).get('id')]
         custos_frete_reais = {}
         if shipping_ids:
@@ -190,11 +190,8 @@ def api_dados():
                         if ship_info.get('code') == 200:
                             ship_body = ship_info.get('body', {})
                             s_id = str(ship_body.get('id'))
-                            # O custo base do envio (Total)
                             base = float(ship_body.get('base_cost', 0) or 0)
-                            # O que o comprador pagou
                             buyer_pays = float(ship_body.get('shipping_option', {}).get('cost', 0) or 0)
-                            # O vendedor paga a diferença (Zero se o comprador pagou tudo)
                             custos_frete_reais[s_id] = max(0, base - buyer_pays)
                 except Exception as e:
                     print("Erro Frete:", e)
@@ -206,14 +203,11 @@ def api_dados():
             data_venda = order.get('date_created', '')[:10]
             if data_venda not in timeline: timeline[data_venda] = {'faturamento': 0, 'lucro': 0}
             
-            # Puxa o frete real que acabamos de consultar
             ship_id = str(order.get('shipping', {}).get('id', ''))
             frete_total_pedido = custos_frete_reais.get(ship_id, 0)
             
             order_items = order.get('order_items', [])
             total_qty_order = sum(item['quantity'] for item in order_items)
-            
-            # Divide o frete real do pedido pelas unidades vendidas
             custo_envio_unidade = frete_total_pedido / total_qty_order if total_qty_order > 0 else 0
             
             for item in order_items:
@@ -295,16 +289,46 @@ def api_dados():
             else: return "🔵 Saudável"
             
         df['Status'] = df.apply(gerar_status, axis=1)
-        
-        # CÁLCULO DA PROMOÇÃO MÁXIMA PRESERVANDO 15%
         df['Desconto_Max'] = (((df['Margem_Contribuicao'] - (df['Ticket_Medio'] * 0.15)) / df['Ticket_Medio']) * 100).round(2)
         df['Desconto_Max_Grafico'] = df['Desconto_Max'].apply(lambda x: x if x > 0 else 0)
 
         lucro_total = float((df[~df['Sem_Custo']]['Giro'] * df[~df['Sem_Custo']]['Margem_Contribuicao']).sum())
         ads_total = float(df['Custo_ADS'].sum())
+        faturamento_total = float(df['Faturamento'].sum())
         
         timeline_ordenada = dict(sorted(timeline.items()))
         grafico_dados = { "labels": list(timeline_ordenada.keys()), "faturamento": [v['faturamento'] for v in timeline_ordenada.values()], "lucro": [v['lucro'] for v in timeline_ordenada.values()] }
+
+        # --- PROCESSAMENTO: CURVA ABC NO BACKEND ---
+        df_abc = df[df['Faturamento'] > 0].sort_values(by='Faturamento', ascending=False)
+        faturamento_acumulado = 0
+        curva_abc = []
+        for _, row in df_abc.iterrows():
+            faturamento_acumulado += row['Faturamento']
+            pct_acumulada = (faturamento_acumulado / faturamento_total) * 100 if faturamento_total > 0 else 0
+            pct_total = (row['Faturamento'] / faturamento_total) * 100 if faturamento_total > 0 else 0
+            classe = 'A' if pct_acumulada <= 80 else ('B' if pct_acumulada <= 95 else 'C')
+            curva_abc.append({
+                'ID': row['ID'], 'Produto': row['Produto'], 'Faturamento': row['Faturamento'], 
+                'Percentual': round(pct_total, 1), 'Classe': classe
+            })
+
+        # --- PROCESSAMENTO: DIAGNÓSTICO DO PREÇO NO BACKEND ---
+        diagnosticos = []
+        for _, row in df.iterrows():
+            if row['Sem_Custo'] or row['Giro'] == 0: continue
+            margem_pct = (row['Margem_Contribuicao'] / row['Ticket_Medio']) * 100 if row['Ticket_Medio'] > 0 else 0
+            
+            if margem_pct > 30 and row['Giro'] < 5:
+                diagnosticos.append({
+                    'tipo': 'escala', 'titulo': 'Potencial de Escala', 'produto': row['Produto'],
+                    'mensagem': f"A sua Margem de Contribuição está alta ({margem_pct:.1f}%), mas vendeu apenas {row['Giro']} unidades. Teste reduzir o preço em 5% a 10% para ganhar tração e aumentar o Lucro Bruto total."
+                })
+            elif 0 < margem_pct < 15 and row['Custo_ADS'] > 0:
+                diagnosticos.append({
+                    'tipo': 'alerta_ads', 'titulo': 'Alerta de ADS', 'produto': row['Produto'],
+                    'mensagem': f"A sua Margem de Contribuição é de apenas {margem_pct:.1f}% e o ADS está ativo. Vigie de perto para garantir que o ACOS não consome todo o seu Lucro Bruto."
+                })
 
         # --- BUSCA DO ESTOQUE PARADO ---
         url_itens_ativos = f"https://api.mercadolibre.com/users/{ml_seller_id}/items/search?status=active&limit=50"
@@ -312,7 +336,6 @@ def api_dados():
         try:
             res_itens = requests.get(url_itens_ativos, headers=headers).json()
             todos_itens = res_itens.get('results', [])
-            
             itens_parados_ids = [i for i in todos_itens if i not in agrupado]
             if itens_parados_ids:
                 for i in range(0, len(itens_parados_ids), 20):
@@ -324,17 +347,15 @@ def api_dados():
                         if item_obj.get('code') == 200:
                             body = item_obj['body']
                             estoque_parado.append({
-                                'ID': body.get('id'),
-                                'Produto': body.get('title'),
-                                'Preco': body.get('price'),
-                                'Disponivel': body.get('available_quantity', 0),
+                                'ID': body.get('id'), 'Produto': body.get('title'),
+                                'Preco': body.get('price'), 'Disponivel': body.get('available_quantity', 0),
                                 'Link': body.get('permalink', '#')
                             })
         except Exception as e:
             print("Aviso Estoque Parado:", e)
 
         kpis = {
-            "faturamento": f"R$ {float(df['Faturamento'].sum()):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+            "faturamento": f"R$ {faturamento_total:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
             "lucro": f"R$ {lucro_total:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
             "ads": f"R$ {ads_total:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
             "unidades": str(int(df['Giro'].sum())),
@@ -343,7 +364,14 @@ def api_dados():
             "imposto_padrao": imposto_padrao_pct
         }
 
-        return jsonify({"kpis": kpis, "tabela": df.to_dict(orient='records'), "grafico": grafico_dados, "estoque_parado": estoque_parado})
+        return jsonify({
+            "kpis": kpis, 
+            "tabela": df.to_dict(orient='records'), 
+            "grafico": grafico_dados, 
+            "estoque_parado": estoque_parado,
+            "abc": curva_abc,
+            "diagnosticos": diagnosticos
+        })
 
     except Exception as e:
         return jsonify({"erro": str(e)}), 500

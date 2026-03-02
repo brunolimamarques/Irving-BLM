@@ -218,16 +218,15 @@ def api_dados():
                 
                 custo_cmv = float(custos_db.get(item_id, 0))
                 
-                # --- CORREÇÃO DO CUSTO FIXO E COMISSÃO ---
-                comissao_unitaria = float(item.get('sale_fee') or (price * 0.16))
-                
-                # O ML cobra R$ 6,00 fixos para anúncios abaixo de R$ 79,00
-                custo_fixo_unidade = 6.00 if price < 79 else 0.00
+                # --- TARIFA EXATA DA API (COMISSÃO % + FIXO) ---
+                # A API retorna no 'sale_fee' o valor EXATO total que o ML descontou por esta linha de pedido
+                comissao_total_linha = float(item.get('sale_fee', 0))
+                tarifa_ml_unitaria = comissao_total_linha / qty if qty > 0 else 0
                 
                 imposto_reais = price * (imposto_padrao_pct / 100)
                 
-                # Lucro abate TODOS os custos (CMV, Frete Exato, Comissão %, Custo Fixo de R$ 6,00 e Imposto)
-                lucro_unidade_base = price - custo_cmv - custo_envio_unidade - comissao_unitaria - custo_fixo_unidade - imposto_reais
+                # O lucro deduz a tarifa exata lida na fatura
+                lucro_unidade_base = price - custo_cmv - custo_envio_unidade - tarifa_ml_unitaria - imposto_reais
                 
                 timeline[data_venda]['faturamento'] += (price * qty)
                 if custo_cmv > 0: timeline[data_venda]['lucro'] += (lucro_unidade_base * qty)
@@ -235,15 +234,14 @@ def api_dados():
                 if item_id not in agrupado:
                     agrupado[item_id] = {
                         'Produto': title, 'Giro': 0, 'Faturamento': 0, 'Ticket_Medio': price,
-                        'Custo_CMV': custo_cmv, 'Custo_Frete': 0, 'Custo_Comissao': 0, 'Custo_Fixo': 0,
+                        'Custo_CMV': custo_cmv, 'Custo_Frete': 0, 'Custo_Tarifa_ML': 0,
                         'Custo_Imposto': 0, 'Custo_ADS': 0, 'Margem_Contribuicao': 0, 'Sem_Custo': (custo_cmv == 0)
                     }
                 
                 agrupado[item_id]['Giro'] += qty
                 agrupado[item_id]['Faturamento'] += (price * qty)
                 agrupado[item_id]['Custo_Frete'] += (custo_envio_unidade * qty)
-                agrupado[item_id]['Custo_Comissao'] += (comissao_unitaria * qty)
-                agrupado[item_id]['Custo_Fixo'] += (custo_fixo_unidade * qty) # Sobe para a interface
+                agrupado[item_id]['Custo_Tarifa_ML'] += comissao_total_linha # Soma o total exato cobrado
                 agrupado[item_id]['Custo_Imposto'] += (imposto_reais * qty)
                 agrupado[item_id]['Margem_Contribuicao'] += (lucro_unidade_base * qty) 
 
@@ -273,9 +271,8 @@ def api_dados():
             dados_reais.append({
                 'ID': item_id, 'Produto': dados['Produto'], 'Ticket_Medio': dados['Ticket_Medio'],
                 'Faturamento': dados['Faturamento'], 'Giro': giro, 'Custo_Frete': dados['Custo_Frete'],
-                'Custo_Comissao': dados['Custo_Comissao'], 'Custo_Fixo': dados['Custo_Fixo'], 
-                'Custo_Imposto': dados['Custo_Imposto'], 'Custo_ADS': custo_ads_total, 
-                'Custo_CMV': dados['Custo_CMV'], 'Sem_Custo': dados['Sem_Custo'],
+                'Custo_Tarifa_ML': dados['Custo_Tarifa_ML'], 'Custo_Imposto': dados['Custo_Imposto'], 
+                'Custo_ADS': custo_ads_total, 'Custo_CMV': dados['Custo_CMV'], 'Sem_Custo': dados['Sem_Custo'],
                 'Margem_Contribuicao': margem_unitaria_final, 
                 'Giro_Ant': int(giro * 0.85), 'Margem_Ant': margem_unitaria_final * 0.9 
             })
@@ -328,16 +325,28 @@ def api_dados():
             if row['Sem_Custo'] or row['Giro'] == 0: continue
             margem_pct = (row['Margem_Contribuicao'] / row['Ticket_Medio']) * 100 if row['Ticket_Medio'] > 0 else 0
             
-            if margem_pct > 30 and row['Giro'] < 5:
+            # Nova regra para capturar Margem Negativa
+            if margem_pct < 0:
                 diagnosticos.append({
-                    'tipo': 'escala', 'titulo': 'Potencial de Escala', 'produto': row['Produto'],
-                    'mensagem': f"A sua Margem de Contribuição está alta ({margem_pct:.1f}%), mas vendeu apenas {row['Giro']} unidades. Teste reduzir o preço em 5% a 10% para ganhar tração e aumentar o Lucro Bruto total."
+                    'tipo': 'prejuizo', 'titulo': '🔴 Erro de Precificação', 'produto': row['Produto'],
+                    'mensagem': f"Prejuízo! A sua Margem de Contribuição está negativa ({margem_pct:.1f}%). Você perde R$ {abs(row['Margem_Contribuicao']):.2f} a cada venda. Revise o CMV ou aumente o preço urgentemente."
                 })
-            elif 0 < margem_pct < 15 and row['Custo_ADS'] > 0:
+            elif margem_pct > 30 and row['Giro'] < 5:
                 diagnosticos.append({
-                    'tipo': 'alerta_ads', 'titulo': 'Alerta de ADS', 'produto': row['Produto'],
-                    'mensagem': f"A sua Margem de Contribuição é de apenas {margem_pct:.1f}% e o ADS está ativo. Vigie de perto para garantir que o ACOS não consome todo o seu Lucro Bruto."
+                    'tipo': 'escala', 'titulo': '📉 Potencial de Escala', 'produto': row['Produto'],
+                    'mensagem': f"A sua Margem de Contribuição está alta ({margem_pct:.1f}%), mas vendeu pouco ({row['Giro']} unid). Teste reduzir o preço para ganhar tração."
                 })
+            elif 0 <= margem_pct < 15:
+                if row['Custo_ADS'] > 0:
+                    diagnosticos.append({
+                        'tipo': 'alerta_ads', 'titulo': '⚠️ Alerta de ADS', 'produto': row['Produto'],
+                        'mensagem': f"A sua Margem de Contribuição é baixa ({margem_pct:.1f}%) e o ADS está ligado. Vigie de perto para garantir que a publicidade não consome todo o seu Lucro Bruto."
+                    })
+                else:
+                    diagnosticos.append({
+                        'tipo': 'alerta_margem', 'titulo': '⚠️ Margem Espremida', 'produto': row['Produto'],
+                        'mensagem': f"A sua Margem de Contribuição está muito baixa ({margem_pct:.1f}%). Qualquer devolução ou aumento do frete pode causar prejuízo nesta operação."
+                    })
 
         # --- BUSCA DO ESTOQUE PARADO ---
         url_itens_ativos = f"https://api.mercadolibre.com/users/{ml_seller_id}/items/search?status=active&limit=50"

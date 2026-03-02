@@ -153,10 +153,10 @@
                             <div class="space-y-4 html2pdf__page-break-avoid">
                                 <h3 class="text-lg font-bold mb-2">System Alerts</h3>
                                 <div class="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 text-red-800 dark:text-red-400 text-sm hover:scale-[1.02] transition-transform cursor-default">
-                                    <strong class="block mb-2 font-bold flex items-center gap-2">⚠️ Suspensão (ML)</strong> Não adicione link nas perguntas dos anúncios.
+                                    <strong class="block mb-2 font-bold flex items-center gap-2">⚠️ Custo Fixo do ML</strong> O sistema agora deduz rigorosamente a Tarifa Fixa (R$ 6,00) de todos os produtos vendidos abaixo de R$ 79,00 para proteger o seu lucro.
                                 </div>
                                 <div class="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 text-blue-800 dark:text-blue-400 text-sm hover:scale-[1.02] transition-transform cursor-default">
-                                    <strong class="block mb-2 font-bold flex items-center gap-2">🚚 Frete Inteligente</strong> Puxamos o valor exato pago por você na etiqueta direto da API.
+                                    <strong class="block mb-2 font-bold flex items-center gap-2">🚚 Frete Inteligente</strong> Puxamos o valor exato pago por você na etiqueta direto da API, evitando "achismos" de custos logísticos.
                                 </div>
                             </div>
                         </div>
@@ -243,9 +243,9 @@
                             <div><label class="block text-sm font-bold mb-2">Comissão do ML (%)</label><input type="number" id="sim-comissao" value="16" class="w-full p-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 outline-none focus:border-blue-500" oninput="calcularSimulador()"></div>
                         </div>
 
-                        <div class="flex items-center gap-3 mb-8 p-4 bg-slate-100 dark:bg-slate-800/50 rounded-lg">
+                        <div class="flex items-center gap-3 mb-8 p-4 bg-slate-100 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
                             <input type="checkbox" id="sim-frete" class="w-5 h-5 rounded cursor-pointer" onchange="calcularSimulador()">
-                            <label for="sim-frete" class="font-medium cursor-pointer">Lojista paga o Frete? (R$ 18,50 deduzidos do lucro)</label>
+                            <label for="sim-frete" class="font-medium cursor-pointer">Lojista paga o Frete? (Dedução de R$ 18,50)</label>
                         </div>
 
                         <div class="border-t border-slate-200 dark:border-slate-700 pt-6">
@@ -416,12 +416,6 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
                 'diagnostico': "Diagnóstico do Preço", 'abc': "Inteligência de Catálogo", 'clientes': "Gestão de Clientes"
             };
             document.getElementById('titulo-pagina').innerText = titulos[aba];
-            
-            if(aba === 'custos') renderTabelaCustos();
-            if(aba === 'estoque') renderEstoqueParado();
-            if(aba === 'abc') renderCurvaABC();
-            if(aba === 'diagnostico') renderDiagnostico();
-            if(aba === 'clientes') carregarClientes();
         };
 
         window.calcularSimulador = () => {
@@ -434,10 +428,11 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
             if(preco >= 79 && !freteCheck.checked) freteCheck.checked = true;
 
             const frete = freteCheck.checked ? 18.50 : 0;
+            const custoFixo = preco < 79 ? 6.00 : 0; // TARIFA FIXA NO SIMULADOR
             const comissaoRS = preco * (comissaoPct / 100);
             const impostoRS = preco * (impostoPct / 100);
 
-            const lucroBruto = preco - cmv - frete - comissaoRS - impostoRS;
+            const lucroBruto = preco - cmv - frete - custoFixo - comissaoRS - impostoRS;
             const margem = preco > 0 ? (lucroBruto / preco) * 100 : 0;
 
             const elLucro = document.getElementById('sim-resultado-lucro');
@@ -615,14 +610,18 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
                 const espacoPromo = row.Sem_Custo ? `<span class="text-xs text-slate-500">-</span>` : `<div class="flex items-center gap-3"><div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 shadow-inner"><div class="${cor} h-2 rounded-full transition-all duration-1000 ease-out" style="width: ${Math.min(p, 100)}%"></div></div><span class="text-[11px] font-bold">${p.toFixed(1)}%</span></div>`;
                 const margemValor = row.Sem_Custo ? `<span class="text-slate-500 text-xs">Aguardando CMV</span>` : `<span class="font-bold text-base block">R$ ${row.Margem_Contribuicao.toFixed(2)}</span><span class="inline-block mt-1">${formatarTrend(row.MC_Trend)}</span>`;
 
-                const freteUn = (row.Custo_Frete / row.Giro).toFixed(2); const comissaoUn = (row.Custo_Comissao / row.Giro).toFixed(2);
-                const impostoUn = (row.Custo_Imposto / row.Giro).toFixed(2); const adsUn = row.Giro > 0 ? (row.Custo_ADS / row.Giro).toFixed(2) : '0.00';
+                const freteUn = (row.Custo_Frete / row.Giro).toFixed(2); 
+                const comissaoUn = (row.Custo_Comissao / row.Giro).toFixed(2);
+                const fixoUn = (row.Custo_Fixo / row.Giro).toFixed(2);
+                const impostoUn = (row.Custo_Imposto / row.Giro).toFixed(2); 
+                const adsUn = row.Giro > 0 ? (row.Custo_ADS / row.Giro).toFixed(2) : '0.00';
 
+                // Atualizado para incluir o Custo Fixo de forma limpa na interface
                 const custosHTML = `
                     <div class="text-[11px] text-slate-500 dark:text-slate-400 space-y-1.5">
-                        <div class="flex justify-between w-40"><span class="font-semibold text-slate-700 dark:text-slate-300">CMV:</span> <span>R$ ${row.Custo_CMV.toFixed(2)}</span> <span class="text-slate-300 dark:text-slate-600">|</span> <span class="font-semibold text-slate-700 dark:text-slate-300">ML:</span> <span>R$ ${comissaoUn}</span></div>
-                        <div class="flex justify-between w-40"><span class="font-semibold text-slate-700 dark:text-slate-300">Frete:</span> <span>R$ ${freteUn}</span> <span class="text-slate-300 dark:text-slate-600">|</span> <span class="font-semibold text-slate-700 dark:text-slate-300">Imp:</span> <span>R$ ${impostoUn}</span></div>
-                        <div class="flex justify-between w-40"><span class="font-semibold text-slate-700 dark:text-slate-300">ADS:</span> <span class="font-medium text-slate-600 dark:text-slate-300">R$ ${adsUn}</span></div>
+                        <div class="flex justify-between w-44"><span class="font-semibold text-slate-700 dark:text-slate-300">CMV:</span> <span>R$ ${row.Custo_CMV.toFixed(2)}</span> <span class="text-slate-300 dark:text-slate-600">|</span> <span class="font-semibold text-slate-700 dark:text-slate-300">% ML:</span> <span>R$ ${comissaoUn}</span></div>
+                        <div class="flex justify-between w-44"><span class="font-semibold text-slate-700 dark:text-slate-300">Frete:</span> <span>R$ ${freteUn}</span> <span class="text-slate-300 dark:text-slate-600">|</span> <span class="font-semibold text-slate-700 dark:text-slate-300">Fixo ML:</span> <span class="text-amber-600 dark:text-amber-400 font-bold">R$ ${fixoUn}</span></div>
+                        <div class="flex justify-between w-44"><span class="font-semibold text-slate-700 dark:text-slate-300">ADS:</span> <span class="font-medium text-slate-600 dark:text-slate-300">R$ ${adsUn}</span> <span class="text-slate-300 dark:text-slate-600">|</span> <span class="font-semibold text-slate-700 dark:text-slate-300">Imp:</span> <span>R$ ${impostoUn}</span></div>
                     </div>`;
 
                 const animDelay = index * 0.05;
@@ -637,13 +636,46 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
                         <td class="py-5 align-middle w-36 pr-2">${espacoPromo}</td>
                     </tr>`;
             });
-            if(!document.getElementById('aba-custos').classList.contains('hidden')) renderTabelaCustos();
-            if(!document.getElementById('aba-estoque').classList.contains('hidden')) renderEstoqueParado();
             
+            // RENDERS DE FUNDO (Agora a magia acontece sempre que os dados chegam!)
+            renderTabelaCustos();
+            renderEstoqueParado();
             renderDiagnostico();
             renderCurvaABC();
             calcularSimulador();
         }
+
+        window.renderTabelaCustos = () => {
+            const tbody = document.getElementById('tabela-custos'); tbody.innerHTML = '';
+            dadosAPI.forEach((row, index) => {
+                const borderClass = row.Sem_Custo ? 'border-amber-500/50 bg-amber-50 dark:bg-amber-500/5 ring-1 ring-amber-500/30' : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent';
+                const animDelay = index * 0.05;
+                tbody.innerHTML += `
+                    <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors animate-slide-up opacity-0" style="animation-delay: ${animDelay}s; animation-fill-mode: forwards;">
+                        <td class="py-5 align-middle"><p class="font-bold w-64 truncate text-slate-800 dark:text-white" title="${row.Produto}">${row.Produto}</p><p class="text-[11px] text-slate-400 mt-1.5">ID: <span class="select-all">${row.ID}</span></p></td>
+                        <td class="py-5 align-middle"><input type="number" id="custo-${row.ID}" value="${row.Custo_CMV}" step="0.01" class="w-32 p-2.5 rounded-lg border ${borderClass} text-slate-900 dark:text-white outline-none transition-all shadow-sm"></td>
+                        <td class="py-5 align-middle"><button onclick="salvarCusto('${row.ID}')" id="btn-salvar-${row.ID}" class="px-5 py-2.5 bg-slate-200 dark:bg-slate-700 hover:bg-blue-600 dark:hover:bg-blue-600 text-slate-800 dark:text-white hover:text-white rounded-lg text-sm transition-all duration-200 active:scale-95 font-bold shadow-sm hover:shadow-md">Salvar CMV</button></td>
+                    </tr>`;
+            });
+        };
+
+        window.renderEstoqueParado = () => {
+            const tbody = document.getElementById('tabela-estoque-corpo'); tbody.innerHTML = '';
+            if(dadosEstoque.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='4' class='py-12 text-center text-slate-500 font-medium'>Nenhum estoque parado encontrado. Ótimo trabalho!</td></tr>";
+                return;
+            }
+            dadosEstoque.forEach((row, index) => {
+                const animDelay = index * 0.05;
+                tbody.innerHTML += `
+                    <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors animate-slide-up opacity-0" style="animation-delay: ${animDelay}s; animation-fill-mode: forwards;">
+                        <td class="py-5 align-middle"><p class="font-bold w-64 truncate text-slate-800 dark:text-white" title="${row.Produto}">${row.Produto}</p><p class="text-[11px] text-slate-400 mt-1.5">ID: <span class="select-all">${row.ID}</span></p></td>
+                        <td class="py-5 align-middle font-medium text-slate-800 dark:text-slate-300">R$ ${row.Preco.toFixed(2)}</td>
+                        <td class="py-5 align-middle"><span class="px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded text-xs font-bold shadow-sm">${row.Disponivel} un</span></td>
+                        <td class="py-5 align-middle text-center"><a href="${row.Link}" target="_blank" class="px-5 py-2.5 bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-500/30 rounded-lg text-sm transition-all duration-200 font-bold shadow-sm inline-block">Ver Anúncio</a></td>
+                    </tr>`;
+            });
+        };
     </script>
 </body>
 </html>

@@ -175,7 +175,7 @@ def api_dados():
         
         if not resultados: return jsonify({"erro": "vazio", "imposto_padrao": imposto_padrao_pct})
 
-        # --- BUSCA EXATA DOS FRETES DIRETAMENTE DO SHIPMENT ---
+        # --- BUSCA EXATA DOS FRETES DIRETAMENTE DA TARIFA DO VENDEDOR ---
         shipping_ids = [str(o.get('shipping', {}).get('id')) for o in resultados if o.get('shipping', {}).get('id')]
         custos_frete_reais = {}
         if shipping_ids:
@@ -191,16 +191,33 @@ def api_dados():
                             ship_body = ship_info.get('body', {})
                             s_id = str(ship_body.get('id'))
                             
-                            # O base_cost é o custo total da etiqueta. Se for 0, busca o list_cost.
-                            base = float(ship_body.get('base_cost') or ship_body.get('shipping_option', {}).get('list_cost', 0) or 0)
-                            # buyer_pays é o que o cliente pagou.
-                            buyer_pays = float(ship_body.get('shipping_option', {}).get('cost', 0) or 0)
+                            base = float(ship_body.get('base_cost') or ship_body.get('shipping_option', {}).get('list_cost') or 0)
+                            buyer_pays = float(ship_body.get('shipping_option', {}).get('cost') or 0)
                             
-                            # O custo EXATO deduzido do lojista é a diferença. Se for menor que 0, é 0.
-                            seller_freight = base - buyer_pays
-                            custos_frete_reais[s_id] = max(0, seller_freight)
+                            # Se o frete é por conta do vendedor (frete grátis) ou full, extrai a nota real
+                            if base > buyer_pays or str(ship_body.get('logistic_type')) == 'fulfillment':
+                                url_costs = f"https://api.mercadolibre.com/shipments/{s_id}/costs"
+                                res_costs = requests.get(url_costs, headers=headers)
+                                if res_costs.status_code == 200:
+                                    data_costs = res_costs.json()
+                                    # senders contém o valor líquido cobrado após os descontos de reputação
+                                    if 'senders' in data_costs and data_costs['senders']:
+                                        custos_frete_reais[s_id] = sum([float(s.get('amount', 0)) for s in data_costs['senders']])
+                                    else:
+                                        custos_frete_reais[s_id] = max(0, base - buyer_pays)
+                                else:
+                                    custos_frete_reais[s_id] = max(0, base - buyer_pays)
+                            else:
+                                custos_frete_reais[s_id] = 0
                 except Exception as e:
-                    print("Erro Frete:", e)
+                    print("Erro Frete Lote:", e)
+
+        # Ratear o frete para evitar duplicação em vendas de "Carrinho"
+        qty_por_shipment = {}
+        for order in resultados:
+            ship_id = str(order.get('shipping', {}).get('id', ''))
+            if ship_id:
+                qty_por_shipment[ship_id] = qty_por_shipment.get(ship_id, 0) + sum(item['quantity'] for item in order.get('order_items', []))
 
         agrupado = {}
         timeline = {}
@@ -212,11 +229,11 @@ def api_dados():
             ship_id = str(order.get('shipping', {}).get('id', ''))
             frete_total_pedido = custos_frete_reais.get(ship_id, 0)
             
-            order_items = order.get('order_items', [])
-            total_qty_order = sum(item['quantity'] for item in order_items)
-            custo_envio_unidade = frete_total_pedido / total_qty_order if total_qty_order > 0 else 0
+            # Rateio inteligente pela etiqueta inteira do carrinho!
+            total_qty_pack = qty_por_shipment.get(ship_id, 1)
+            custo_envio_unidade = frete_total_pedido / total_qty_pack if total_qty_pack > 0 else 0
             
-            for item in order_items:
+            for item in order.get('order_items', []):
                 item_id = item['item']['id']
                 title = item['item']['title']
                 qty = item['quantity']
@@ -224,10 +241,8 @@ def api_dados():
                 
                 custo_cmv = float(custos_db.get(item_id, 0))
                 
-                # --- A MÁGICA ACONTECE AQUI: EXTRAÇÃO DIRETA DO VALOR DA API ---
-                # A API retorna no 'sale_fee' o valor EXATO por unidade descontado (já com Fixo e %). Sem achismos.
+                # A API retorna no 'sale_fee' o valor EXATO por unidade descontado de comissão e fixo
                 tarifa_ml_unitaria = float(item.get('sale_fee', 0))
-                
                 imposto_reais = price * (imposto_padrao_pct / 100)
                 
                 lucro_unidade_base = price - custo_cmv - custo_envio_unidade - tarifa_ml_unitaria - imposto_reais

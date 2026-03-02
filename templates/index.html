@@ -153,10 +153,10 @@
                             <div class="space-y-4 html2pdf__page-break-avoid">
                                 <h3 class="text-lg font-bold mb-2">System Alerts</h3>
                                 <div class="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 text-blue-800 dark:text-blue-400 text-sm hover:scale-[1.02] transition-transform cursor-default">
-                                    <strong class="block mb-2 font-bold flex items-center gap-2">✅ Precisão Total na Tarifa</strong> A coluna "Tarifa ML" puxa exatamente o valor em centavos descontado na nota de venda, sem adivinhações.
+                                    <strong class="block mb-2 font-bold flex items-center gap-2">✅ Tarifa Exata ML</strong> O campo "Tarifa ML" agora extrai da API o valor idêntico descontado da sua conta (já incluindo taxas fixas e comissões da categoria).
                                 </div>
                                 <div class="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 text-blue-800 dark:text-blue-400 text-sm hover:scale-[1.02] transition-transform cursor-default">
-                                    <strong class="block mb-2 font-bold flex items-center gap-2">🚚 Frete Inteligente</strong> Puxamos o valor exato pago por você na etiqueta direto da API, evitando surpresas logísticas.
+                                    <strong class="block mb-2 font-bold flex items-center gap-2">🚚 Frete Blindado</strong> Lemos a fatura da etiqueta de envio (base_cost) e deduzimos o que o comprador pagou. Diferença zero.
                                 </div>
                             </div>
                         </div>
@@ -240,12 +240,18 @@
                             <div><label class="block text-sm font-bold mb-2">Preço de Venda (R$)</label><input type="number" id="sim-preco" value="100" class="w-full p-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 outline-none focus:border-blue-500" oninput="calcularSimulador()"></div>
                             <div><label class="block text-sm font-bold mb-2">Custo de Compra (CMV) (R$)</label><input type="number" id="sim-cmv" value="30" class="w-full p-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 outline-none focus:border-blue-500" oninput="calcularSimulador()"></div>
                             <div><label class="block text-sm font-bold mb-2">Imposto da Empresa (%)</label><input type="number" id="sim-imposto" value="6" class="w-full p-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 outline-none focus:border-blue-500" oninput="calcularSimulador()"></div>
-                            <div><label class="block text-sm font-bold mb-2">Comissão do ML (%)</label><input type="number" id="sim-comissao" value="16" class="w-full p-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 outline-none focus:border-blue-500" oninput="calcularSimulador()"></div>
+                            <div><label class="block text-sm font-bold mb-2">Comissão Base Categoria (%)</label><input type="number" id="sim-comissao" value="16" class="w-full p-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 outline-none focus:border-blue-500" oninput="calcularSimulador()"></div>
                         </div>
 
-                        <div class="flex items-center gap-3 mb-8 p-4 bg-slate-100 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-                            <input type="checkbox" id="sim-frete" class="w-5 h-5 rounded cursor-pointer" onchange="calcularSimulador()">
-                            <label for="sim-frete" class="font-medium cursor-pointer">Lojista paga o Frete? (Dedução de R$ 18,50)</label>
+                        <div class="flex flex-col gap-4 mb-8 p-5 bg-slate-100 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                            <div class="flex items-center gap-3">
+                                <input type="checkbox" id="sim-fixo" class="w-5 h-5 rounded cursor-pointer" onchange="calcularSimulador()">
+                                <label for="sim-fixo" class="font-medium cursor-pointer">Adicionar Custo Fixo de R$ 6,00 (Produtos abaixo de R$ 79)</label>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <input type="checkbox" id="sim-frete" class="w-5 h-5 rounded cursor-pointer" onchange="calcularSimulador()">
+                                <label for="sim-frete" class="font-medium cursor-pointer">Lojista paga o Frete? (Dedução de R$ 18,50)</label>
+                            </div>
                         </div>
 
                         <div class="border-t border-slate-200 dark:border-slate-700 pt-6">
@@ -424,12 +430,15 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
             const impostoPct = parseFloat(document.getElementById('sim-imposto').value) || 0;
             const comissaoPct = parseFloat(document.getElementById('sim-comissao').value) || 0;
             
+            const fixoCheck = document.getElementById('sim-fixo');
+            if(preco < 79 && !fixoCheck.checked && preco > 0) fixoCheck.checked = true; // Auto-check if < 79
+            if(preco >= 79) fixoCheck.checked = false; // Auto-uncheck if >= 79
+
             const freteCheck = document.getElementById('sim-frete');
-            if(preco >= 79 && !freteCheck.checked) freteCheck.checked = true;
+            if(preco >= 79 && !freteCheck.checked && preco > 0) freteCheck.checked = true; // Auto-check if >= 79
 
             const frete = freteCheck.checked ? 18.50 : 0;
-            // O Simulador ainda precisa calcular a Tarifa Fixa (R$ 6) manualmente para testar o preço
-            const custoFixo = preco < 79 ? 6.00 : 0; 
+            const custoFixo = fixoCheck.checked ? 6.00 : 0; 
             const comissaoRS = preco * (comissaoPct / 100);
             const impostoRS = preco * (impostoPct / 100);
 
@@ -468,7 +477,7 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
             const container = document.getElementById('lista-diagnostico');
             container.innerHTML = '';
             if(dadosDiagnostico.length === 0 && dadosAPI.length > 0) {
-                container.innerHTML = `<div class="col-span-1 md:col-span-2 p-8 text-center rounded-xl border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50/50 dark:bg-emerald-900/10"><span class="text-4xl mb-3 block">🏆</span><h4 class="font-bold text-emerald-700 dark:text-emerald-400 text-lg">Precificação Saudável</h4><p class="text-sm text-slate-600 dark:text-slate-400 mt-2">O <b>Diagnóstico do Preço</b> não encontrou nenhuma discrepância crítica. A sua operação está otimizada!</p></div>`;
+                container.innerHTML = `<div class="col-span-1 md:col-span-2 p-8 text-center rounded-xl border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50/50 dark:bg-emerald-900/10"><span class="text-4xl mb-3 block">🏆</span><h4 class="font-bold text-emerald-700 dark:text-emerald-400 text-lg">Precificação Saudável</h4><p class="text-sm text-slate-600 dark:text-slate-400 mt-2">Nenhuma discrepância crítica detectada. Operação otimizada!</p></div>`;
                 return;
             }
             dadosDiagnostico.forEach((diag, index) => {
@@ -626,7 +635,6 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
                 const impostoUn = (row.Custo_Imposto / row.Giro).toFixed(2); 
                 const adsUn = row.Giro > 0 ? (row.Custo_ADS / row.Giro).toFixed(2) : '0.00';
 
-                // Agora exibimos TARIFA ML de forma consolidada, que é o valor exato da nota.
                 const custosHTML = `
                     <div class="text-[11px] text-slate-500 dark:text-slate-400 space-y-1.5">
                         <div class="flex justify-between w-44"><span class="font-semibold text-slate-700 dark:text-slate-300">CMV:</span> <span>R$ ${row.Custo_CMV.toFixed(2)}</span> <span class="text-slate-300 dark:text-slate-600">|</span> <span class="font-semibold text-slate-700 dark:text-slate-300">Tarifa ML:</span> <span class="text-amber-600 dark:text-amber-400 font-bold">R$ ${tarifaMLUn}</span></div>

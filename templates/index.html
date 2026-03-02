@@ -128,7 +128,8 @@
                                         <tr class="text-slate-500 border-b border-slate-200 dark:border-slate-700">
                                             <th class="pb-4 font-semibold">Produto</th><th class="pb-4 font-semibold">Faturamento (Giro)</th>
                                             <th class="pb-4 font-semibold">Preço (Ticket)</th><th class="pb-4 font-semibold">Custos Unitários</th>
-                                            <th class="pb-4 font-semibold">Margem de Contribuição</th><th class="pb-4 font-semibold">Status</th><th class="pb-4 font-semibold">Espaço Promo (+15%)</th>
+                                            <th class="pb-4 font-semibold">Margem de Contribuição</th><th class="pb-4 font-semibold">Status</th>
+                                            <th class="pb-4 font-semibold">Promo máx</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tabela-corpo"></tbody>
@@ -141,7 +142,7 @@
                                 <strong class="block mb-2 font-bold flex items-center gap-2">⚠️ Suspensão (ML)</strong> Não adicione link nas perguntas dos anúncios para evitar suspensão.
                             </div>
                             <div class="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 text-blue-800 dark:text-blue-400 text-sm hover:scale-[1.02] transition-transform cursor-default">
-                                <strong class="block mb-2 font-bold flex items-center gap-2">🚚 Frete Grátis</strong> Tenha cuidado na precificação quando oferecer Frete Grátis.
+                                <strong class="block mb-2 font-bold flex items-center gap-2">🚚 Frete Grátis</strong> Custo de frete atualizado: descontamos R$ 18,50 apenas em produtos >= R$ 79,00.
                             </div>
                         </div>
                     </div>
@@ -453,7 +454,7 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
             atualizarGrafico(data.grafico);
 
             dadosAPI = data.tabela;
-            dadosEstoque = data.estoque_parado || []; // Salva o estoque parado
+            dadosEstoque = data.estoque_parado || []; 
             
             const tbody = document.getElementById('tabela-corpo'); tbody.innerHTML = ''; 
             

@@ -138,7 +138,7 @@ def salvar_imposto():
     db.collection('configuracoes').document(uid).set({'imposto_padrao': float(request.json.get('imposto', 0))}, merge=True)
     return jsonify({"status": "sucesso"})
 
-# --- 5. MOTOR FINANCEIRO ---
+# --- 5. MOTOR FINANCEIRO (DADOS REAIS DA API) ---
 @app.route('/api/dados')
 def api_dados():
     uid = verificar_token(request)
@@ -175,7 +175,7 @@ def api_dados():
         
         if not resultados: return jsonify({"erro": "vazio", "imposto_padrao": imposto_padrao_pct})
 
-        # --- BUSCA EXATA DOS FRETES ---
+        # --- BUSCA EXATA DOS FRETES DIRETAMENTE DO SHIPMENT ---
         shipping_ids = [str(o.get('shipping', {}).get('id')) for o in resultados if o.get('shipping', {}).get('id')]
         custos_frete_reais = {}
         if shipping_ids:
@@ -190,9 +190,15 @@ def api_dados():
                         if ship_info.get('code') == 200:
                             ship_body = ship_info.get('body', {})
                             s_id = str(ship_body.get('id'))
-                            base = float(ship_body.get('base_cost', 0) or 0)
+                            
+                            # O base_cost é o custo total da etiqueta. Se for 0, busca o list_cost.
+                            base = float(ship_body.get('base_cost') or ship_body.get('shipping_option', {}).get('list_cost', 0) or 0)
+                            # buyer_pays é o que o cliente pagou.
                             buyer_pays = float(ship_body.get('shipping_option', {}).get('cost', 0) or 0)
-                            custos_frete_reais[s_id] = max(0, base - buyer_pays)
+                            
+                            # O custo EXATO deduzido do lojista é a diferença. Se for menor que 0, é 0.
+                            seller_freight = base - buyer_pays
+                            custos_frete_reais[s_id] = max(0, seller_freight)
                 except Exception as e:
                     print("Erro Frete:", e)
 
@@ -218,14 +224,12 @@ def api_dados():
                 
                 custo_cmv = float(custos_db.get(item_id, 0))
                 
-                # --- TARIFA EXATA DA API (COMISSÃO % + FIXO) ---
-                # A API retorna no 'sale_fee' o valor EXATO total que o ML descontou por esta linha de pedido
-                comissao_total_linha = float(item.get('sale_fee', 0))
-                tarifa_ml_unitaria = comissao_total_linha / qty if qty > 0 else 0
+                # --- A MÁGICA ACONTECE AQUI: EXTRAÇÃO DIRETA DO VALOR DA API ---
+                # A API retorna no 'sale_fee' o valor EXATO por unidade descontado (já com Fixo e %). Sem achismos.
+                tarifa_ml_unitaria = float(item.get('sale_fee', 0))
                 
                 imposto_reais = price * (imposto_padrao_pct / 100)
                 
-                # O lucro deduz a tarifa exata lida na fatura
                 lucro_unidade_base = price - custo_cmv - custo_envio_unidade - tarifa_ml_unitaria - imposto_reais
                 
                 timeline[data_venda]['faturamento'] += (price * qty)
@@ -241,7 +245,7 @@ def api_dados():
                 agrupado[item_id]['Giro'] += qty
                 agrupado[item_id]['Faturamento'] += (price * qty)
                 agrupado[item_id]['Custo_Frete'] += (custo_envio_unidade * qty)
-                agrupado[item_id]['Custo_Tarifa_ML'] += comissao_total_linha # Soma o total exato cobrado
+                agrupado[item_id]['Custo_Tarifa_ML'] += (tarifa_ml_unitaria * qty)
                 agrupado[item_id]['Custo_Imposto'] += (imposto_reais * qty)
                 agrupado[item_id]['Margem_Contribuicao'] += (lucro_unidade_base * qty) 
 
@@ -305,7 +309,7 @@ def api_dados():
         timeline_ordenada = dict(sorted(timeline.items()))
         grafico_dados = { "labels": list(timeline_ordenada.keys()), "faturamento": [v['faturamento'] for v in timeline_ordenada.values()], "lucro": [v['lucro'] for v in timeline_ordenada.values()] }
 
-        # --- PROCESSAMENTO: CURVA ABC NO BACKEND ---
+        # --- PROCESSAMENTO: CURVA ABC ---
         df_abc = df[df['Faturamento'] > 0].sort_values(by='Faturamento', ascending=False)
         faturamento_acumulado = 0
         curva_abc = []
@@ -319,34 +323,49 @@ def api_dados():
                 'Percentual': round(pct_total, 1), 'Classe': classe
             })
 
-        # --- PROCESSAMENTO: DIAGNÓSTICO DO PREÇO NO BACKEND ---
+        # --- PROCESSAMENTO: DIAGNÓSTICO DO PREÇO ---
         diagnosticos = []
+        sem_cmv_count = 0
+        
         for _, row in df.iterrows():
-            if row['Sem_Custo'] or row['Giro'] == 0: continue
+            if row['Sem_Custo']:
+                sem_cmv_count += 1
+                continue
+                
+            if row['Giro'] == 0: continue
+            
             margem_pct = (row['Margem_Contribuicao'] / row['Ticket_Medio']) * 100 if row['Ticket_Medio'] > 0 else 0
             
-            # Nova regra para capturar Margem Negativa
             if margem_pct < 0:
                 diagnosticos.append({
                     'tipo': 'prejuizo', 'titulo': '🔴 Erro de Precificação', 'produto': row['Produto'],
-                    'mensagem': f"Prejuízo! A sua Margem de Contribuição está negativa ({margem_pct:.1f}%). Você perde R$ {abs(row['Margem_Contribuicao']):.2f} a cada venda. Revise o CMV ou aumente o preço urgentemente."
-                })
-            elif margem_pct > 30 and row['Giro'] < 5:
-                diagnosticos.append({
-                    'tipo': 'escala', 'titulo': '📉 Potencial de Escala', 'produto': row['Produto'],
-                    'mensagem': f"A sua Margem de Contribuição está alta ({margem_pct:.1f}%), mas vendeu pouco ({row['Giro']} unid). Teste reduzir o preço para ganhar tração."
+                    'mensagem': f"Prejuízo! Margem negativa ({margem_pct:.1f}%). Você perde R$ {abs(row['Margem_Contribuicao']):.2f} a cada venda."
                 })
             elif 0 <= margem_pct < 15:
                 if row['Custo_ADS'] > 0:
                     diagnosticos.append({
                         'tipo': 'alerta_ads', 'titulo': '⚠️ Alerta de ADS', 'produto': row['Produto'],
-                        'mensagem': f"A sua Margem de Contribuição é baixa ({margem_pct:.1f}%) e o ADS está ligado. Vigie de perto para garantir que a publicidade não consome todo o seu Lucro Bruto."
+                        'mensagem': f"Margem espremida ({margem_pct:.1f}%) e ADS ativo. O custo do anúncio pode engolir seu lucro."
                     })
                 else:
                     diagnosticos.append({
-                        'tipo': 'alerta_margem', 'titulo': '⚠️ Margem Espremida', 'produto': row['Produto'],
-                        'mensagem': f"A sua Margem de Contribuição está muito baixa ({margem_pct:.1f}%). Qualquer devolução ou aumento do frete pode causar prejuízo nesta operação."
+                        'tipo': 'alerta_margem', 'titulo': '⚠️ Margem Baixa', 'produto': row['Produto'],
+                        'mensagem': f"Sua Margem de Contribuição está no limite ({margem_pct:.1f}%). Risco de prejuízo se houver devoluções."
                     })
+            elif margem_pct > 30 and row['Giro'] < 5:
+                diagnosticos.append({
+                    'tipo': 'escala', 'titulo': '📉 Potencial de Escala', 'produto': row['Produto'],
+                    'mensagem': f"Sua Margem está excelente ({margem_pct:.1f}%), mas vendeu pouco ({row['Giro']} unid). Teste baixar o preço para atrair mais compras."
+                })
+
+        # Adiciona um aviso consolidado se faltar CMV
+        if sem_cmv_count > 0:
+            diagnosticos.insert(0, {
+                'tipo': 'alerta_cmv', 'titulo': '⚠️ Preencha o Custo de Compra', 'produto': f"{sem_cmv_count} produtos sem CMV na API",
+                'mensagem': "Acesse a aba 'Gestão de Custos'. A IA saltou estes produtos porque precisa do custo da mercadoria para calcular lucros e prejuízos."
+            })
+            
+        diagnosticos = diagnosticos[:6] # Mostra apenas os top 6 para não poluir
 
         # --- BUSCA DO ESTOQUE PARADO ---
         url_itens_ativos = f"https://api.mercadolibre.com/users/{ml_seller_id}/items/search?status=active&limit=50"

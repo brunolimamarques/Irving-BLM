@@ -7,6 +7,7 @@ import requests
 import pandas as pd
 from datetime import datetime, timedelta
 import urllib.parse
+import concurrent.futures  # <--- NOVA BIBLIOTECA PARA PROCESSAMENTO PARALELO
 
 app = Flask(__name__)
 
@@ -175,51 +176,47 @@ def api_dados():
         
         if not resultados: return jsonify({"erro": "vazio", "imposto_padrao": imposto_padrao_pct})
 
-        # --- BUSCA EXATA DOS FRETES (Á PROVA DE CRASH E COPARTICIPAÇÃO) ---
+        # --- BUSCA EXATA DOS FRETES (VIA FATURA COM MULTITHREADING) ---
         shipping_ids = [str(o.get('shipping', {}).get('id')) for o in resultados if o.get('shipping', {}).get('id')]
         custos_frete_reais = {}
+        
+        def buscar_frete_exato(s_id):
+            # Acesso direto à fatura da etiqueta de envio
+            url_costs = f"https://api.mercadolibre.com/shipments/{s_id}/costs"
+            try:
+                res_costs = requests.get(url_costs, headers=headers, timeout=5)
+                if res_costs.status_code == 200:
+                    data = res_costs.json()
+                    # A rota /costs retorna a fatura detalhada. 'senders' contém o valor descontado do vendedor
+                    if 'senders' in data and data['senders']:
+                        return s_id, sum([float(s.get('amount', 0)) for s in data['senders']])
+                    return s_id, 0
+            except Exception:
+                pass
+            
+            # Fallback de emergência (raro de ocorrer com Multithreading)
+            url_ship = f"https://api.mercadolibre.com/shipments/{s_id}"
+            try:
+                res_ship = requests.get(url_ship, headers=headers, timeout=5)
+                if res_ship.status_code == 200:
+                    body = res_ship.json()
+                    base = float(body.get('base_cost') or 0)
+                    buyer = float(body.get('shipping_option', {}).get('cost') or 0)
+                    if base > buyer:
+                        return s_id, (base - buyer)
+            except Exception:
+                pass
+                
+            return s_id, 0
+
+        # Dispara 20 requisições simultâneas para coletar os fretes instantaneamente
         if shipping_ids:
             shipping_ids = list(set(shipping_ids))
-            for i in range(0, len(shipping_ids), 50):
-                lote = shipping_ids[i:i+50]
-                ids_str = ",".join(lote)
-                url_ship = f"https://api.mercadolibre.com/shipments?ids={ids_str}"
-                try:
-                    res_ship_response = requests.get(url_ship, headers=headers, timeout=20)
-                    if res_ship_response.status_code == 200:
-                        res_ship = res_ship_response.json()
-                        
-                        # Evita o crash silencioso caso a API devolva um objeto de erro em vez de lista
-                        if isinstance(res_ship, list):
-                            for ship_info in res_ship:
-                                if isinstance(ship_info, dict) and ship_info.get('code') == 200:
-                                    ship_body = ship_info.get('body', {})
-                                    s_id = str(ship_body.get('id'))
-                                    
-                                    shipping_option = ship_body.get('shipping_option') or {}
-                                    buyer_pays = float(shipping_option.get('cost') or 0)
-                                    list_cost = float(shipping_option.get('list_cost') or 0)
-                                    base_cost = float(ship_body.get('base_cost') or 0)
-                                    
-                                    # REGRA MATEMÁTICA DEFINITIVA:
-                                    # 1. Frete Totalmente Grátis (O ML já coloca a sua parte exata no base_cost)
-                                    if buyer_pays == 0:
-                                        seller_freight = base_cost
-                                    
-                                    # 2. Cliente Pagou Tudo (Nenhum custo extra para si)
-                                    elif (list_cost > 0 and buyer_pays >= list_cost) or (list_cost == 0 and buyer_pays >= base_cost):
-                                        seller_freight = 0
-                                        
-                                    # 3. Coparticipação (Vocês dividiram)
-                                    else:
-                                        etiqueta_total = max(base_cost, list_cost)
-                                        seller_freight = max(0, etiqueta_total - buyer_pays)
-                                        
-                                    custos_frete_reais[s_id] = seller_freight
-                        else:
-                            print("ML retornou erro de limite no lote.")
-                except Exception as e:
-                    print(f"Erro ao analisar frete do lote {i}:", e)
+            with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+                futures = [executor.submit(buscar_frete_exato, sid) for sid in shipping_ids]
+                for future in concurrent.futures.as_completed(futures):
+                    sid, custo = future.result()
+                    custos_frete_reais[sid] = custo
 
         # Ratear o frete para evitar duplicação em vendas de "Carrinho"
         qty_por_shipment = {}

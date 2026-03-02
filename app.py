@@ -138,7 +138,7 @@ def salvar_imposto():
     db.collection('configuracoes').document(uid).set({'imposto_padrao': float(request.json.get('imposto', 0))}, merge=True)
     return jsonify({"status": "sucesso"})
 
-# --- 5. MOTOR FINANCEIRO ---
+# --- 5. MOTOR FINANCEIRO (COM FRETE EXATO) ---
 @app.route('/api/dados')
 def api_dados():
     uid = verificar_token(request)
@@ -175,28 +175,52 @@ def api_dados():
         
         if not resultados: return jsonify({"erro": "vazio", "imposto_padrao": imposto_padrao_pct})
 
+        # --- BUSCA EXATA DOS FRETES (NOVA INTELIGÊNCIA) ---
+        shipping_ids = [str(o.get('shipping', {}).get('id')) for o in resultados if o.get('shipping', {}).get('id')]
+        custos_frete_reais = {}
+        if shipping_ids:
+            shipping_ids = list(set(shipping_ids))
+            for i in range(0, len(shipping_ids), 50):
+                lote = shipping_ids[i:i+50]
+                ids_str = ",".join(lote)
+                url_ship = f"https://api.mercadolibre.com/shipments?ids={ids_str}"
+                try:
+                    res_ship = requests.get(url_ship, headers=headers).json()
+                    for ship_info in res_ship:
+                        if ship_info.get('code') == 200:
+                            ship_body = ship_info.get('body', {})
+                            s_id = str(ship_body.get('id'))
+                            # O custo base do envio (Total)
+                            base = float(ship_body.get('base_cost', 0) or 0)
+                            # O que o comprador pagou
+                            buyer_pays = float(ship_body.get('shipping_option', {}).get('cost', 0) or 0)
+                            # O vendedor paga a diferença (Zero se o comprador pagou tudo)
+                            custos_frete_reais[s_id] = max(0, base - buyer_pays)
+                except Exception as e:
+                    print("Erro Frete:", e)
+
         agrupado = {}
         timeline = {}
 
         for order in resultados:
-            destino = order.get('shipping', {}).get('receiver_address', {}).get('country', {}).get('id', 'BR')
-            
             data_venda = order.get('date_created', '')[:10]
             if data_venda not in timeline: timeline[data_venda] = {'faturamento': 0, 'lucro': 0}
             
-            for item in order.get('order_items', []):
+            # Puxa o frete real que acabamos de consultar
+            ship_id = str(order.get('shipping', {}).get('id', ''))
+            frete_total_pedido = custos_frete_reais.get(ship_id, 0)
+            
+            order_items = order.get('order_items', [])
+            total_qty_order = sum(item['quantity'] for item in order_items)
+            
+            # Divide o frete real do pedido pelas unidades vendidas
+            custo_envio_unidade = frete_total_pedido / total_qty_order if total_qty_order > 0 else 0
+            
+            for item in order_items:
                 item_id = item['item']['id']
                 title = item['item']['title']
                 qty = item['quantity']
                 price = item['unit_price']
-                
-                # --- CORREÇÃO DO CÁLCULO DE FRETE ---
-                custo_envio_unidade = 0
-                if destino != 'AR':
-                    if price >= 79:
-                        custo_envio_unidade = 18.50 # Média cobrada do vendedor (Frete Grátis)
-                    else:
-                        custo_envio_unidade = 0.00 # Pago pelo comprador
                 
                 custo_cmv = float(custos_db.get(item_id, 0))
                 comissao_unitaria = item.get('sale_fee', price * 0.16)
@@ -272,7 +296,7 @@ def api_dados():
             
         df['Status'] = df.apply(gerar_status, axis=1)
         
-        # --- CÁLCULO DA PROMOÇÃO MÁXIMA PRESERVANDO 15% ---
+        # CÁLCULO DA PROMOÇÃO MÁXIMA PRESERVANDO 15%
         df['Desconto_Max'] = (((df['Margem_Contribuicao'] - (df['Ticket_Medio'] * 0.15)) / df['Ticket_Medio']) * 100).round(2)
         df['Desconto_Max_Grafico'] = df['Desconto_Max'].apply(lambda x: x if x > 0 else 0)
 

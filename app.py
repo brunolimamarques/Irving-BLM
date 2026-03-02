@@ -175,12 +175,11 @@ def api_dados():
         
         if not resultados: return jsonify({"erro": "vazio", "imposto_padrao": imposto_padrao_pct})
 
-        # --- BUSCA EXATA DOS FRETES (OTIMIZADA E SEM TIMEOUT) ---
+        # --- BUSCA EXATA DOS FRETES (CORRIGIDO PARA COPARTICIPAÇÃO) ---
         shipping_ids = [str(o.get('shipping', {}).get('id')) for o in resultados if o.get('shipping', {}).get('id')]
         custos_frete_reais = {}
         if shipping_ids:
             shipping_ids = list(set(shipping_ids))
-            # Busca de 50 em 50 para ser ultrarrápido
             for i in range(0, len(shipping_ids), 50):
                 lote = shipping_ids[i:i+50]
                 ids_str = ",".join(lote)
@@ -192,20 +191,25 @@ def api_dados():
                             ship_body = ship_info.get('body', {})
                             s_id = str(ship_body.get('id'))
                             
-                            # O 'base_cost' na API já considera os descontos de Mercado Pontos do vendedor
-                            base = float(ship_body.get('base_cost') or 0)
                             list_cost = float(ship_body.get('shipping_option', {}).get('list_cost') or 0)
                             buyer_pays = float(ship_body.get('shipping_option', {}).get('cost') or 0)
+                            base_cost = float(ship_body.get('base_cost') or 0)
                             
-                            valor_etiqueta = base if base > 0 else list_cost
-                            
-                            # O custo final do vendedor é o valor da etiqueta menos a parte que o cliente pagou
-                            seller_freight = max(0, valor_etiqueta - buyer_pays)
+                            # Se o comprador pagou 100% da tabela cheia da etiqueta, você não paga frete.
+                            if buyer_pays > 0 and buyer_pays >= list_cost and list_cost > 0:
+                                seller_freight = 0
+                            # Segurança extra caso list_cost venha zerado na API por algum motivo
+                            elif buyer_pays > 0 and list_cost == 0 and buyer_pays >= base_cost:
+                                seller_freight = 0
+                            # Em Frete Grátis ou Coparticipação, o "base_cost" reflete exatamente a sua fatia cobrada!
+                            else:
+                                seller_freight = base_cost
+                                
                             custos_frete_reais[s_id] = seller_freight
                 except Exception as e:
                     print(f"Erro ao buscar fretes do lote {i}:", e)
 
-        # --- RATEIO DE CARRINHO (Evita duplicar frete quando compram vários juntos) ---
+        # Ratear o frete para evitar duplicação em vendas de "Carrinho"
         qty_por_shipment = {}
         for order in resultados:
             ship_id = str(order.get('shipping', {}).get('id', ''))

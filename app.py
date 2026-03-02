@@ -175,44 +175,37 @@ def api_dados():
         
         if not resultados: return jsonify({"erro": "vazio", "imposto_padrao": imposto_padrao_pct})
 
-        # --- BUSCA EXATA DOS FRETES DIRETAMENTE DA TARIFA DO VENDEDOR ---
+        # --- BUSCA EXATA DOS FRETES (OTIMIZADA E SEM TIMEOUT) ---
         shipping_ids = [str(o.get('shipping', {}).get('id')) for o in resultados if o.get('shipping', {}).get('id')]
         custos_frete_reais = {}
         if shipping_ids:
             shipping_ids = list(set(shipping_ids))
+            # Busca de 50 em 50 para ser ultrarrápido
             for i in range(0, len(shipping_ids), 50):
                 lote = shipping_ids[i:i+50]
                 ids_str = ",".join(lote)
                 url_ship = f"https://api.mercadolibre.com/shipments?ids={ids_str}"
                 try:
-                    res_ship = requests.get(url_ship, headers=headers).json()
+                    res_ship = requests.get(url_ship, headers=headers, timeout=10).json()
                     for ship_info in res_ship:
                         if ship_info.get('code') == 200:
                             ship_body = ship_info.get('body', {})
                             s_id = str(ship_body.get('id'))
                             
-                            base = float(ship_body.get('base_cost') or ship_body.get('shipping_option', {}).get('list_cost') or 0)
+                            # O 'base_cost' na API já considera os descontos de Mercado Pontos do vendedor
+                            base = float(ship_body.get('base_cost') or 0)
+                            list_cost = float(ship_body.get('shipping_option', {}).get('list_cost') or 0)
                             buyer_pays = float(ship_body.get('shipping_option', {}).get('cost') or 0)
                             
-                            # Se o frete é por conta do vendedor (frete grátis) ou full, extrai a nota real
-                            if base > buyer_pays or str(ship_body.get('logistic_type')) == 'fulfillment':
-                                url_costs = f"https://api.mercadolibre.com/shipments/{s_id}/costs"
-                                res_costs = requests.get(url_costs, headers=headers)
-                                if res_costs.status_code == 200:
-                                    data_costs = res_costs.json()
-                                    # senders contém o valor líquido cobrado após os descontos de reputação
-                                    if 'senders' in data_costs and data_costs['senders']:
-                                        custos_frete_reais[s_id] = sum([float(s.get('amount', 0)) for s in data_costs['senders']])
-                                    else:
-                                        custos_frete_reais[s_id] = max(0, base - buyer_pays)
-                                else:
-                                    custos_frete_reais[s_id] = max(0, base - buyer_pays)
-                            else:
-                                custos_frete_reais[s_id] = 0
+                            valor_etiqueta = base if base > 0 else list_cost
+                            
+                            # O custo final do vendedor é o valor da etiqueta menos a parte que o cliente pagou
+                            seller_freight = max(0, valor_etiqueta - buyer_pays)
+                            custos_frete_reais[s_id] = seller_freight
                 except Exception as e:
-                    print("Erro Frete Lote:", e)
+                    print(f"Erro ao buscar fretes do lote {i}:", e)
 
-        # Ratear o frete para evitar duplicação em vendas de "Carrinho"
+        # --- RATEIO DE CARRINHO (Evita duplicar frete quando compram vários juntos) ---
         qty_por_shipment = {}
         for order in resultados:
             ship_id = str(order.get('shipping', {}).get('id', ''))
@@ -229,7 +222,6 @@ def api_dados():
             ship_id = str(order.get('shipping', {}).get('id', ''))
             frete_total_pedido = custos_frete_reais.get(ship_id, 0)
             
-            # Rateio inteligente pela etiqueta inteira do carrinho!
             total_qty_pack = qty_por_shipment.get(ship_id, 1)
             custo_envio_unidade = frete_total_pedido / total_qty_pack if total_qty_pack > 0 else 0
             
@@ -272,7 +264,7 @@ def api_dados():
                 ids_str = ",".join(lote_ids)
                 url_ads = f"https://api.mercadolibre.com/advertising/product_ads/metrics/items?date_from={data_inicio_str}&date_to={data_fim_str}&item_ids={ids_str}"
                 try:
-                    res_ads = requests.get(url_ads, headers=headers)
+                    res_ads = requests.get(url_ads, headers=headers, timeout=10)
                     if res_ads.status_code == 200:
                         for ad_metric in res_ads.json():
                             id_anuncio = ad_metric.get('item_id')
@@ -373,14 +365,13 @@ def api_dados():
                     'mensagem': f"Sua Margem está excelente ({margem_pct:.1f}%), mas vendeu pouco ({row['Giro']} unid). Teste baixar o preço para atrair mais compras."
                 })
 
-        # Adiciona um aviso consolidado se faltar CMV
         if sem_cmv_count > 0:
             diagnosticos.insert(0, {
                 'tipo': 'alerta_cmv', 'titulo': '⚠️ Preencha o Custo de Compra', 'produto': f"{sem_cmv_count} produtos sem CMV na API",
                 'mensagem': "Acesse a aba 'Gestão de Custos'. A IA saltou estes produtos porque precisa do custo da mercadoria para calcular lucros e prejuízos."
             })
             
-        diagnosticos = diagnosticos[:6] # Mostra apenas os top 6 para não poluir
+        diagnosticos = diagnosticos[:6]
 
         # --- BUSCA DO ESTOQUE PARADO ---
         url_itens_ativos = f"https://api.mercadolibre.com/users/{ml_seller_id}/items/search?status=active&limit=50"

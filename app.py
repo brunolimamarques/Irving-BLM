@@ -175,7 +175,7 @@ def api_dados():
         
         if not resultados: return jsonify({"erro": "vazio", "imposto_padrao": imposto_padrao_pct})
 
-        # --- BUSCA EXATA DOS FRETES (CORRIGIDO PARA COPARTICIPAÇÃO) ---
+        # --- BUSCA EXATA DOS FRETES (Á PROVA DE CRASH E COPARTICIPAÇÃO) ---
         shipping_ids = [str(o.get('shipping', {}).get('id')) for o in resultados if o.get('shipping', {}).get('id')]
         custos_frete_reais = {}
         if shipping_ids:
@@ -185,29 +185,41 @@ def api_dados():
                 ids_str = ",".join(lote)
                 url_ship = f"https://api.mercadolibre.com/shipments?ids={ids_str}"
                 try:
-                    res_ship = requests.get(url_ship, headers=headers, timeout=10).json()
-                    for ship_info in res_ship:
-                        if ship_info.get('code') == 200:
-                            ship_body = ship_info.get('body', {})
-                            s_id = str(ship_body.get('id'))
-                            
-                            list_cost = float(ship_body.get('shipping_option', {}).get('list_cost') or 0)
-                            buyer_pays = float(ship_body.get('shipping_option', {}).get('cost') or 0)
-                            base_cost = float(ship_body.get('base_cost') or 0)
-                            
-                            # Se o comprador pagou 100% da tabela cheia da etiqueta, você não paga frete.
-                            if buyer_pays > 0 and buyer_pays >= list_cost and list_cost > 0:
-                                seller_freight = 0
-                            # Segurança extra caso list_cost venha zerado na API por algum motivo
-                            elif buyer_pays > 0 and list_cost == 0 and buyer_pays >= base_cost:
-                                seller_freight = 0
-                            # Em Frete Grátis ou Coparticipação, o "base_cost" reflete exatamente a sua fatia cobrada!
-                            else:
-                                seller_freight = base_cost
-                                
-                            custos_frete_reais[s_id] = seller_freight
+                    res_ship_response = requests.get(url_ship, headers=headers, timeout=20)
+                    if res_ship_response.status_code == 200:
+                        res_ship = res_ship_response.json()
+                        
+                        # Evita o crash silencioso caso a API devolva um objeto de erro em vez de lista
+                        if isinstance(res_ship, list):
+                            for ship_info in res_ship:
+                                if isinstance(ship_info, dict) and ship_info.get('code') == 200:
+                                    ship_body = ship_info.get('body', {})
+                                    s_id = str(ship_body.get('id'))
+                                    
+                                    shipping_option = ship_body.get('shipping_option') or {}
+                                    buyer_pays = float(shipping_option.get('cost') or 0)
+                                    list_cost = float(shipping_option.get('list_cost') or 0)
+                                    base_cost = float(ship_body.get('base_cost') or 0)
+                                    
+                                    # REGRA MATEMÁTICA DEFINITIVA:
+                                    # 1. Frete Totalmente Grátis (O ML já coloca a sua parte exata no base_cost)
+                                    if buyer_pays == 0:
+                                        seller_freight = base_cost
+                                    
+                                    # 2. Cliente Pagou Tudo (Nenhum custo extra para si)
+                                    elif (list_cost > 0 and buyer_pays >= list_cost) or (list_cost == 0 and buyer_pays >= base_cost):
+                                        seller_freight = 0
+                                        
+                                    # 3. Coparticipação (Vocês dividiram)
+                                    else:
+                                        etiqueta_total = max(base_cost, list_cost)
+                                        seller_freight = max(0, etiqueta_total - buyer_pays)
+                                        
+                                    custos_frete_reais[s_id] = seller_freight
+                        else:
+                            print("ML retornou erro de limite no lote.")
                 except Exception as e:
-                    print(f"Erro ao buscar fretes do lote {i}:", e)
+                    print(f"Erro ao analisar frete do lote {i}:", e)
 
         # Ratear o frete para evitar duplicação em vendas de "Carrinho"
         qty_por_shipment = {}

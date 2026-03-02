@@ -152,11 +152,11 @@
                             </div>
                             <div class="space-y-4 html2pdf__page-break-avoid">
                                 <h3 class="text-lg font-bold mb-2">System Alerts</h3>
-                                <div class="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 text-red-800 dark:text-red-400 text-sm hover:scale-[1.02] transition-transform cursor-default">
-                                    <strong class="block mb-2 font-bold flex items-center gap-2">⚠️ Custo Fixo do ML</strong> O sistema agora deduz rigorosamente a Tarifa Fixa (R$ 6,00) de todos os produtos vendidos abaixo de R$ 79,00 para proteger o seu lucro.
+                                <div class="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 text-blue-800 dark:text-blue-400 text-sm hover:scale-[1.02] transition-transform cursor-default">
+                                    <strong class="block mb-2 font-bold flex items-center gap-2">✅ Precisão Total na Tarifa</strong> A coluna "Tarifa ML" puxa exatamente o valor em centavos descontado na nota de venda, sem adivinhações.
                                 </div>
                                 <div class="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 text-blue-800 dark:text-blue-400 text-sm hover:scale-[1.02] transition-transform cursor-default">
-                                    <strong class="block mb-2 font-bold flex items-center gap-2">🚚 Frete Inteligente</strong> Puxamos o valor exato pago por você na etiqueta direto da API, evitando "achismos" de custos logísticos.
+                                    <strong class="block mb-2 font-bold flex items-center gap-2">🚚 Frete Inteligente</strong> Puxamos o valor exato pago por você na etiqueta direto da API, evitando surpresas logísticas.
                                 </div>
                             </div>
                         </div>
@@ -428,7 +428,8 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
             if(preco >= 79 && !freteCheck.checked) freteCheck.checked = true;
 
             const frete = freteCheck.checked ? 18.50 : 0;
-            const custoFixo = preco < 79 ? 6.00 : 0; // TARIFA FIXA NO SIMULADOR
+            // O Simulador ainda precisa calcular a Tarifa Fixa (R$ 6) manualmente para testar o preço
+            const custoFixo = preco < 79 ? 6.00 : 0; 
             const comissaoRS = preco * (comissaoPct / 100);
             const impostoRS = preco * (impostoPct / 100);
 
@@ -471,10 +472,20 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
                 return;
             }
             dadosDiagnostico.forEach((diag, index) => {
-                const isEscala = diag.tipo === 'escala';
-                const corBorder = isEscala ? 'border-blue-200 dark:border-blue-800/50 bg-blue-50/50 dark:bg-blue-900/10' : 'border-amber-200 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-900/10';
-                const corTexto = isEscala ? 'text-blue-700 dark:text-blue-400' : 'text-amber-700 dark:text-amber-400';
-                const icone = isEscala ? '📉' : '⚠️';
+                let corBorder = 'border-amber-200 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-900/10';
+                let corTexto = 'text-amber-700 dark:text-amber-400';
+                let icone = '⚠️';
+                
+                if (diag.tipo === 'escala') {
+                    corBorder = 'border-blue-200 dark:border-blue-800/50 bg-blue-50/50 dark:bg-blue-900/10';
+                    corTexto = 'text-blue-700 dark:text-blue-400';
+                    icone = '📉';
+                } else if (diag.tipo === 'prejuizo') {
+                    corBorder = 'border-red-200 dark:border-red-800/50 bg-red-50/50 dark:bg-red-900/10';
+                    corTexto = 'text-red-700 dark:text-red-400';
+                    icone = '🔴';
+                }
+
                 container.innerHTML += `<div class="p-5 rounded-xl border ${corBorder} hover:shadow-md transition-all animate-slide-up opacity-0" style="animation-delay: ${index * 0.05}s; animation-fill-mode: forwards;">
                     <div class="flex items-center gap-2 mb-3"><span class="text-xl">${icone}</span><h4 class="font-bold ${corTexto}">${diag.titulo}</h4></div>
                     <p class="font-bold text-slate-800 dark:text-slate-200 text-sm mb-1 truncate" title="${diag.produto}">${diag.produto}</p>
@@ -611,17 +622,16 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
                 const margemValor = row.Sem_Custo ? `<span class="text-slate-500 text-xs">Aguardando CMV</span>` : `<span class="font-bold text-base block">R$ ${row.Margem_Contribuicao.toFixed(2)}</span><span class="inline-block mt-1">${formatarTrend(row.MC_Trend)}</span>`;
 
                 const freteUn = (row.Custo_Frete / row.Giro).toFixed(2); 
-                const comissaoUn = (row.Custo_Comissao / row.Giro).toFixed(2);
-                const fixoUn = (row.Custo_Fixo / row.Giro).toFixed(2);
+                const tarifaMLUn = (row.Custo_Tarifa_ML / row.Giro).toFixed(2);
                 const impostoUn = (row.Custo_Imposto / row.Giro).toFixed(2); 
                 const adsUn = row.Giro > 0 ? (row.Custo_ADS / row.Giro).toFixed(2) : '0.00';
 
-                // Atualizado para incluir o Custo Fixo de forma limpa na interface
+                // Agora exibimos TARIFA ML de forma consolidada, que é o valor exato da nota.
                 const custosHTML = `
                     <div class="text-[11px] text-slate-500 dark:text-slate-400 space-y-1.5">
-                        <div class="flex justify-between w-44"><span class="font-semibold text-slate-700 dark:text-slate-300">CMV:</span> <span>R$ ${row.Custo_CMV.toFixed(2)}</span> <span class="text-slate-300 dark:text-slate-600">|</span> <span class="font-semibold text-slate-700 dark:text-slate-300">% ML:</span> <span>R$ ${comissaoUn}</span></div>
-                        <div class="flex justify-between w-44"><span class="font-semibold text-slate-700 dark:text-slate-300">Frete:</span> <span>R$ ${freteUn}</span> <span class="text-slate-300 dark:text-slate-600">|</span> <span class="font-semibold text-slate-700 dark:text-slate-300">Fixo ML:</span> <span class="text-amber-600 dark:text-amber-400 font-bold">R$ ${fixoUn}</span></div>
-                        <div class="flex justify-between w-44"><span class="font-semibold text-slate-700 dark:text-slate-300">ADS:</span> <span class="font-medium text-slate-600 dark:text-slate-300">R$ ${adsUn}</span> <span class="text-slate-300 dark:text-slate-600">|</span> <span class="font-semibold text-slate-700 dark:text-slate-300">Imp:</span> <span>R$ ${impostoUn}</span></div>
+                        <div class="flex justify-between w-44"><span class="font-semibold text-slate-700 dark:text-slate-300">CMV:</span> <span>R$ ${row.Custo_CMV.toFixed(2)}</span> <span class="text-slate-300 dark:text-slate-600">|</span> <span class="font-semibold text-slate-700 dark:text-slate-300">Tarifa ML:</span> <span class="text-amber-600 dark:text-amber-400 font-bold">R$ ${tarifaMLUn}</span></div>
+                        <div class="flex justify-between w-44"><span class="font-semibold text-slate-700 dark:text-slate-300">Frete:</span> <span>R$ ${freteUn}</span> <span class="text-slate-300 dark:text-slate-600">|</span> <span class="font-semibold text-slate-700 dark:text-slate-300">Imp:</span> <span>R$ ${impostoUn}</span></div>
+                        <div class="flex justify-between w-44"><span class="font-semibold text-slate-700 dark:text-slate-300">ADS:</span> <span class="font-medium text-slate-600 dark:text-slate-300">R$ ${adsUn}</span></div>
                     </div>`;
 
                 const animDelay = index * 0.05;
@@ -637,7 +647,6 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
                     </tr>`;
             });
             
-            // RENDERS DE FUNDO (Agora a magia acontece sempre que os dados chegam!)
             renderTabelaCustos();
             renderEstoqueParado();
             renderDiagnostico();

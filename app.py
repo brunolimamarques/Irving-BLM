@@ -7,7 +7,7 @@ import requests
 import pandas as pd
 from datetime import datetime, timedelta
 import urllib.parse
-import concurrent.futures  # <--- NOVA BIBLIOTECA PARA PROCESSAMENTO PARALELO
+import concurrent.futures
 
 app = Flask(__name__)
 
@@ -181,35 +181,40 @@ def api_dados():
         custos_frete_reais = {}
         
         def buscar_frete_exato(s_id):
-            # Acesso direto à fatura da etiqueta de envio
             url_costs = f"https://api.mercadolibre.com/shipments/{s_id}/costs"
+            # O header x-format-new garante a leitura do JSON estruturado corretamente
+            headers_frete = {"Authorization": f"Bearer {ml_token}", "x-format-new": "true"}
+            
             try:
-                res_costs = requests.get(url_costs, headers=headers, timeout=5)
+                res_costs = requests.get(url_costs, headers=headers_frete, timeout=10)
                 if res_costs.status_code == 200:
                     data = res_costs.json()
-                    # A rota /costs retorna a fatura detalhada. 'senders' contém o valor descontado do vendedor
+                    # AQUI ESTAVA O SEGREDO: A chave da API é 'cost' e não 'amount'!
                     if 'senders' in data and data['senders']:
-                        return s_id, sum([float(s.get('amount', 0)) for s in data['senders']])
+                        return s_id, sum([float(s.get('cost', 0)) for s in data['senders']])
                     return s_id, 0
             except Exception:
                 pass
             
-            # Fallback de emergência (raro de ocorrer com Multithreading)
+            # Fallback de emergência (raro de ser necessário agora)
             url_ship = f"https://api.mercadolibre.com/shipments/{s_id}"
             try:
-                res_ship = requests.get(url_ship, headers=headers, timeout=5)
+                res_ship = requests.get(url_ship, headers=headers_frete, timeout=5)
                 if res_ship.status_code == 200:
                     body = res_ship.json()
                     base = float(body.get('base_cost') or 0)
                     buyer = float(body.get('shipping_option', {}).get('cost') or 0)
-                    if base > buyer:
-                        return s_id, (base - buyer)
+                    list_cost = float(body.get('shipping_option', {}).get('list_cost') or 0)
+                    
+                    if buyer == 0: return s_id, base
+                    elif (list_cost > 0 and buyer >= list_cost) or (list_cost == 0 and buyer >= base): return s_id, 0
+                    else: return s_id, max(0, max(base, list_cost) - buyer)
             except Exception:
                 pass
                 
             return s_id, 0
 
-        # Dispara 20 requisições simultâneas para coletar os fretes instantaneamente
+        # Dispara as 20 requisições simultâneas para extrair a fatura num instante
         if shipping_ids:
             shipping_ids = list(set(shipping_ids))
             with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:

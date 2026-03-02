@@ -153,10 +153,10 @@
                             <div class="space-y-4 html2pdf__page-break-avoid">
                                 <h3 class="text-lg font-bold mb-2">System Alerts</h3>
                                 <div class="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 text-blue-800 dark:text-blue-400 text-sm hover:scale-[1.02] transition-transform cursor-default">
-                                    <strong class="block mb-2 font-bold flex items-center gap-2">✅ Tarifa Exata ML</strong> O campo "Tarifa ML" agora extrai da API o valor idêntico descontado da sua conta (já incluindo taxas fixas e comissões da categoria).
+                                    <strong class="block mb-2 font-bold flex items-center gap-2">✅ Tarifa Exata ML</strong> O campo "Tarifa ML" puxa da API o exato valor descontado em centavos (incluindo fixos e comissões da categoria).
                                 </div>
                                 <div class="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 text-blue-800 dark:text-blue-400 text-sm hover:scale-[1.02] transition-transform cursor-default">
-                                    <strong class="block mb-2 font-bold flex items-center gap-2">🚚 Frete Blindado</strong> Lemos a fatura da etiqueta de envio (base_cost) e deduzimos o que o comprador pagou. Diferença zero.
+                                    <strong class="block mb-2 font-bold flex items-center gap-2">🚚 Frete Blindado</strong> Lemos a rota <code>/costs</code> para descontar o frete após os seus descontos de reputação, rateando vendas de Carrinho para não duplicar custos.
                                 </div>
                             </div>
                         </div>
@@ -431,11 +431,11 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
             const comissaoPct = parseFloat(document.getElementById('sim-comissao').value) || 0;
             
             const fixoCheck = document.getElementById('sim-fixo');
-            if(preco < 79 && !fixoCheck.checked && preco > 0) fixoCheck.checked = true; // Auto-check if < 79
-            if(preco >= 79) fixoCheck.checked = false; // Auto-uncheck if >= 79
+            if(preco < 79 && !fixoCheck.checked && preco > 0) fixoCheck.checked = true;
+            if(preco >= 79) fixoCheck.checked = false;
 
             const freteCheck = document.getElementById('sim-frete');
-            if(preco >= 79 && !freteCheck.checked && preco > 0) freteCheck.checked = true; // Auto-check if >= 79
+            if(preco >= 79 && !freteCheck.checked && preco > 0) freteCheck.checked = true;
 
             const frete = freteCheck.checked ? 18.50 : 0;
             const custoFixo = fixoCheck.checked ? 6.00 : 0; 

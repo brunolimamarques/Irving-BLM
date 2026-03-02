@@ -119,7 +119,8 @@
             <div class="min-h-[calc(100vh-250px)] flex flex-col justify-between">
                 
                 <div id="aba-visao_geral" class="w-full">
-                    <div id="pdf-area" class="w-full bg-slate-50 dark:bg-slate-900"> <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+                    <div id="pdf-area" class="w-full bg-slate-50 dark:bg-slate-900">
+                        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
                             <div class="glass-card rounded-2xl p-5 hover:-translate-y-1 hover:shadow-lg animate-slide-up" style="animation-delay: 0.2s;"><p class="text-xs font-bold text-slate-500 uppercase mb-2">Faturamento</p><h3 class="text-2xl font-extrabold" id="kpi-fat">...</h3></div>
                             <div class="glass-card rounded-2xl p-5 hover:-translate-y-1 hover:shadow-lg animate-slide-up" style="animation-delay: 0.3s;"><p class="text-xs font-bold text-slate-500 uppercase mb-2">Lucro Bruto</p><h3 class="text-2xl font-extrabold text-emerald-500 dark:text-emerald-400" id="kpi-lucro">...</h3></div>
                             <div class="glass-card rounded-2xl p-5 hover:-translate-y-1 hover:shadow-lg animate-slide-up" style="animation-delay: 0.4s;"><p class="text-xs font-bold text-slate-500 uppercase mb-2">Unidades</p><h3 class="text-2xl font-extrabold" id="kpi-unidades">...</h3></div>
@@ -267,7 +268,7 @@
                     <div class="glass-card rounded-2xl p-6 mb-8 w-full animate-slide-up">
                         <div class="mb-6">
                             <h3 class="text-xl font-bold flex items-center gap-2">🧠 Diagnóstico do Preço</h3>
-                            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Análise baseada nos seus resultados reais. A IA procura oportunidades de melhorar os seus preços.</p>
+                            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Análise processada pela nossa IA baseada nos seus resultados reais da API.</p>
                         </div>
                         <div id="lista-diagnostico" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             </div>
@@ -338,6 +339,8 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
         let usuarioGlobal = null;
         let dadosAPI = []; 
         let dadosEstoque = [];
+        let dadosABC = [];
+        let dadosDiagnostico = [];
         let graficoInstancia = null;
         let uidClienteAtivo = null;
         let emailClienteAtivo = null;
@@ -370,7 +373,6 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
             if(graficoInstancia) graficoInstancia.update();
         };
 
-        // --- EXPORTAÇÃO PDF ---
         window.exportarRelatorioPDF = () => {
             const btn = document.getElementById('btn-pdf');
             const textoOriginal = btn.innerHTML;
@@ -385,7 +387,6 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
                 jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
             };
 
-            // Força modo claro temporariamente para o PDF se estiver dark para melhor impressão
             const wasDark = document.documentElement.classList.contains('dark');
             if (wasDark) document.documentElement.classList.remove('dark');
 
@@ -423,7 +424,6 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
             if(aba === 'clientes') carregarClientes();
         };
 
-        // --- FUNÇÕES SIMULADOR ---
         window.calcularSimulador = () => {
             const preco = parseFloat(document.getElementById('sim-preco').value) || 0;
             const cmv = parseFloat(document.getElementById('sim-cmv').value) || 0;
@@ -431,7 +431,7 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
             const comissaoPct = parseFloat(document.getElementById('sim-comissao').value) || 0;
             
             const freteCheck = document.getElementById('sim-frete');
-            if(preco >= 79 && !freteCheck.checked) freteCheck.checked = true; // Auto-check if >= 79
+            if(preco >= 79 && !freteCheck.checked) freteCheck.checked = true;
 
             const frete = freteCheck.checked ? 18.50 : 0;
             const comissaoRS = preco * (comissaoPct / 100);
@@ -450,86 +450,44 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
             elMargem.className = `text-3xl font-extrabold mt-1 ${margem >= 15 ? 'text-emerald-600 dark:text-emerald-400' : (margem >= 0 ? 'text-amber-500' : 'text-red-600 dark:text-red-400')}`;
         };
 
-        // --- RENDER CURVA ABC (SEM TOCAR NO BACKEND) ---
         window.renderCurvaABC = () => {
             const tbody = document.getElementById('tabela-abc-corpo'); tbody.innerHTML = '';
-            
-            if(dadosAPI.length === 0) return;
-
-            // Ordena os produtos do que mais faturou para o que menos faturou
-            const sortedData = [...dadosAPI].sort((a, b) => b.Faturamento - a.Faturamento);
-            const faturamentoTotal = sortedData.reduce((acc, curr) => acc + curr.Faturamento, 0);
-            
-            let faturamentoAcumulado = 0;
-
-            sortedData.forEach((row, index) => {
-                if(row.Faturamento === 0) return;
-                
-                faturamentoAcumulado += row.Faturamento;
-                const pctAcumulada = (faturamentoAcumulado / faturamentoTotal) * 100;
-                const pctDoTotal = (row.Faturamento / faturamentoTotal) * 100;
-                
-                let classeABC = 'C'; let corBadge = 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300';
-                if(pctAcumulada <= 80) { classeABC = 'A'; corBadge = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'; }
-                else if(pctAcumulada <= 95) { classeABC = 'B'; corBadge = 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400'; }
-
+            if(dadosABC.length === 0) return;
+            dadosABC.forEach((row, index) => {
+                let corBadge = 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300';
+                if(row.Classe === 'A') corBadge = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400';
+                else if(row.Classe === 'B') corBadge = 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400';
                 const animDelay = index * 0.05;
                 tbody.innerHTML += `
                     <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors animate-slide-up opacity-0" style="animation-delay: ${animDelay}s; animation-fill-mode: forwards;">
                         <td class="py-5 align-middle"><p class="font-bold w-64 truncate text-slate-800 dark:text-white" title="${row.Produto}">${row.Produto}</p><p class="text-[11px] text-slate-400 mt-1">ID: ${row.ID}</p></td>
-                        <td class="py-5 align-middle"><span class="px-3 py-1 rounded text-xs font-bold shadow-sm ${corBadge}">Curva ${classeABC}</span></td>
+                        <td class="py-5 align-middle"><span class="px-3 py-1 rounded text-xs font-bold shadow-sm ${corBadge}">Curva ${row.Classe}</span></td>
                         <td class="py-5 align-middle font-medium text-slate-800 dark:text-slate-300">R$ ${row.Faturamento.toFixed(2)}</td>
-                        <td class="py-5 align-middle font-bold text-slate-500">${pctDoTotal.toFixed(1)}%</td>
+                        <td class="py-5 align-middle font-bold text-slate-500">${row.Percentual}%</td>
                     </tr>`;
             });
         };
 
-        // --- RENDER DIAGNÓSTICO DO PREÇO ---
         window.renderDiagnostico = () => {
             const container = document.getElementById('lista-diagnostico');
             container.innerHTML = '';
-            
-            let achouAlgo = false;
-
-            dadosAPI.forEach((row, index) => {
-                if(row.Sem_Custo || row.Giro === 0) return;
-
-                const margemPct = (row.Margem_Contribuicao / row.Ticket_Medio) * 100;
-                let avisoHTML = '';
-
-                // Regra 1: Margem alta, Giro baixo (Oportunidade de Promoção)
-                if(margemPct > 30 && row.Giro < 5) {
-                    avisoHTML = `<div class="p-5 rounded-xl border border-blue-200 dark:border-blue-800/50 bg-blue-50/50 dark:bg-blue-900/10 hover:shadow-md transition-all animate-slide-up opacity-0" style="animation-delay: ${index * 0.05}s; animation-fill-mode: forwards;">
-                        <div class="flex items-center gap-2 mb-3"><span class="text-xl">📉</span><h4 class="font-bold text-blue-700 dark:text-blue-400">Potencial de Escala</h4></div>
-                        <p class="font-bold text-slate-800 dark:text-slate-200 text-sm mb-1 truncate" title="${row.Produto}">${row.Produto}</p>
-                        <p class="text-sm text-slate-600 dark:text-slate-400">A sua <b>Margem de Contribuição</b> está alta (${margemPct.toFixed(1)}%), mas vendeu apenas ${row.Giro} unidades. Teste reduzir o preço em 5% a 10% para ganhar tração e aumentar o <b>Lucro Bruto</b> total.</p>
-                    </div>`;
-                    achouAlgo = true;
-                }
-                
-                // Regra 2: Margem espremida com ADS (Risco de Prejuízo)
-                if(margemPct < 15 && margemPct > 0 && row.Custo_ADS > 0) {
-                    avisoHTML = `<div class="p-5 rounded-xl border border-amber-200 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-900/10 hover:shadow-md transition-all animate-slide-up opacity-0" style="animation-delay: ${index * 0.05}s; animation-fill-mode: forwards;">
-                        <div class="flex items-center gap-2 mb-3"><span class="text-xl">⚠️</span><h4 class="font-bold text-amber-700 dark:text-amber-400">Alerta de ADS</h4></div>
-                        <p class="font-bold text-slate-800 dark:text-slate-200 text-sm mb-1 truncate" title="${row.Produto}">${row.Produto}</p>
-                        <p class="text-sm text-slate-600 dark:text-slate-400">A sua <b>Margem de Contribuição</b> é de apenas ${margemPct.toFixed(1)}% e o ADS está ativo. Vigie de perto para garantir que o ACOS não consome todo o seu <b>Lucro Bruto</b>.</p>
-                    </div>`;
-                    achouAlgo = true;
-                }
-
-                if(avisoHTML) container.innerHTML += avisoHTML;
-            });
-
-            if(!achouAlgo && dadosAPI.length > 0) {
-                container.innerHTML = `<div class="col-span-1 md:col-span-2 p-8 text-center rounded-xl border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50/50 dark:bg-emerald-900/10">
-                    <span class="text-4xl mb-3 block">🏆</span>
-                    <h4 class="font-bold text-emerald-700 dark:text-emerald-400 text-lg">Precificação Saudável</h4>
-                    <p class="text-sm text-slate-600 dark:text-slate-400 mt-2">O <b>Diagnóstico do Preço</b> não encontrou nenhuma discrepância crítica nos seus anúncios com venda. A sua operação está otimizada!</p>
-                </div>`;
+            if(dadosDiagnostico.length === 0 && dadosAPI.length > 0) {
+                container.innerHTML = `<div class="col-span-1 md:col-span-2 p-8 text-center rounded-xl border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50/50 dark:bg-emerald-900/10"><span class="text-4xl mb-3 block">🏆</span><h4 class="font-bold text-emerald-700 dark:text-emerald-400 text-lg">Precificação Saudável</h4><p class="text-sm text-slate-600 dark:text-slate-400 mt-2">O <b>Diagnóstico do Preço</b> não encontrou nenhuma discrepância crítica. A sua operação está otimizada!</p></div>`;
+                return;
             }
+            dadosDiagnostico.forEach((diag, index) => {
+                const isEscala = diag.tipo === 'escala';
+                const corBorder = isEscala ? 'border-blue-200 dark:border-blue-800/50 bg-blue-50/50 dark:bg-blue-900/10' : 'border-amber-200 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-900/10';
+                const corTexto = isEscala ? 'text-blue-700 dark:text-blue-400' : 'text-amber-700 dark:text-amber-400';
+                const icone = isEscala ? '📉' : '⚠️';
+                container.innerHTML += `<div class="p-5 rounded-xl border ${corBorder} hover:shadow-md transition-all animate-slide-up opacity-0" style="animation-delay: ${index * 0.05}s; animation-fill-mode: forwards;">
+                    <div class="flex items-center gap-2 mb-3"><span class="text-xl">${icone}</span><h4 class="font-bold ${corTexto}">${diag.titulo}</h4></div>
+                    <p class="font-bold text-slate-800 dark:text-slate-200 text-sm mb-1 truncate" title="${diag.produto}">${diag.produto}</p>
+                    <p class="text-sm text-slate-600 dark:text-slate-400">${diag.mensagem}</p>
+                </div>`;
+            });
         };
 
-        // --- RESTO DOS SCRIPTS MANTIDOS EXATAMENTE IGUAIS ---
         window.baixarModeloExcel = () => {
             const ws = XLSX.utils.json_to_sheet([{ "ID": "MLB123456789", "Custo": 45.50 }, { "ID": "MLB987654321", "Custo": 12.90 }]);
             const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Custos"); XLSX.writeFile(wb, "Modelo_CMV_Irving.xlsx");
@@ -644,6 +602,8 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
 
             dadosAPI = data.tabela;
             dadosEstoque = data.estoque_parado || []; 
+            dadosABC = data.abc || [];
+            dadosDiagnostico = data.diagnosticos || [];
             
             const tbody = document.getElementById('tabela-corpo'); tbody.innerHTML = ''; 
             
@@ -680,43 +640,10 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
             if(!document.getElementById('aba-custos').classList.contains('hidden')) renderTabelaCustos();
             if(!document.getElementById('aba-estoque').classList.contains('hidden')) renderEstoqueParado();
             
-            // Renderiza abas modulares
             renderDiagnostico();
             renderCurvaABC();
             calcularSimulador();
         }
-
-        window.renderTabelaCustos = () => {
-            const tbody = document.getElementById('tabela-custos'); tbody.innerHTML = '';
-            dadosAPI.forEach((row, index) => {
-                const borderClass = row.Sem_Custo ? 'border-amber-500/50 bg-amber-50 dark:bg-amber-500/5 ring-1 ring-amber-500/30' : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent';
-                const animDelay = index * 0.05;
-                tbody.innerHTML += `
-                    <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors animate-slide-up opacity-0" style="animation-delay: ${animDelay}s; animation-fill-mode: forwards;">
-                        <td class="py-5 align-middle"><p class="font-bold w-64 truncate text-slate-800 dark:text-white" title="${row.Produto}">${row.Produto}</p><p class="text-[11px] text-slate-400 mt-1.5">ID: <span class="select-all">${row.ID}</span></p></td>
-                        <td class="py-5 align-middle"><input type="number" id="custo-${row.ID}" value="${row.Custo_CMV}" step="0.01" class="w-32 p-2.5 rounded-lg border ${borderClass} text-slate-900 dark:text-white outline-none transition-all shadow-sm"></td>
-                        <td class="py-5 align-middle"><button onclick="salvarCusto('${row.ID}')" id="btn-salvar-${row.ID}" class="px-5 py-2.5 bg-slate-200 dark:bg-slate-700 hover:bg-blue-600 dark:hover:bg-blue-600 text-slate-800 dark:text-white hover:text-white rounded-lg text-sm transition-all duration-200 active:scale-95 font-bold shadow-sm hover:shadow-md">Salvar CMV</button></td>
-                    </tr>`;
-            });
-        };
-
-        window.renderEstoqueParado = () => {
-            const tbody = document.getElementById('tabela-estoque-corpo'); tbody.innerHTML = '';
-            if(dadosEstoque.length === 0) {
-                tbody.innerHTML = "<tr><td colspan='4' class='py-12 text-center text-slate-500 font-medium'>Nenhum estoque parado encontrado. Ótimo trabalho!</td></tr>";
-                return;
-            }
-            dadosEstoque.forEach((row, index) => {
-                const animDelay = index * 0.05;
-                tbody.innerHTML += `
-                    <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors animate-slide-up opacity-0" style="animation-delay: ${animDelay}s; animation-fill-mode: forwards;">
-                        <td class="py-5 align-middle"><p class="font-bold w-64 truncate text-slate-800 dark:text-white" title="${row.Produto}">${row.Produto}</p><p class="text-[11px] text-slate-400 mt-1.5">ID: <span class="select-all">${row.ID}</span></p></td>
-                        <td class="py-5 align-middle font-medium text-slate-800 dark:text-slate-300">R$ ${row.Preco.toFixed(2)}</td>
-                        <td class="py-5 align-middle"><span class="px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded text-xs font-bold shadow-sm">${row.Disponivel} un</span></td>
-                        <td class="py-5 align-middle text-center"><a href="${row.Link}" target="_blank" class="px-5 py-2.5 bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-500/30 rounded-lg text-sm transition-all duration-200 font-bold shadow-sm inline-block">Ver Anúncio</a></td>
-                    </tr>`;
-            });
-        };
     </script>
 </body>
 </html>

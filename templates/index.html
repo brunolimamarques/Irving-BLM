@@ -76,13 +76,14 @@
                 </div>
 
                 <nav class="flex flex-col gap-1 mt-2 pb-6">
-                    <button onclick="mudarAba('visao_geral')" id="btn-visao" class="menu-ativo text-left px-6 py-3 font-semibold transition-all duration-200">📊 Visão Geral</button>
+                    <button onclick="mudarAba('visao_geral')" id="btn-visao_geral" class="menu-ativo text-left px-6 py-3 font-semibold transition-all duration-200">📊 Visão Geral</button>
                     <button onclick="mudarAba('custos')" id="btn-custos" class="menu-inativo text-left px-6 py-3 font-semibold transition-all duration-200">💰 Gestão de Custos</button>
                     <button onclick="mudarAba('estoque')" id="btn-estoque" class="menu-inativo text-left px-6 py-3 font-semibold transition-all duration-200">📦 Estoque Parado</button>
                     
                     <div class="my-2 border-t border-slate-200 dark:border-slate-700 mx-4"></div>
                     
                     <button onclick="mudarAba('simulador')" id="btn-simulador" class="menu-inativo text-left px-6 py-3 font-semibold transition-all duration-200">🧮 Simulador</button>
+                    <button onclick="mudarAba('stalker')" id="btn-stalker" class="menu-inativo text-left px-6 py-3 font-semibold transition-all duration-200">🕵️ Stalker (Espião)</button>
                     <button onclick="mudarAba('diagnostico')" id="btn-diagnostico" class="menu-inativo text-left px-6 py-3 font-semibold transition-all duration-200">🧠 Diagnóstico do Preço</button>
                     <button onclick="mudarAba('abc')" id="btn-abc" class="menu-inativo text-left px-6 py-3 font-semibold transition-all duration-200">📈 Curva ABC</button>
 
@@ -128,9 +129,15 @@
                             <div class="glass-card rounded-2xl p-5 hover:-translate-y-1 hover:shadow-lg animate-slide-up" style="animation-delay: 0.6s;"><p class="text-xs font-bold text-slate-500 uppercase mb-2">Gasto ADS</p><h3 class="text-2xl font-extrabold" id="kpi-ads">...</h3></div>
                         </div>
 
-                        <div class="glass-card rounded-2xl p-6 mb-8 w-full animate-slide-up hover:shadow-md transition-shadow" style="animation-delay: 0.7s;">
-                            <h3 class="text-lg font-bold mb-4">Evolução Diária</h3>
-                            <div class="relative w-full h-64"><canvas id="graficoCrescimento"></canvas></div>
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 animate-slide-up" style="animation-delay: 0.7s;">
+                            <div class="lg:col-span-2 glass-card rounded-2xl p-6 hover:shadow-md transition-shadow">
+                                <h3 class="text-lg font-bold mb-4">Evolução Diária</h3>
+                                <div class="relative w-full h-64"><canvas id="graficoCrescimento"></canvas></div>
+                            </div>
+                            <div class="glass-card rounded-2xl p-6 hover:shadow-md transition-shadow">
+                                <h3 class="text-lg font-bold mb-4">📍 Mapa de Calor (Top Estados)</h3>
+                                <div class="relative w-full h-64"><canvas id="graficoMapaCalor"></canvas></div>
+                            </div>
                         </div>
 
                         <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-slide-up" style="animation-delay: 0.8s;">
@@ -232,40 +239,67 @@
                 </div>
 
                 <div id="aba-simulador" class="hidden w-full">
-                    <div class="glass-card rounded-2xl p-8 mb-8 w-full max-w-3xl mx-auto animate-slide-up">
-                        <h3 class="text-2xl font-bold mb-2">Simulador de Cenários</h3>
-                        <p class="text-slate-500 dark:text-slate-400 text-sm mb-8">Teste alterações de preço antes de aplicar no Mercado Livre.</p>
+                    <div class="glass-card rounded-2xl p-8 mb-8 w-full max-w-4xl mx-auto animate-slide-up">
+                        <h3 class="text-2xl font-bold mb-2">Simulador de Cenários PRO</h3>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm mb-8">Descubra o seu ponto de equilíbrio e projete lucros antes de mudar o preço na plataforma.</p>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                            <div><label class="block text-sm font-bold mb-2">Preço de Venda (R$)</label><input type="number" id="sim-preco" value="100" class="w-full p-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 outline-none focus:border-blue-500" oninput="calcularSimulador()"></div>
-                            <div><label class="block text-sm font-bold mb-2">Custo de Compra (CMV) (R$)</label><input type="number" id="sim-cmv" value="30" class="w-full p-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 outline-none focus:border-blue-500" oninput="calcularSimulador()"></div>
-                            <div><label class="block text-sm font-bold mb-2">Imposto da Empresa (%)</label><input type="number" id="sim-imposto" value="6" class="w-full p-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 outline-none focus:border-blue-500" oninput="calcularSimulador()"></div>
-                            <div><label class="block text-sm font-bold mb-2">Comissão Base Categoria (%)</label><input type="number" id="sim-comissao" value="16" class="w-full p-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 outline-none focus:border-blue-500" oninput="calcularSimulador()"></div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div><label class="block text-sm font-bold mb-2">Preço de Venda Desejado (R$)</label><input type="number" id="sim-preco" value="100" class="w-full p-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 outline-none focus:border-blue-500 text-lg font-bold" oninput="calcularSimulador()"></div>
+                            <div><label class="block text-sm font-bold mb-2 text-emerald-600 dark:text-emerald-400">Estimativa de Vendas / Mês</label><input type="number" id="sim-vendas" value="50" class="w-full p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-300 dark:border-emerald-700 outline-none focus:border-emerald-500 text-lg font-bold" oninput="calcularSimulador()"></div>
+                            <div><label class="block text-sm font-bold mb-2">Custo de Compra (CMV) (R$)</label><input type="number" id="sim-cmv" value="30" class="w-full p-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 outline-none" oninput="calcularSimulador()"></div>
+                            <div>
+                                <div class="flex gap-4">
+                                    <div class="flex-1"><label class="block text-sm font-bold mb-2">Imposto (%)</label><input type="number" id="sim-imposto" value="6" class="w-full p-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 outline-none" oninput="calcularSimulador()"></div>
+                                    <div class="flex-1"><label class="block text-sm font-bold mb-2">Comissão ML (%)</label><input type="number" id="sim-comissao" value="16" class="w-full p-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 outline-none" oninput="calcularSimulador()"></div>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="flex flex-col gap-4 mb-8 p-5 bg-slate-100 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
-                            <div class="flex items-center gap-3">
+                        <div class="flex flex-col md:flex-row gap-4 mb-8">
+                            <label class="flex-1 flex items-center gap-3 p-4 bg-slate-100 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer">
                                 <input type="checkbox" id="sim-fixo" class="w-5 h-5 rounded cursor-pointer" onchange="calcularSimulador()">
-                                <label for="sim-fixo" class="font-medium cursor-pointer">Adicionar Custo Fixo de R$ 6,00 (Produtos abaixo de R$ 79)</label>
-                            </div>
-                            <div class="flex items-center gap-3">
+                                <span class="font-medium text-sm">Adicionar Fixo de R$ 6,00</span>
+                            </label>
+                            <label class="flex-1 flex items-center gap-3 p-4 bg-slate-100 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer">
                                 <input type="checkbox" id="sim-frete" class="w-5 h-5 rounded cursor-pointer" onchange="calcularSimulador()">
-                                <label for="sim-frete" class="font-medium cursor-pointer">Lojista paga o Frete? (Dedução de R$ 18,50)</label>
-                            </div>
+                                <span class="font-medium text-sm">Frete Grátis (Desconto R$ 18,50)</span>
+                            </label>
                         </div>
 
-                        <div class="border-t border-slate-200 dark:border-slate-700 pt-6">
-                            <h4 class="text-sm font-bold text-slate-500 uppercase mb-4">Projeção de Resultado</h4>
-                            <div class="grid grid-cols-2 gap-6">
-                                <div class="p-5 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30">
-                                    <p class="text-sm font-medium text-slate-600 dark:text-slate-400">Lucro Bruto Unitário</p>
-                                    <h3 class="text-3xl font-extrabold text-blue-600 dark:text-blue-400 mt-1" id="sim-resultado-lucro">R$ 0,00</h3>
-                                </div>
-                                <div class="p-5 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30">
-                                    <p class="text-sm font-medium text-slate-600 dark:text-slate-400">Margem de Contribuição</p>
-                                    <h3 class="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1" id="sim-resultado-margem">0,0%</h3>
-                                </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 border-t border-slate-200 dark:border-slate-700">
+                            <div class="p-5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center">
+                                <p class="text-xs font-bold text-slate-500 uppercase">Ponto de Equilíbrio (Zero a Zero)</p>
+                                <h3 class="text-2xl font-extrabold text-slate-800 dark:text-white mt-2" id="sim-break-even">R$ 0,00</h3>
+                                <p class="text-[10px] text-slate-400 mt-1">Vender abaixo disso = Prejuízo</p>
                             </div>
+                            <div class="p-5 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 text-center">
+                                <p class="text-xs font-bold text-slate-500 uppercase">Lucro Líquido Unitário</p>
+                                <h3 class="text-3xl font-extrabold text-blue-600 dark:text-blue-400 mt-1" id="sim-resultado-lucro">R$ 0,00</h3>
+                                <p class="text-xs font-bold mt-1" id="sim-resultado-margem">0,0% Margem</p>
+                            </div>
+                            <div class="p-5 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 text-center relative overflow-hidden">
+                                <p class="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase relative z-10">Projeção Mensal (Vendas Est.)</p>
+                                <h3 class="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1 relative z-10" id="sim-projecao">R$ 0,00</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="aba-stalker" class="hidden w-full">
+                    <div class="glass-card rounded-2xl p-6 mb-8 w-full max-w-5xl animate-slide-up">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                            <div>
+                                <h3 class="text-xl font-bold flex items-center gap-2">🕵️ Stalker de Concorrentes</h3>
+                                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Cole o link ou o código MLB do seu concorrente e monitore o preço dele.</p>
+                            </div>
+                            <div class="flex gap-2 w-full md:w-auto">
+                                <input type="text" id="input-stalker" placeholder="Ex: MLB12345678" class="flex-1 w-full md:w-64 p-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 outline-none focus:ring-2 focus:ring-blue-500">
+                                <button onclick="adicionarStalker()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-all shadow-md active:scale-95">Monitorar</button>
+                            </div>
+                        </div>
+                        
+                        <div id="grid-stalker" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div class="col-span-full py-12 text-center text-slate-500">A carregar concorrentes...</div>
                         </div>
                     </div>
                 </div>
@@ -337,9 +371,8 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // COLOQUE SUAS CHAVES AQUI E O SEU E-MAIL MASTER
-const ADMIN_EMAIL = "brunolima.marques@gmail.com"; // <--- SEU EMAIL AQUI
-const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", authDomain: "irving-blm.firebaseapp.com", projectId: "irving-blm", storageBucket: "irving-blm.firebasestorage.app", messagingSenderId: "209820833777", appId: "1:209820833777:web:809fd74f0abcbd8b1d5650" };
+        const ADMIN_EMAIL = "brunolima.marques@gmail.com"; 
+        const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", authDomain: "irving-blm.firebaseapp.com", projectId: "irving-blm", storageBucket: "irving-blm.firebasestorage.app", messagingSenderId: "209820833777", appId: "1:209820833777:web:809fd74f0abcbd8b1d5650" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         
@@ -349,6 +382,7 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
         let dadosABC = [];
         let dadosDiagnostico = [];
         let graficoInstancia = null;
+        let graficoMapaInstancia = null; // Novo
         let uidClienteAtivo = null;
         let emailClienteAtivo = null;
 
@@ -377,7 +411,8 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
             document.getElementById('theme-icon').innerHTML = isDark 
                 ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>' 
                 : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>';
-            if(graficoInstancia) graficoInstancia.update();
+            if(graficoInstancia) { graficoInstancia.update(); }
+            if(graficoMapaInstancia) { graficoMapaInstancia.update(); }
         };
 
         window.exportarRelatorioPDF = () => {
@@ -404,7 +439,7 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
         };
 
         window.mudarAba = (aba) => {
-            const abas = ['visao_geral', 'custos', 'estoque', 'simulador', 'diagnostico', 'abc', 'clientes'];
+            const abas = ['visao_geral', 'custos', 'estoque', 'simulador', 'diagnostico', 'abc', 'clientes', 'stalker'];
             abas.forEach(a => {
                 document.getElementById(`aba-${a}`).classList.add('hidden');
                 if(document.getElementById(`btn-${a}`)) {
@@ -417,19 +452,25 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
             document.getElementById(`aba-${aba}`).classList.remove('hidden');
             document.getElementById(`btn-${aba}`).classList.replace('menu-inativo', 'menu-ativo');
             
+            if(aba === 'stalker') carregarStalker();
+            if(aba === 'simulador') calcularSimulador();
+
             const titulos = {
                 'visao_geral': "Visão Geral da Operação", 'custos': "Gestão de Custos e Tributos",
-                'estoque': "Estoque Parado", 'simulador': "Simulador de Cenários",
-                'diagnostico': "Diagnóstico do Preço", 'abc': "Inteligência de Catálogo", 'clientes': "Gestão de Clientes"
+                'estoque': "Estoque Parado", 'simulador': "Simulador de Cenários PRO",
+                'diagnostico': "Diagnóstico do Preço", 'abc': "Inteligência de Catálogo", 'clientes': "Gestão de Clientes",
+                'stalker': "Stalker de Concorrentes"
             };
             document.getElementById('titulo-pagina').innerText = titulos[aba];
         };
 
+        // --- CÁLCULO PRO DO SIMULADOR ---
         window.calcularSimulador = () => {
             const preco = parseFloat(document.getElementById('sim-preco').value) || 0;
+            const vendasMes = parseFloat(document.getElementById('sim-vendas').value) || 0;
             const cmv = parseFloat(document.getElementById('sim-cmv').value) || 0;
-            const impostoPct = parseFloat(document.getElementById('sim-imposto').value) || 0;
-            const comissaoPct = parseFloat(document.getElementById('sim-comissao').value) || 0;
+            const impostoPct = parseFloat(document.getElementById('sim-imposto').value) / 100 || 0;
+            const comissaoPct = parseFloat(document.getElementById('sim-comissao').value) / 100 || 0;
             
             const fixoCheck = document.getElementById('sim-fixo');
             if(preco < 79 && !fixoCheck.checked && preco > 0) fixoCheck.checked = true;
@@ -440,23 +481,84 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
 
             const frete = freteCheck.checked ? 18.50 : 0;
             const custoFixo = fixoCheck.checked ? 6.00 : 0; 
-            const comissaoRS = preco * (comissaoPct / 100);
-            const impostoRS = preco * (impostoPct / 100);
-
-            const lucroBruto = preco - cmv - frete - custoFixo - comissaoRS - impostoRS;
+            
+            // 1. Lucro Base
+            const lucroBruto = preco - cmv - frete - custoFixo - (preco * comissaoPct) - (preco * impostoPct);
             const margem = preco > 0 ? (lucroBruto / preco) * 100 : 0;
+            
+            // 2. Projeção
+            const projecaoMes = lucroBruto * vendasMes;
 
-            const elLucro = document.getElementById('sim-resultado-lucro');
-            const elMargem = document.getElementById('sim-resultado-margem');
+            // 3. Ponto de Equilíbrio
+            const custosVariaveisPct = comissaoPct + impostoPct;
+            const custosFixosTotais = cmv + frete + custoFixo;
+            let breakEven = 0;
+            if(custosVariaveisPct < 1) breakEven = custosFixosTotais / (1 - custosVariaveisPct);
 
-            elLucro.innerText = `R$ ${lucroBruto.toFixed(2).replace('.', ',')}`;
-            elMargem.innerText = `${margem.toFixed(1).replace('.', ',')}%`;
+            document.getElementById('sim-break-even').innerText = `R$ ${breakEven.toFixed(2).replace('.', ',')}`;
+            document.getElementById('sim-resultado-lucro').innerText = `R$ ${lucroBruto.toFixed(2).replace('.', ',')}`;
+            document.getElementById('sim-resultado-margem').innerText = `${margem.toFixed(1).replace('.', ',')}% Margem`;
+            document.getElementById('sim-projecao').innerText = `R$ ${projecaoMes.toFixed(2).replace('.', ',')}`;
 
-            elLucro.className = `text-3xl font-extrabold mt-1 ${lucroBruto >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}`;
-            elMargem.className = `text-3xl font-extrabold mt-1 ${margem >= 15 ? 'text-emerald-600 dark:text-emerald-400' : (margem >= 0 ? 'text-amber-500' : 'text-red-600 dark:text-red-400')}`;
+            document.getElementById('sim-resultado-lucro').className = `text-3xl font-extrabold mt-1 ${lucroBruto >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}`;
+            document.getElementById('sim-resultado-margem').className = `text-xs font-bold mt-1 ${margem >= 15 ? 'text-emerald-600 dark:text-emerald-400' : (margem >= 0 ? 'text-amber-500' : 'text-red-600 dark:text-red-400')}`;
+            document.getElementById('sim-projecao').className = `text-3xl font-extrabold mt-1 relative z-10 ${projecaoMes >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`;
         };
 
-        // --- ATUALIZAÇÃO: Ticket Médio incluído no render da Curva ABC ---
+        // --- STALKER JS ---
+        window.carregarStalker = async () => {
+            const grid = document.getElementById('grid-stalker');
+            const token = await usuarioGlobal.getIdToken();
+            let url = '/api/stalker'; if(uidClienteAtivo) url += `?client_uid=${uidClienteAtivo}`;
+            
+            const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
+            const data = await res.json();
+            
+            grid.innerHTML = '';
+            if(!data || data.length === 0) { grid.innerHTML = '<div class="col-span-full py-12 text-center text-slate-500 font-medium bg-slate-100 dark:bg-slate-800/50 rounded-xl">Nenhum concorrente monitorizado. Adicione um código MLB acima!</div>'; return; }
+
+            data.forEach(item => {
+                grid.innerHTML += `
+                    <div class="glass-card p-5 rounded-2xl flex flex-col justify-between animate-slide-up hover:shadow-lg transition-shadow">
+                        <div class="flex gap-4 mb-4">
+                            <img src="${item.imagem}" class="w-20 h-20 rounded-lg object-cover border border-slate-200 dark:border-slate-700">
+                            <div>
+                                <h4 class="font-bold text-sm text-slate-800 dark:text-slate-200 line-clamp-2" title="${item.titulo}">${item.titulo}</h4>
+                                <span class="text-[10px] bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-500 mt-1 inline-block">${item.id}</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-end border-t border-slate-100 dark:border-slate-700 pt-4">
+                            <div>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase">Preço Atual</p>
+                                <p class="text-xl font-extrabold text-blue-600 dark:text-blue-400">R$ ${item.preco.toFixed(2).replace('.',',')}</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <a href="${item.link}" target="_blank" class="p-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors" title="Ver no ML">🔗</a>
+                                <button onclick="removerStalker('${item.id}')" class="p-2 bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-lg transition-colors" title="Deixar de Monitorar">🗑️</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        };
+
+        window.adicionarStalker = async () => {
+            const input = document.getElementById('input-stalker');
+            if(!input.value.trim()) return;
+            const token = await usuarioGlobal.getIdToken();
+            let payload = { mlb_id: input.value }; if(uidClienteAtivo) payload.client_uid = uidClienteAtivo;
+            await fetch('/api/stalker', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(payload) });
+            input.value = ''; carregarStalker();
+        };
+
+        window.removerStalker = async (mlb_id) => {
+            if(!confirm("Tem certeza que deseja remover este concorrente?")) return;
+            const token = await usuarioGlobal.getIdToken();
+            let payload = { mlb_id: mlb_id }; if(uidClienteAtivo) payload.client_uid = uidClienteAtivo;
+            await fetch('/api/stalker', { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(payload) });
+            carregarStalker();
+        };
+
         window.renderCurvaABC = () => {
             const tbody = document.getElementById('tabela-abc-corpo'); tbody.innerHTML = '';
             if(dadosABC.length === 0) {
@@ -579,10 +681,19 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
             return '';
         };
 
-        function atualizarGrafico(dadosGrafico) {
-            const ctx = document.getElementById('graficoCrescimento').getContext('2d'); if (graficoInstancia) graficoInstancia.destroy(); 
+        function atualizarGrafico(dadosGrafico, dadosCalor) {
             const isDark = document.documentElement.classList.contains('dark'); const gridColor = isDark ? '#334155' : '#E2E8F0'; const textColor = isDark ? '#94A3B8' : '#64748B';
-            graficoInstancia = new Chart(ctx, { type: 'bar', data: { labels: dadosGrafico.labels, datasets: [{ label: 'Faturamento (R$)', data: dadosGrafico.faturamento, backgroundColor: 'rgba(59, 130, 246, 0.6)', borderColor: '#3B82F6', borderWidth: 1, borderRadius: {topLeft: 4, topRight: 4}, hoverBackgroundColor: 'rgba(59, 130, 246, 0.8)', order: 2 }, { label: 'Lucro Bruto (R$)', data: dadosGrafico.lucro, type: 'line', borderColor: '#10B981', backgroundColor: '#10B981', borderWidth: 3, tension: 0.4, pointRadius: 4, pointHoverRadius: 6, pointBackgroundColor: '#fff', order: 1 }] }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, scales: { y: { beginAtZero: true, grid: { color: gridColor, drawBorder: false }, ticks: { color: textColor, padding: 10 } }, x: { grid: { display: false, drawBorder: false }, ticks: { color: textColor, padding: 10 } } }, plugins: { legend: { labels: { color: textColor, font: { family: 'Inter', weight: '500' }, usePointStyle: true, boxWidth: 8 } }, tooltip: { backgroundColor: isDark ? '#1E293B' : '#ffffff', titleColor: isDark ? '#f8fafc' : '#0f172a', bodyColor: isDark ? '#cbd5e1' : '#475569', borderColor: isDark ? '#334155' : '#e2e8f0', borderWidth: 1, padding: 12, boxPadding: 6, usePointStyle: true } } } });
+            
+            // Gráfico 1: Evolução
+            const ctx1 = document.getElementById('graficoCrescimento').getContext('2d'); if (graficoInstancia) graficoInstancia.destroy(); 
+            graficoInstancia = new Chart(ctx1, { type: 'bar', data: { labels: dadosGrafico.labels, datasets: [{ label: 'Faturamento (R$)', data: dadosGrafico.faturamento, backgroundColor: 'rgba(59, 130, 246, 0.6)', borderColor: '#3B82F6', borderWidth: 1, borderRadius: {topLeft: 4, topRight: 4}, hoverBackgroundColor: 'rgba(59, 130, 246, 0.8)', order: 2 }, { label: 'Lucro Bruto (R$)', data: dadosGrafico.lucro, type: 'line', borderColor: '#10B981', backgroundColor: '#10B981', borderWidth: 3, tension: 0.4, pointRadius: 4, pointHoverRadius: 6, pointBackgroundColor: '#fff', order: 1 }] }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, scales: { y: { beginAtZero: true, grid: { color: gridColor, drawBorder: false }, ticks: { color: textColor, padding: 10 } }, x: { grid: { display: false, drawBorder: false }, ticks: { color: textColor, padding: 10 } } }, plugins: { legend: { labels: { color: textColor, font: { family: 'Inter', weight: '500' }, usePointStyle: true, boxWidth: 8 } }, tooltip: { backgroundColor: isDark ? '#1E293B' : '#ffffff', titleColor: isDark ? '#f8fafc' : '#0f172a', bodyColor: isDark ? '#cbd5e1' : '#475569', borderColor: isDark ? '#334155' : '#e2e8f0', borderWidth: 1, padding: 12, boxPadding: 6, usePointStyle: true } } } });
+
+            // Gráfico 2: Mapa de Calor
+            const ctx2 = document.getElementById('graficoMapaCalor').getContext('2d'); if (graficoMapaInstancia) graficoMapaInstancia.destroy();
+            if(dadosCalor) {
+                const calorLabels = dadosCalor.map(d => d.estado); const calorData = dadosCalor.map(d => d.faturamento);
+                graficoMapaInstancia = new Chart(ctx2, { type: 'bar', data: { labels: calorLabels, datasets: [{ label: 'Faturamento por Estado', data: calorData, backgroundColor: 'rgba(245, 158, 11, 0.8)', borderColor: '#F59E0B', borderWidth: 1, borderRadius: 4 }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { grid: { color: gridColor }, ticks: { color: textColor } }, y: { grid: { display: false }, ticks: { color: textColor, font: {weight: 'bold'} } } }, plugins: { legend: { display: false } } } });
+            }
         }
 
         window.carregarDados = async () => {
@@ -608,7 +719,9 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
 
             if (data.erro === "vazio") {
                 document.getElementById('tabela-corpo').innerHTML = "<tr><td colspan='7' class='py-16 text-center text-slate-500 font-medium'>Nenhuma venda encontrada para o período selecionado.</td></tr>";
-                if (graficoInstancia) graficoInstancia.destroy(); return;
+                if (graficoInstancia) graficoInstancia.destroy(); 
+                if (graficoMapaInstancia) graficoMapaInstancia.destroy();
+                return;
             }
 
             document.getElementById('input-imposto').value = data.kpis.imposto_padrao;
@@ -619,7 +732,7 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
             document.getElementById('kpi-ads').textContent = data.kpis.ads;
             document.getElementById('kpi-alertas').textContent = data.kpis.alertas_criticos;
 
-            atualizarGrafico(data.grafico);
+            atualizarGrafico(data.grafico, data.mapa_calor);
 
             dadosAPI = data.tabela;
             dadosEstoque = data.estoque_parado || []; 

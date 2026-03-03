@@ -182,21 +182,19 @@ def api_dados():
         
         def buscar_frete_exato(s_id):
             url_costs = f"https://api.mercadolibre.com/shipments/{s_id}/costs"
-            # O header x-format-new garante a leitura do JSON estruturado corretamente
             headers_frete = {"Authorization": f"Bearer {ml_token}", "x-format-new": "true"}
             
             try:
                 res_costs = requests.get(url_costs, headers=headers_frete, timeout=10)
                 if res_costs.status_code == 200:
                     data = res_costs.json()
-                    # AQUI ESTAVA O SEGREDO: A chave da API é 'cost' e não 'amount'!
                     if 'senders' in data and data['senders']:
                         return s_id, sum([float(s.get('cost', 0)) for s in data['senders']])
                     return s_id, 0
             except Exception:
                 pass
             
-            # Fallback de emergência (raro de ser necessário agora)
+            # Fallback de emergência
             url_ship = f"https://api.mercadolibre.com/shipments/{s_id}"
             try:
                 res_ship = requests.get(url_ship, headers=headers_frete, timeout=5)
@@ -214,7 +212,6 @@ def api_dados():
                 
             return s_id, 0
 
-        # Dispara as 20 requisições simultâneas para extrair a fatura num instante
         if shipping_ids:
             shipping_ids = list(set(shipping_ids))
             with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
@@ -223,7 +220,6 @@ def api_dados():
                     sid, custo = future.result()
                     custos_frete_reais[sid] = custo
 
-        # Ratear o frete para evitar duplicação em vendas de "Carrinho"
         qty_por_shipment = {}
         for order in resultados:
             ship_id = str(order.get('shipping', {}).get('id', ''))
@@ -251,7 +247,6 @@ def api_dados():
                 
                 custo_cmv = float(custos_db.get(item_id, 0))
                 
-                # A API retorna no 'sale_fee' o valor EXATO por unidade descontado de comissão e fixo
                 tarifa_ml_unitaria = float(item.get('sale_fee', 0))
                 imposto_reais = price * (imposto_padrao_pct / 100)
                 
@@ -274,7 +269,6 @@ def api_dados():
                 agrupado[item_id]['Custo_Imposto'] += (imposto_reais * qty)
                 agrupado[item_id]['Margem_Contribuicao'] += (lucro_unidade_base * qty) 
 
-        # Processamento do ADS
         item_ids_list = list(agrupado.keys())
         if item_ids_list:
             for i in range(0, len(item_ids_list), 50):
@@ -313,85 +307,90 @@ def api_dados():
             if anterior == 0: return 100
             return round(((atual - anterior) / anterior) * 100, 1)
 
-        df['Giro_Trend'] = df.apply(lambda x: calc_trend(x['Giro'], x['Giro_Ant']), axis=1)
-        df['MC_Trend'] = df.apply(lambda x: calc_trend(x['Margem_Contribuicao'], x['Margem_Ant']), axis=1)
+        if not df.empty:
+            df['Giro_Trend'] = df.apply(lambda x: calc_trend(x['Giro'], x['Giro_Ant']), axis=1)
+            df['MC_Trend'] = df.apply(lambda x: calc_trend(x['Margem_Contribuicao'], x['Margem_Ant']), axis=1)
 
-        def gerar_status(row):
-            if row['Sem_Custo']: return "⚠️ Preencha o CMV"
-            mc = row['Margem_Contribuicao']
-            if mc < 0: return "🔴 Erro de Preço"
-            elif mc > 0 and row['Custo_ADS'] > 0: return "🟢 Escalar ADS"
-            else: return "🔵 Saudável"
-            
-        df['Status'] = df.apply(gerar_status, axis=1)
-        df['Desconto_Max'] = (((df['Margem_Contribuicao'] - (df['Ticket_Medio'] * 0.15)) / df['Ticket_Medio']) * 100).round(2)
-        df['Desconto_Max_Grafico'] = df['Desconto_Max'].apply(lambda x: x if x > 0 else 0)
+            def gerar_status(row):
+                if row['Sem_Custo']: return "⚠️ Preencha o CMV"
+                mc = row['Margem_Contribuicao']
+                if mc < 0: return "🔴 Erro de Preço"
+                elif mc > 0 and row['Custo_ADS'] > 0: return "🟢 Escalar ADS"
+                else: return "🔵 Saudável"
+                
+            df['Status'] = df.apply(gerar_status, axis=1)
+            df['Desconto_Max'] = (((df['Margem_Contribuicao'] - (df['Ticket_Medio'] * 0.15)) / df['Ticket_Medio']) * 100).round(2)
+            df['Desconto_Max_Grafico'] = df['Desconto_Max'].apply(lambda x: x if x > 0 else 0)
 
-        lucro_total = float((df[~df['Sem_Custo']]['Giro'] * df[~df['Sem_Custo']]['Margem_Contribuicao']).sum())
-        ads_total = float(df['Custo_ADS'].sum())
-        faturamento_total = float(df['Faturamento'].sum())
+            lucro_total = float((df[~df['Sem_Custo']]['Giro'] * df[~df['Sem_Custo']]['Margem_Contribuicao']).sum())
+            ads_total = float(df['Custo_ADS'].sum())
+            faturamento_total = float(df['Faturamento'].sum())
+        else:
+            lucro_total, ads_total, faturamento_total = 0, 0, 0
         
         timeline_ordenada = dict(sorted(timeline.items()))
         grafico_dados = { "labels": list(timeline_ordenada.keys()), "faturamento": [v['faturamento'] for v in timeline_ordenada.values()], "lucro": [v['lucro'] for v in timeline_ordenada.values()] }
 
-        # --- PROCESSAMENTO: CURVA ABC ---
-        df_abc = df[df['Faturamento'] > 0].sort_values(by='Faturamento', ascending=False)
-        faturamento_acumulado = 0
+        # --- PROCESSAMENTO: CURVA ABC COM TICKET MÉDIO ---
         curva_abc = []
-        for _, row in df_abc.iterrows():
-            faturamento_acumulado += row['Faturamento']
-            pct_acumulada = (faturamento_acumulado / faturamento_total) * 100 if faturamento_total > 0 else 0
-            pct_total = (row['Faturamento'] / faturamento_total) * 100 if faturamento_total > 0 else 0
-            classe = 'A' if pct_acumulada <= 80 else ('B' if pct_acumulada <= 95 else 'C')
-            curva_abc.append({
-                'ID': row['ID'], 'Produto': row['Produto'], 'Faturamento': row['Faturamento'], 
-                'Percentual': round(pct_total, 1), 'Classe': classe
-            })
+        if not df.empty:
+            df_abc = df[df['Faturamento'] > 0].sort_values(by='Faturamento', ascending=False)
+            faturamento_acumulado = 0
+            for _, row in df_abc.iterrows():
+                faturamento_acumulado += row['Faturamento']
+                pct_acumulada = (faturamento_acumulado / faturamento_total) * 100 if faturamento_total > 0 else 0
+                pct_total = (row['Faturamento'] / faturamento_total) * 100 if faturamento_total > 0 else 0
+                classe = 'A' if pct_acumulada <= 80 else ('B' if pct_acumulada <= 95 else 'C')
+                curva_abc.append({
+                    'ID': row['ID'], 'Produto': row['Produto'], 'Faturamento': row['Faturamento'], 
+                    'Ticket_Medio': row['Ticket_Medio'],
+                    'Percentual': round(pct_total, 1), 'Classe': classe
+                })
 
         # --- PROCESSAMENTO: DIAGNÓSTICO DO PREÇO ---
         diagnosticos = []
         sem_cmv_count = 0
         
-        for _, row in df.iterrows():
-            if row['Sem_Custo']:
-                sem_cmv_count += 1
-                continue
+        if not df.empty:
+            for _, row in df.iterrows():
+                if row['Sem_Custo']:
+                    sem_cmv_count += 1
+                    continue
+                    
+                if row['Giro'] == 0: continue
                 
-            if row['Giro'] == 0: continue
-            
-            margem_pct = (row['Margem_Contribuicao'] / row['Ticket_Medio']) * 100 if row['Ticket_Medio'] > 0 else 0
-            
-            if margem_pct < 0:
-                diagnosticos.append({
-                    'tipo': 'prejuizo', 'titulo': '🔴 Erro de Precificação', 'produto': row['Produto'],
-                    'mensagem': f"Prejuízo! Margem negativa ({margem_pct:.1f}%). Você perde R$ {abs(row['Margem_Contribuicao']):.2f} a cada venda."
-                })
-            elif 0 <= margem_pct < 15:
-                if row['Custo_ADS'] > 0:
+                margem_pct = (row['Margem_Contribuicao'] / row['Ticket_Medio']) * 100 if row['Ticket_Medio'] > 0 else 0
+                
+                if margem_pct < 0:
                     diagnosticos.append({
-                        'tipo': 'alerta_ads', 'titulo': '⚠️ Alerta de ADS', 'produto': row['Produto'],
-                        'mensagem': f"Margem espremida ({margem_pct:.1f}%) e ADS ativo. O custo do anúncio pode engolir seu lucro."
+                        'tipo': 'prejuizo', 'titulo': '🔴 Erro de Precificação', 'produto': row['Produto'],
+                        'mensagem': f"Prejuízo! Margem negativa ({margem_pct:.1f}%). Você perde R$ {abs(row['Margem_Contribuicao']):.2f} a cada venda."
                     })
-                else:
+                elif 0 <= margem_pct < 15:
+                    if row['Custo_ADS'] > 0:
+                        diagnosticos.append({
+                            'tipo': 'alerta_ads', 'titulo': '⚠️ Alerta de ADS', 'produto': row['Produto'],
+                            'mensagem': f"Margem espremida ({margem_pct:.1f}%) e ADS ativo. O custo do anúncio pode engolir seu lucro."
+                        })
+                    else:
+                        diagnosticos.append({
+                            'tipo': 'alerta_margem', 'titulo': '⚠️ Margem Baixa', 'produto': row['Produto'],
+                            'mensagem': f"Sua Margem de Contribuição está no limite ({margem_pct:.1f}%). Risco de prejuízo se houver devoluções."
+                        })
+                elif margem_pct > 30 and row['Giro'] < 5:
                     diagnosticos.append({
-                        'tipo': 'alerta_margem', 'titulo': '⚠️ Margem Baixa', 'produto': row['Produto'],
-                        'mensagem': f"Sua Margem de Contribuição está no limite ({margem_pct:.1f}%). Risco de prejuízo se houver devoluções."
+                        'tipo': 'escala', 'titulo': '📉 Potencial de Escala', 'produto': row['Produto'],
+                        'mensagem': f"Sua Margem está excelente ({margem_pct:.1f}%), mas vendeu pouco ({row['Giro']} unid). Teste baixar o preço para atrair mais compras."
                     })
-            elif margem_pct > 30 and row['Giro'] < 5:
-                diagnosticos.append({
-                    'tipo': 'escala', 'titulo': '📉 Potencial de Escala', 'produto': row['Produto'],
-                    'mensagem': f"Sua Margem está excelente ({margem_pct:.1f}%), mas vendeu pouco ({row['Giro']} unid). Teste baixar o preço para atrair mais compras."
-                })
 
-        if sem_cmv_count > 0:
-            diagnosticos.insert(0, {
-                'tipo': 'alerta_cmv', 'titulo': '⚠️ Preencha o Custo de Compra', 'produto': f"{sem_cmv_count} produtos sem CMV na API",
-                'mensagem': "Acesse a aba 'Gestão de Custos'. A IA saltou estes produtos porque precisa do custo da mercadoria para calcular lucros e prejuízos."
-            })
+            if sem_cmv_count > 0:
+                diagnosticos.insert(0, {
+                    'tipo': 'alerta_cmv', 'titulo': '⚠️ Preencha o Custo de Compra', 'produto': f"{sem_cmv_count} produtos sem CMV na API",
+                    'mensagem': "Acesse a aba 'Gestão de Custos'. A IA saltou estes produtos porque precisa do custo da mercadoria para calcular lucros e prejuízos."
+                })
             
         diagnosticos = diagnosticos[:6]
 
-        # --- BUSCA DO ESTOQUE PARADO ---
         url_itens_ativos = f"https://api.mercadolibre.com/users/{ml_seller_id}/items/search?status=active&limit=50"
         estoque_parado = []
         try:
@@ -415,19 +414,22 @@ def api_dados():
         except Exception as e:
             print("Aviso Estoque Parado:", e)
 
+        unidades_total = int(df['Giro'].sum()) if not df.empty else 0
+        alertas_total = int(len(df[df['Sem_Custo'] == True])) if not df.empty else 0
+
         kpis = {
             "faturamento": f"R$ {faturamento_total:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
             "lucro": f"R$ {lucro_total:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
             "ads": f"R$ {ads_total:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
-            "unidades": str(int(df['Giro'].sum())),
-            "alertas_criticos": int(len(df[df['Sem_Custo'] == True])),
+            "unidades": str(unidades_total),
+            "alertas_criticos": alertas_total,
             "periodo_nome": f"Últimos {periodo_dias} dias",
             "imposto_padrao": imposto_padrao_pct
         }
 
         return jsonify({
             "kpis": kpis, 
-            "tabela": df.to_dict(orient='records'), 
+            "tabela": df.to_dict(orient='records') if not df.empty else [], 
             "grafico": grafico_dados, 
             "estoque_parado": estoque_parado,
             "abc": curva_abc,

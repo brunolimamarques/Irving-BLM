@@ -293,6 +293,7 @@
                                     <tr class="text-slate-500 border-b border-slate-200 dark:border-slate-700">
                                         <th class="pb-4 font-semibold">Produto (SKU)</th>
                                         <th class="pb-4 font-semibold">Classificação</th>
+                                        <th class="pb-4 font-semibold">Ticket Médio</th>
                                         <th class="pb-4 font-semibold">Faturamento Gerado</th>
                                         <th class="pb-4 font-semibold">% do Total</th>
                                     </tr>
@@ -455,9 +456,13 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
             elMargem.className = `text-3xl font-extrabold mt-1 ${margem >= 15 ? 'text-emerald-600 dark:text-emerald-400' : (margem >= 0 ? 'text-amber-500' : 'text-red-600 dark:text-red-400')}`;
         };
 
+        // --- ATUALIZAÇÃO: Ticket Médio incluído no render da Curva ABC ---
         window.renderCurvaABC = () => {
             const tbody = document.getElementById('tabela-abc-corpo'); tbody.innerHTML = '';
-            if(dadosABC.length === 0) return;
+            if(dadosABC.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="py-4 text-center text-slate-500">Nenhum dado encontrado no período.</td></tr>';
+                return;
+            }
             dadosABC.forEach((row, index) => {
                 let corBadge = 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300';
                 if(row.Classe === 'A') corBadge = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400';
@@ -467,7 +472,8 @@ const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", auth
                     <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors animate-slide-up opacity-0" style="animation-delay: ${animDelay}s; animation-fill-mode: forwards;">
                         <td class="py-5 align-middle"><p class="font-bold w-64 truncate text-slate-800 dark:text-white" title="${row.Produto}">${row.Produto}</p><p class="text-[11px] text-slate-400 mt-1">ID: ${row.ID}</p></td>
                         <td class="py-5 align-middle"><span class="px-3 py-1 rounded text-xs font-bold shadow-sm ${corBadge}">Curva ${row.Classe}</span></td>
-                        <td class="py-5 align-middle font-medium text-slate-800 dark:text-slate-300">R$ ${row.Faturamento.toFixed(2)}</td>
+                        <td class="py-5 align-middle font-semibold text-amber-600 dark:text-amber-400">R$ ${(row.Ticket_Medio || 0).toFixed(2).replace('.',',')}</td>
+                        <td class="py-5 align-middle font-medium text-slate-800 dark:text-slate-300">R$ ${row.Faturamento.toFixed(2).replace('.',',')}</td>
                         <td class="py-5 align-middle font-bold text-slate-500">${row.Percentual}%</td>
                     </tr>`;
             });

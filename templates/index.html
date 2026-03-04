@@ -93,7 +93,7 @@
                     <button onclick="mudarAba('visao_geral')" id="btn-visao_geral" class="menu-ativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">📊 Visão Central</button>
                     <button onclick="mudarAba('custos')" id="btn-custos" class="menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">💰 Engine de Custos</button>
                     <button onclick="mudarAba('estoque')" id="btn-estoque" class="menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">📦 Inventário Parado</button>
-                    <button onclick="mudarAba('radar')" id="btn-radar" class="menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">📡 Radar de Ruptura</button>
+                    <button onclick="mudarAba('radar')" id="btn-radar" class="menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">📡 Radar Supply Chain</button>
                     
                     <div class="my-3 border-t border-slate-200/50 dark:border-slate-800/50 mx-4"></div>
                     
@@ -267,11 +267,15 @@
 
                 <div id="aba-radar" class="hidden w-full">
                     <div class="glass-card rounded-2xl p-8 mb-8 w-full animate-slide-up border border-red-500/20 bg-gradient-to-b from-red-500/5 to-transparent">
-                        <div class="flex justify-between items-center mb-8">
+                        <div class="flex justify-between items-center mb-8 flex-wrap gap-4">
                             <div>
-                                <h3 class="text-2xl font-extrabold flex items-center gap-3"><span class="text-3xl animate-pulse">📡</span> Radar de Ruptura Crítica</h3>
-                                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1.5 font-medium">O algoritmo projeta quais anúncios vão esgotar nos próximos 15 dias com base no giro instantâneo.</p>
+                                <h3 class="text-2xl font-extrabold flex items-center gap-3"><span class="text-3xl animate-pulse">📡</span> Radar Supply Chain</h3>
+                                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1.5 font-medium">O algoritmo cruza o tempo de entrega do fornecedor com o seu giro diário para sugerir compras exatas para 30 dias.</p>
                             </div>
+                            <button onclick="gerarPedidoFornecedor()" class="px-6 py-3 bg-red-500 hover:bg-red-400 text-white font-extrabold rounded-xl transition-all shadow-[0_0_15px_rgba(239,68,68,0.4)] flex items-center gap-2 active:scale-95 uppercase tracking-wide text-sm">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                Gerar Pedido (WhatsApp)
+                            </button>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left text-sm whitespace-nowrap">
@@ -279,9 +283,9 @@
                                     <tr class="text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-slate-800/50">
                                         <th class="pb-4 font-bold uppercase tracking-wider text-xs">Produto Ameaçado</th>
                                         <th class="pb-4 font-bold uppercase tracking-wider text-xs">Giro / Dia</th>
-                                        <th class="pb-4 font-bold uppercase tracking-wider text-xs">Estoque Atual</th>
-                                        <th class="pb-4 font-bold uppercase tracking-wider text-xs">Tempo Restante (Previsão)</th>
-                                        <th class="pb-4 font-bold uppercase tracking-wider text-xs text-center">Ação Rápida</th>
+                                        <th class="pb-4 font-bold uppercase tracking-wider text-xs">Tempo Fornecedor (Dias)</th>
+                                        <th class="pb-4 font-bold uppercase tracking-wider text-xs">Status do Estoque</th>
+                                        <th class="pb-4 font-bold uppercase tracking-wider text-xs">Sugestão (30d)</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tabela-radar-corpo"></tbody>
@@ -372,7 +376,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // COLOQUE SUAS CHAVES AQUI E O SEU E-MAIL MASTER
         const ADMIN_EMAIL = "brunolima.marques@gmail.com"; 
         const firebaseConfig = { apiKey: "AIzaSyDLsKE-eRjq5EzDlR32ba0xXaEcMdnOBuM", authDomain: "irving-blm.firebaseapp.com", projectId: "irving-blm", storageBucket: "irving-blm.firebasestorage.app", messagingSenderId: "209820833777", appId: "1:209820833777:web:809fd74f0abcbd8b1d5650" };
         const app = initializeApp(firebaseConfig);
@@ -409,30 +412,26 @@
         window.sair = () => signOut(auth);
         window.iniciarAuthML = () => window.location.href = `/conectar-ml?uid=${usuarioGlobal.uid}`;
 
-        // --- MODO WAR ROOM (FULLSCREEN E OCULTA MENU) ---
         window.toggleWarRoom = () => {
             const menuLateral = document.getElementById('menu-lateral');
             const wrapperGrafico = document.getElementById('wrapper-canvas');
             
             if (menuLateral.classList.contains('hidden')) {
-                // Sair do War Room
                 menuLateral.classList.remove('hidden');
                 menuLateral.classList.add('md:flex');
                 wrapperGrafico.classList.remove('h-96');
                 wrapperGrafico.classList.add('h-72');
                 if (document.exitFullscreen) { document.exitFullscreen().catch(err => console.log(err)); }
             } else {
-                // Entrar no War Room
                 menuLateral.classList.add('hidden');
                 menuLateral.classList.remove('md:flex');
                 wrapperGrafico.classList.remove('h-72');
-                wrapperGrafico.classList.add('h-96'); // Grafico maior na TV
+                wrapperGrafico.classList.add('h-96'); 
                 if (document.documentElement.requestFullscreen) { document.documentElement.requestFullscreen().catch(err => console.log(err)); }
             }
             if(graficoInstancia) { setTimeout(() => graficoInstancia.resize(), 500); }
         };
 
-// --- DISPARO RELATÓRIO WHATSAPP (FRONTEND NATIVO) ---
         window.enviarRelatorioZap = async () => {
             if(!dadosAPI || dadosAPI.length === 0) { alert("Gerar Dados antes de enviar relatório!"); return; }
             const btn = document.getElementById('btn-zap');
@@ -456,22 +455,13 @@
                 });
                 const data = await res.json();
                 if(res.ok && data.mensagem_formatada) {
-                    // Codifica o texto para formato de link
                     const textoCodificado = encodeURIComponent(data.mensagem_formatada);
-                    
-                    // Pergunta se quer enviar para um número específico ou escolher na lista
                     const numero = prompt("O relatório está pronto! 🚀\n\nDigite o número do WhatsApp com DDD (Ex: 11999999999) para abrir a conversa direta, ou deixe em branco e clique em OK para escolher um contato da sua lista:");
-                    
-                    let linkWa = `https://api.whatsapp.com/send?text=${textoCodificado}`; // Deixou em branco (abre lista)
-                    
+                    let linkWa = `https://api.whatsapp.com/send?text=${textoCodificado}`;
                     if(numero && numero.trim() !== "") {
-                        let numLimpo = numero.replace(/\D/g, ''); // Remove traços e espaços
-                        if(numLimpo.length >= 10) { 
-                            linkWa = `https://api.whatsapp.com/send?phone=55${numLimpo}&text=${textoCodificado}`; 
-                        }
+                        let numLimpo = numero.replace(/\D/g, ''); 
+                        if(numLimpo.length >= 10) linkWa = `https://api.whatsapp.com/send?phone=55${numLimpo}&text=${textoCodificado}`; 
                     }
-                    
-                    // Abre a janela do WhatsApp
                     window.open(linkWa, '_blank');
                 } else {
                     alert("Erro ao formatar mensagem no servidor.");
@@ -480,7 +470,7 @@
             
             btn.innerHTML = textoOriginal; btn.classList.remove('opacity-80', 'cursor-wait');
         };
-        
+
         window.toggleDarkMode = () => {
             document.documentElement.classList.toggle('dark');
             const isDark = document.documentElement.classList.contains('dark');
@@ -531,7 +521,7 @@
                 'visao_geral': "Visão Central", 'custos': "Engine de Custos",
                 'estoque': "Inventário Parado", 'calculadora': "Calculadora BLM",
                 'diagnostico': "Diagnóstico Smart", 'abc': "Matriz ABC", 'clientes': "Terminal Root",
-                'radar': "Radar de Ruptura Crítica"
+                'radar': "Radar Supply Chain"
             };
             document.getElementById('titulo-pagina').innerText = titulos[aba];
         };
@@ -665,6 +655,52 @@
             btn.innerText = "Salvo ✔"; btn.className = "px-6 py-2.5 bg-emerald-500 text-slate-900 rounded-xl text-xs transition-all duration-300 font-extrabold shadow-[0_0_15px_rgba(16,185,129,0.4)] uppercase tracking-wide";
         };
 
+        window.salvarLeadTime = async (itemId) => {
+            const btn = document.getElementById(`btn-lt-${itemId}`);
+            const leadTime = document.getElementById(`lt-${itemId}`).value;
+            const token = await usuarioGlobal.getIdToken();
+            
+            btn.innerText = "..."; btn.classList.add('opacity-80', 'cursor-wait');
+            let payload = { item_id: itemId, lead_time: leadTime }; 
+            if (uidClienteAtivo) payload.client_uid = uidClienteAtivo;
+            
+            await fetch('/api/salvar_leadtime', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, 
+                body: JSON.stringify(payload) 
+            });
+            
+            btn.innerText = "✔"; 
+            btn.classList.replace('text-slate-600', 'text-emerald-500');
+            setTimeout(() => carregarDados(), 800); 
+        };
+
+        window.gerarPedidoFornecedor = () => {
+            if(!dadosRadar || dadosRadar.length === 0) return;
+            const itensPedir = dadosRadar.filter(r => r.Dias_Restantes <= r.Lead_Time);
+            
+            if(itensPedir.length === 0) {
+                alert("O seu estoque está seguro! Nenhum produto atingiu a linha crítica do Tempo de Reposição (Lead Time).");
+                return;
+            }
+
+            let texto = "*GERADOR DE PEDIDOS (IRVING BLM)* 📦\n\n_Produtos que atingiram o limite de ruptura:_\n\n";
+            itensPedir.forEach(i => {
+                texto += `*Ref:* ${i.Produto.substring(0,40)}...\n*Reposição Sugerida (30d):* ${i.Sugestao_Compra} unidades\n\n`;
+            });
+            texto += "_Pedido gerado automaticamente pelo algoritmo de giro._";
+            
+            const textoCodificado = encodeURIComponent(texto);
+            const numero = prompt("Pedido pronto para disparo! 🚀\n\nDigite o WhatsApp do seu fornecedor com DDD (Ex: 11999999999) ou deixe em branco para escolher direto da agenda:");
+            
+            let linkWa = `https://api.whatsapp.com/send?text=${textoCodificado}`;
+            if(numero && numero.trim() !== "") {
+                let numLimpo = numero.replace(/\D/g, '');
+                if(numLimpo.length >= 10) linkWa = `https://api.whatsapp.com/send?phone=55${numLimpo}&text=${textoCodificado}`;
+            }
+            window.open(linkWa, '_blank');
+        };
+
         window.formatarTrend = (v) => {
             if(v > 0) return `<span class="text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-1.5 py-0.5 rounded ml-1 font-bold tracking-widest shadow-[0_0_8px_rgba(16,185,129,0.15)]">↑ ${v}%</span>`;
             if(v < 0) return `<span class="text-[10px] text-red-600 dark:text-red-400 bg-red-500/10 border border-red-500/30 px-1.5 py-0.5 rounded ml-1 font-bold tracking-widest">↓ ${Math.abs(v)}%</span>`;
@@ -790,20 +826,27 @@
         window.renderRadar = () => {
             const tbody = document.getElementById('tabela-radar-corpo'); tbody.innerHTML = '';
             if(!dadosRadar || dadosRadar.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="py-12 text-center text-emerald-500 font-bold tracking-wider">Estoque saudável. Sem risco para os próximos 15 dias.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="py-12 text-center text-emerald-500 font-bold tracking-wider">Estoque saudável. Sem risco de ruptura no momento.</td></tr>';
                 return;
             }
             dadosRadar.forEach((row, index) => {
-                let corStatus = row.Dias_Restantes <= 5 ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.2)]' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30';
-                let textoStatus = row.Dias_Restantes <= 0 ? 'Esgotado' : `Restam ${row.Dias_Restantes} Dias`;
+                const isCritico = row.Dias_Restantes <= row.Lead_Time;
+                let corStatus = isCritico ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.2)] animate-pulse' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30';
+                let textoStatus = isCritico ? '⚠️ Pedir Fornecedor' : `Seguro por ${row.Dias_Restantes}d`;
+                
                 const animDelay = index * 0.04;
                 tbody.innerHTML += `
                     <tr class="border-b border-slate-100/50 dark:border-slate-800/50 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-colors animate-slide-up opacity-0" style="animation-delay: ${animDelay}s; animation-fill-mode: forwards;">
-                        <td class="py-5 align-middle"><p class="font-bold text-sm w-64 truncate text-slate-800 dark:text-slate-200" title="${row.Produto}">${row.Produto}</p><p class="text-[10px] text-slate-400 uppercase tracking-widest mt-1">ID: ${row.ID}</p></td>
+                        <td class="py-5 align-middle"><p class="font-bold text-sm w-56 truncate text-slate-800 dark:text-slate-200" title="${row.Produto}">${row.Produto}</p><p class="text-[10px] text-slate-400 uppercase tracking-widest mt-1">ID: ${row.ID}</p></td>
                         <td class="py-5 align-middle font-black text-slate-700 dark:text-slate-300 tracking-tight">${row.Giro_Diario} un/dia</td>
-                        <td class="py-5 align-middle font-bold text-slate-500 dark:text-slate-400">${row.Estoque} unidades</td>
-                        <td class="py-5 align-middle"><span class="px-3 py-1.5 rounded-lg text-[10px] uppercase tracking-widest font-black shadow-sm ${corStatus}">${textoStatus}</span></td>
-                        <td class="py-5 align-middle text-center"><a href="${row.Link}" target="_blank" class="px-5 py-2.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30 hover:bg-blue-500/20 rounded-xl text-xs transition-all font-extrabold shadow-sm inline-block uppercase tracking-wider">Acessar ML</a></td>
+                        <td class="py-5 align-middle">
+                            <div class="flex items-center gap-2">
+                                <input type="number" id="lt-${row.ID}" value="${row.Lead_Time}" class="w-16 p-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-center text-sm font-bold outline-none focus:ring-2 focus:ring-cyan-500">
+                                <button onclick="salvarLeadTime('${row.ID}')" id="btn-lt-${row.ID}" class="px-3 py-2 bg-slate-200/50 dark:bg-slate-800/50 hover:bg-cyan-500/20 text-slate-600 dark:text-slate-300 hover:text-cyan-600 rounded-lg text-xs font-bold transition-all">OK</button>
+                            </div>
+                        </td>
+                        <td class="py-5 align-middle"><span class="px-3 py-1.5 rounded-lg text-[10px] uppercase tracking-widest font-black shadow-sm ${corStatus}">${textoStatus}</span><p class="text-[10px] text-slate-500 mt-1 font-bold ml-1">${row.Estoque} un. físicas</p></td>
+                        <td class="py-5 align-middle font-black text-cyan-600 dark:text-cyan-400 text-lg">${row.Sugestao_Compra} <span class="text-xs text-slate-400 uppercase tracking-widest font-bold">un</span></td>
                     </tr>`;
             });
         };
@@ -842,4 +885,3 @@
     </script>
 </body>
 </html>
-

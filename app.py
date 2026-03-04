@@ -294,26 +294,27 @@ def api_dados():
                 agrupado[item_id]['Margem_Contribuicao'] += (lucro_unidade_base * qty) 
 
         item_ids_list = list(agrupado.keys())
-        estoque_atual_detalhes = {} 
-        itens_com_ads = set() 
         
-        if item_ids_list:
-            for i in range(0, len(item_ids_list), 50):
-                lote_ids = item_ids_list[i:i+50]
+        # --- BUSCA GLOBAL DE ADS (INCLUINDO ITENS SEM VENDA) ---
+        all_item_ids = []
+        try:
+            for offset in [0, 50, 100, 150, 200]:
+                res_it = requests.get(f"https://api.mercadolibre.com/users/{ml_seller_id}/items/search?status=active&limit=50&offset={offset}", headers=headers).json()
+                if 'results' in res_it and res_it['results']:
+                    all_item_ids.extend(res_it['results'])
+                else:
+                    break
+        except: pass
+
+        full_item_ids = list(set(item_ids_list + all_item_ids))
+        estoque_atual_detalhes = {}
+        ads_geral_dict = {}
+        itens_com_ads = set()
+        
+        if full_item_ids:
+            for i in range(0, len(full_item_ids), 50):
+                lote_ids = full_item_ids[i:i+50]
                 ids_str = ",".join(lote_ids)
-                
-                url_ads = f"https://api.mercadolibre.com/advertising/product_ads/metrics/items?date_from={data_inicio_str}&date_to={data_fim_str}&item_ids={ids_str}"
-                try:
-                    res_ads = requests.get(url_ads, headers=headers, timeout=10)
-                    if res_ads.status_code == 200:
-                        for ad_metric in res_ads.json():
-                            id_anuncio = ad_metric.get('item_id')
-                            custo_ads = float(ad_metric.get('metrics', {}).get('cost', 0))
-                            if id_anuncio in agrupado: 
-                                agrupado[id_anuncio]['Custo_ADS'] = custo_ads
-                                if custo_ads > 0 or ad_metric.get('metrics', {}).get('impressions', 0) > 0:
-                                    itens_com_ads.add(id_anuncio) 
-                except: pass
                 
                 try:
                     res_detalhes = requests.get(f"https://api.mercadolibre.com/items?ids={ids_str}", headers=headers).json()
@@ -324,9 +325,51 @@ def api_dados():
                             estoque_atual_detalhes[iid] = {
                                 'disponivel': body.get('available_quantity', 0),
                                 'link': body.get('permalink', '#'),
-                                'is_catalog': body.get('catalog_listing', False)
+                                'is_catalog': body.get('catalog_listing', False),
+                                'price': body.get('price', 0),
+                                'title': body.get('title', '')
                             }
                 except: pass
+
+                url_ads = f"https://api.mercadolibre.com/advertising/product_ads/metrics/items?date_from={data_inicio_str}&date_to={data_fim_str}&item_ids={ids_str}"
+                try:
+                    res_ads = requests.get(url_ads, headers=headers, timeout=10)
+                    if res_ads.status_code == 200:
+                        for ad_metric in res_ads.json():
+                            id_anuncio = ad_metric.get('item_id')
+                            custo_ads = float(ad_metric.get('metrics', {}).get('cost', 0))
+                            if custo_ads > 0 or ad_metric.get('metrics', {}).get('impressions', 0) > 0:
+                                itens_com_ads.add(id_anuncio) 
+                            ads_geral_dict[id_anuncio] = custo_ads
+                except: pass
+
+        # Busca Gasto Global de Campanhas da Conta (Segurança)
+        ads_total_campanhas = 0
+        try:
+            url_camp_mlb = f"https://api.mercadolibre.com/marketplace/advertising/MLB/advertisers/{ml_seller_id}/product_ads/campaigns/search?date_from={data_inicio_str}&date_to={data_fim_str}"
+            res_camp_mlb = requests.get(url_camp_mlb, headers=headers).json()
+            if isinstance(res_camp_mlb, dict) and 'results' in res_camp_mlb:
+                ads_total_campanhas = sum(float(c.get('metrics', {}).get('cost', 0)) for c in res_camp_mlb['results'])
+        except: pass
+
+        if ads_total_campanhas == 0:
+            try:
+                url_camp = f"https://api.mercadolibre.com/advertising/advertisers/{ml_seller_id}/product_ads/campaigns/search?date_from={data_inicio_str}&date_to={data_fim_str}"
+                res_camp = requests.get(url_camp, headers=headers).json()
+                if isinstance(res_camp, dict) and 'results' in res_camp:
+                    ads_total_campanhas = sum(float(c.get('metrics', {}).get('cost', 0)) for c in res_camp['results'])
+                elif isinstance(res_camp, list):
+                    ads_total_campanhas = sum(float(c.get('metrics', {}).get('cost', 0)) for c in res_camp)
+            except: pass
+
+        ads_total_por_itens = sum(ads_geral_dict.values())
+        # O total real da conta pega sempre o maior valor relatado
+        ads_total_real_conta = max(ads_total_campanhas, ads_total_por_itens)
+
+        # Atualiza a aba de faturamento com os custos de ADS das vendas efetuadas
+        for item_id in agrupado:
+            agrupado[item_id]['Custo_ADS'] = ads_geral_dict.get(item_id, 0)
+
 
         dados_reais = []
         radar_ruptura = [] 
@@ -363,7 +406,7 @@ def api_dados():
                         'Giro_Diario': round(giro_diario, 1), 'Estoque': qtd_estoque,
                         'Dias_Restantes': int(dias_restantes), 
                         'Lead_Time': lead_time,
-                        'Sugestao_Compra': max(1, int(giro_diario * 30))
+                        'Sugestao_Compra': max(1, int(giro_diario * 30)) 
                     })
                     
         radar_ruptura = sorted(radar_ruptura, key=lambda x: x['Dias_Restantes'])
@@ -374,6 +417,7 @@ def api_dados():
             if anterior == 0: return 100
             return round(((atual - anterior) / anterior) * 100, 1)
 
+        ads_desperdicio = 0
         if not df.empty:
             df['Giro_Trend'] = df.apply(lambda x: calc_trend(x['Giro'], x['Giro_Ant']), axis=1)
             df['MC_Trend'] = df.apply(lambda x: calc_trend(x['Margem_Contribuicao'], x['Margem_Ant']), axis=1)
@@ -389,11 +433,18 @@ def api_dados():
             df['Desconto_Max'] = (((df['Margem_Contribuicao'] - (df['Ticket_Medio'] * 0.15)) / df['Ticket_Medio']) * 100).round(2)
             df['Desconto_Max_Grafico'] = df['Desconto_Max'].apply(lambda x: x if x > 0 else 0)
 
-            lucro_total = float((df[~df['Sem_Custo']]['Giro'] * df[~df['Sem_Custo']]['Margem_Contribuicao']).sum())
-            ads_total = float(df['Custo_ADS'].sum())
+            lucro_bruto_vendas = float((df[~df['Sem_Custo']]['Giro'] * df[~df['Sem_Custo']]['Margem_Contribuicao']).sum())
+            ads_atribuido_vendas = float(df['Custo_ADS'].sum())
             faturamento_total = float(df['Faturamento'].sum())
+            
+            # --- CÁLCULO DE SANGRIA DE ADS ---
+            ads_desperdicio = max(0, ads_total_real_conta - ads_atribuido_vendas)
+            lucro_total = lucro_bruto_vendas - ads_desperdicio
+            ads_total_exibicao = ads_total_real_conta
         else:
-            lucro_total, ads_total, faturamento_total = 0, 0, 0
+            lucro_total = -ads_total_real_conta
+            ads_total_exibicao = ads_total_real_conta
+            faturamento_total = 0
         
         timeline_ordenada = dict(sorted(timeline.items()))
         grafico_dados = { "labels": list(timeline_ordenada.keys()), "faturamento": [v['faturamento'] for v in timeline_ordenada.values()], "lucro": [v['lucro'] for v in timeline_ordenada.values()] }
@@ -417,6 +468,14 @@ def api_dados():
         diagnosticos = []
         sem_cmv_count = 0
         if not df.empty:
+            if ads_desperdicio > (faturamento_total * 0.01) and ads_desperdicio > 20:
+                diagnosticos.insert(0, {
+                    'tipo': 'prejuizo', 
+                    'titulo': '🩸 Sangramento de ADS', 
+                    'produto': 'Múltiplos anúncios sem conversão', 
+                    'mensagem': f"Identificamos R$ {ads_desperdicio:.2f} gastos em anúncios para produtos que não geraram vendas neste período. Acesse a aba 'Inventário Parado' e pause essas campanhas para estancar a perda."
+                })
+                
             for _, row in df.iterrows():
                 if row['Sem_Custo']:
                     sem_cmv_count += 1; continue
@@ -434,26 +493,25 @@ def api_dados():
             if sem_cmv_count > 0: diagnosticos.insert(0, {'tipo': 'alerta_cmv', 'titulo': '⚠️ Preencha o Custo de Compra', 'produto': f"{sem_cmv_count} produtos sem CMV na API", 'mensagem': "Acesse a aba 'Gestão de Custos'. A IA saltou estes produtos porque precisa do custo da mercadoria para calcular lucros e prejuízos."})
         diagnosticos = diagnosticos[:6]
 
-        url_itens_ativos = f"https://api.mercadolibre.com/users/{ml_seller_id}/items/search?status=active&limit=50"
+        # --- ESTOQUE PARADO COM CUSTO DE ADS ---
         estoque_parado = []
-        try:
-            res_itens = requests.get(url_itens_ativos, headers=headers).json()
-            todos_itens = res_itens.get('results', [])
-            itens_parados_ids = [i for i in todos_itens if i not in agrupado]
-            if itens_parados_ids:
-                for i in range(0, len(itens_parados_ids), 20):
-                    lote = itens_parados_ids[i:i+20]
-                    ids_str = ",".join(lote)
-                    res_detalhes = requests.get(f"https://api.mercadolibre.com/items?ids={ids_str}", headers=headers).json()
-                    for item_obj in res_detalhes:
-                        if item_obj.get('code') == 200:
-                            body = item_obj['body']
-                            estoque_parado.append({
-                                'ID': body.get('id'), 'Produto': body.get('title'),
-                                'Preco': body.get('price'), 'Disponivel': body.get('available_quantity', 0),
-                                'Link': body.get('permalink', '#')
-                            })
-        except: pass
+        itens_parados_ids = [i for i in full_item_ids if i not in agrupado]
+        for iid in itens_parados_ids:
+            detalhes = estoque_atual_detalhes.get(iid, {})
+            if detalhes:
+                gasto_ads_parado = ads_geral_dict.get(iid, 0)
+                # Adiciona à lista se tiver saldo OU se estiver drenando dinheiro no ADS
+                if detalhes.get('disponivel', 0) > 0 or gasto_ads_parado > 0:
+                    estoque_parado.append({
+                        'ID': iid, 
+                        'Produto': detalhes.get('title', 'Produto Desconhecido'),
+                        'Preco': detalhes.get('price', 0), 
+                        'Disponivel': detalhes.get('disponivel', 0),
+                        'Gasto_Ads': gasto_ads_parado,
+                        'Link': detalhes.get('link', '#')
+                    })
+        # Quem mais gasta ADS fica no topo
+        estoque_parado = sorted(estoque_parado, key=lambda x: x['Gasto_Ads'], reverse=True)
 
         unidades_total = int(df['Giro'].sum()) if not df.empty else 0
         alertas_total = int(len(df[df['Sem_Custo'] == True])) if not df.empty else 0
@@ -461,7 +519,7 @@ def api_dados():
         kpis = {
             "faturamento": f"R$ {faturamento_total:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
             "lucro": f"R$ {lucro_total:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
-            "ads": f"R$ {ads_total:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+            "ads": f"R$ {ads_total_exibicao:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
             "unidades": str(unidades_total),
             "alertas_criticos": alertas_total,
             "periodo_nome": f"Últimos {periodo_dias} dias",

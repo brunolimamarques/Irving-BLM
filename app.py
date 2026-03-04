@@ -47,7 +47,6 @@ def gerenciar_token_ml(uid, user_doc):
     res = requests.get(teste_url, headers={"Authorization": f"Bearer {ml_token}"})
     
     if res.status_code == 401: 
-        print(f"Token expirado para {uid}. A renovar...")
         url_refresh = "https://api.mercadolibre.com/oauth/token"
         payload = {"grant_type": "refresh_token", "client_id": ML_APP_ID, "client_secret": ML_SECRET_KEY, "refresh_token": refresh_token}
         refresh_res = requests.post(url_refresh, data=payload).json()
@@ -139,7 +138,18 @@ def salvar_imposto():
     db.collection('configuracoes').document(uid).set({'imposto_padrao': float(request.json.get('imposto', 0))}, merge=True)
     return jsonify({"status": "sucesso"})
 
-# --- ROTA DO RELATÓRIO WHATSAPP (SOLUÇÃO NATIVA) ---
+@app.route('/api/salvar_leadtime', methods=['POST'])
+def salvar_leadtime():
+    uid = verificar_token(request)
+    if not uid: return jsonify({"erro": "Acesso Negado"}), 401
+    client_uid = request.json.get('client_uid')
+    if client_uid:
+        try:
+            if auth.get_user(uid).email == ADMIN_EMAIL: uid = client_uid
+        except: pass
+    db.collection('leadtimes').document(uid).set({request.json.get('item_id'): int(request.json.get('lead_time', 7))}, merge=True)
+    return jsonify({"status": "sucesso"})
+
 @app.route('/api/disparar_whatsapp', methods=['POST'])
 def disparar_whatsapp():
     uid = verificar_token(request)
@@ -182,6 +192,7 @@ def api_dados():
     
     custos_db = db.collection('custos').document(uid).get().to_dict() or {}
     config_db = db.collection('configuracoes').document(uid).get().to_dict() or {}
+    leadtimes_db = db.collection('leadtimes').document(uid).get().to_dict() or {}
     imposto_padrao_pct = float(config_db.get('imposto_padrao', 0))
     
     headers = {"Authorization": f"Bearer {ml_token}"}
@@ -198,14 +209,12 @@ def api_dados():
         
         if not resultados: return jsonify({"erro": "vazio", "imposto_padrao": imposto_padrao_pct})
 
-        # --- BUSCA EXATA DOS FRETES (VIA FATURA COM MULTITHREADING) ---
         shipping_ids = [str(o.get('shipping', {}).get('id')) for o in resultados if o.get('shipping', {}).get('id')]
         custos_frete_reais = {}
         
         def buscar_frete_exato(s_id):
             url_costs = f"https://api.mercadolibre.com/shipments/{s_id}/costs"
             headers_frete = {"Authorization": f"Bearer {ml_token}", "x-format-new": "true"}
-            
             try:
                 res_costs = requests.get(url_costs, headers=headers_frete, timeout=10)
                 if res_costs.status_code == 200:
@@ -213,10 +222,8 @@ def api_dados():
                     if 'senders' in data and data['senders']:
                         return s_id, sum([float(s.get('cost', 0)) for s in data['senders']])
                     return s_id, 0
-            except Exception:
-                pass
+            except: pass
             
-            # Fallback de emergência
             url_ship = f"https://api.mercadolibre.com/shipments/{s_id}"
             try:
                 res_ship = requests.get(url_ship, headers=headers_frete, timeout=5)
@@ -225,13 +232,10 @@ def api_dados():
                     base = float(body.get('base_cost') or 0)
                     buyer = float(body.get('shipping_option', {}).get('cost') or 0)
                     list_cost = float(body.get('shipping_option', {}).get('list_cost') or 0)
-                    
                     if buyer == 0: return s_id, base
                     elif (list_cost > 0 and buyer >= list_cost) or (list_cost == 0 and buyer >= base): return s_id, 0
                     else: return s_id, max(0, max(base, list_cost) - buyer)
-            except Exception:
-                pass
-                
+            except: pass
             return s_id, 0
 
         if shipping_ids:
@@ -268,10 +272,8 @@ def api_dados():
                 price = float(item['unit_price'])
                 
                 custo_cmv = float(custos_db.get(item_id, 0))
-                
                 tarifa_ml_unitaria = float(item.get('sale_fee', 0))
                 imposto_reais = price * (imposto_padrao_pct / 100)
-                
                 lucro_unidade_base = price - custo_cmv - custo_envio_unidade - tarifa_ml_unitaria - imposto_reais
                 
                 timeline[data_venda]['faturamento'] += (price * qty)
@@ -311,7 +313,7 @@ def api_dados():
                                 agrupado[id_anuncio]['Custo_ADS'] = custo_ads
                                 if custo_ads > 0 or ad_metric.get('metrics', {}).get('impressions', 0) > 0:
                                     itens_com_ads.add(id_anuncio) 
-                except Exception as e: print(f"Aviso ADS: {e}")
+                except: pass
                 
                 try:
                     res_detalhes = requests.get(f"https://api.mercadolibre.com/items?ids={ids_str}", headers=headers).json()
@@ -319,14 +321,12 @@ def api_dados():
                         if item_obj.get('code') == 200:
                             body = item_obj['body']
                             iid = body.get('id')
-                            is_cat = body.get('catalog_listing', False)
-                            
                             estoque_atual_detalhes[iid] = {
                                 'disponivel': body.get('available_quantity', 0),
                                 'link': body.get('permalink', '#'),
-                                'is_catalog': is_cat
+                                'is_catalog': body.get('catalog_listing', False)
                             }
-                except Exception as e: print(f"Aviso Radar/Catalogo: {e}")
+                except: pass
 
         dados_reais = []
         radar_ruptura = [] 
@@ -338,11 +338,8 @@ def api_dados():
             margem_unitaria_final = lucro_total_liquido / giro if giro > 0 else 0
             
             is_catalog = estoque_atual_detalhes.get(item_id, {}).get('is_catalog', False)
-            ads_ativo = item_id in itens_com_ads
-            
             catalog_status = "Não se aplica"
-            if is_catalog:
-                catalog_status = "Ganhando" if giro > 0 else "Perdendo"
+            if is_catalog: catalog_status = "Ganhando" if giro > 0 else "Perdendo"
 
             dados_reais.append({
                 'ID': item_id, 'Produto': dados['Produto'], 'Ticket_Medio': dados['Ticket_Medio'],
@@ -351,24 +348,25 @@ def api_dados():
                 'Custo_ADS': custo_ads_total, 'Custo_CMV': dados['Custo_CMV'], 'Sem_Custo': dados['Sem_Custo'],
                 'Margem_Contribuicao': margem_unitaria_final, 
                 'Giro_Ant': int(giro * 0.85), 'Margem_Ant': margem_unitaria_final * 0.9,
-                'Is_Catalog': is_catalog, 'Catalog_Status': catalog_status, 'Ads_Ativo': ads_ativo
+                'Is_Catalog': is_catalog, 'Catalog_Status': catalog_status, 'Ads_Ativo': item_id in itens_com_ads
             })
             
             giro_diario = giro / periodo_dias
             qtd_estoque = estoque_atual_detalhes.get(item_id, {}).get('disponivel', 0)
-            link_anuncio = estoque_atual_detalhes.get(item_id, {}).get('link', '#')
+            lead_time = int(leadtimes_db.get(item_id, 7))
             
             if giro_diario > 0:
                 dias_restantes = qtd_estoque / giro_diario
-                if dias_restantes <= 15: 
+                if dias_restantes <= (lead_time + 15): 
                     radar_ruptura.append({
                         'ID': item_id, 'Produto': dados['Produto'],
                         'Giro_Diario': round(giro_diario, 1), 'Estoque': qtd_estoque,
-                        'Dias_Restantes': int(dias_restantes), 'Link': link_anuncio
+                        'Dias_Restantes': int(dias_restantes), 
+                        'Lead_Time': lead_time,
+                        'Sugestao_Compra': max(1, int(giro_diario * 30))
                     })
                     
         radar_ruptura = sorted(radar_ruptura, key=lambda x: x['Dias_Restantes'])
-
         df = pd.DataFrame(dados_reais)
         
         def calc_trend(atual, anterior):
@@ -418,45 +416,22 @@ def api_dados():
 
         diagnosticos = []
         sem_cmv_count = 0
-        
         if not df.empty:
             for _, row in df.iterrows():
                 if row['Sem_Custo']:
-                    sem_cmv_count += 1
-                    continue
-                    
+                    sem_cmv_count += 1; continue
                 if row['Giro'] == 0: continue
-                
                 margem_pct = (row['Margem_Contribuicao'] / row['Ticket_Medio']) * 100 if row['Ticket_Medio'] > 0 else 0
                 
                 if margem_pct < 0:
-                    diagnosticos.append({
-                        'tipo': 'prejuizo', 'titulo': '🔴 Erro de Precificação', 'produto': row['Produto'],
-                        'mensagem': f"Prejuízo! Margem negativa ({margem_pct:.1f}%). Você perde R$ {abs(row['Margem_Contribuicao']):.2f} a cada venda."
-                    })
+                    diagnosticos.append({'tipo': 'prejuizo', 'titulo': '🔴 Erro de Precificação', 'produto': row['Produto'], 'mensagem': f"Prejuízo! Margem negativa ({margem_pct:.1f}%). Você perde R$ {abs(row['Margem_Contribuicao']):.2f} a cada venda."})
                 elif 0 <= margem_pct < 15:
-                    if row['Custo_ADS'] > 0:
-                        diagnosticos.append({
-                            'tipo': 'alerta_ads', 'titulo': '⚠️ Alerta de ADS', 'produto': row['Produto'],
-                            'mensagem': f"Margem espremida ({margem_pct:.1f}%) e ADS ativo. O custo do anúncio pode engolir seu lucro."
-                        })
-                    else:
-                        diagnosticos.append({
-                            'tipo': 'alerta_margem', 'titulo': '⚠️ Margem Baixa', 'produto': row['Produto'],
-                            'mensagem': f"Sua Margem de Contribuição está no limite ({margem_pct:.1f}%). Risco de prejuízo se houver devoluções."
-                        })
+                    if row['Custo_ADS'] > 0: diagnosticos.append({'tipo': 'alerta_ads', 'titulo': '⚠️ Alerta de ADS', 'produto': row['Produto'], 'mensagem': f"Margem espremida ({margem_pct:.1f}%) e ADS ativo. O custo do anúncio pode engolir seu lucro."})
+                    else: diagnosticos.append({'tipo': 'alerta_margem', 'titulo': '⚠️ Margem Baixa', 'produto': row['Produto'], 'mensagem': f"Sua Margem de Contribuição está no limite ({margem_pct:.1f}%). Risco de prejuízo se houver devoluções."})
                 elif margem_pct > 30 and row['Giro'] < 5:
-                    diagnosticos.append({
-                        'tipo': 'escala', 'titulo': '📉 Potencial de Escala', 'produto': row['Produto'],
-                        'mensagem': f"Sua Margem está excelente ({margem_pct:.1f}%), mas vendeu pouco ({row['Giro']} unid). Teste baixar o preço para atrair mais compras."
-                    })
+                    diagnosticos.append({'tipo': 'escala', 'titulo': '📉 Potencial de Escala', 'produto': row['Produto'], 'mensagem': f"Sua Margem está excelente ({margem_pct:.1f}%), mas vendeu pouco ({row['Giro']} unid). Teste baixar o preço para atrair mais compras."})
 
-            if sem_cmv_count > 0:
-                diagnosticos.insert(0, {
-                    'tipo': 'alerta_cmv', 'titulo': '⚠️ Preencha o Custo de Compra', 'produto': f"{sem_cmv_count} produtos sem CMV na API",
-                    'mensagem': "Acesse a aba 'Gestão de Custos'. A IA saltou estes produtos porque precisa do custo da mercadoria para calcular lucros e prejuízos."
-                })
-            
+            if sem_cmv_count > 0: diagnosticos.insert(0, {'tipo': 'alerta_cmv', 'titulo': '⚠️ Preencha o Custo de Compra', 'produto': f"{sem_cmv_count} produtos sem CMV na API", 'mensagem': "Acesse a aba 'Gestão de Custos'. A IA saltou estes produtos porque precisa do custo da mercadoria para calcular lucros e prejuízos."})
         diagnosticos = diagnosticos[:6]
 
         url_itens_ativos = f"https://api.mercadolibre.com/users/{ml_seller_id}/items/search?status=active&limit=50"
@@ -469,8 +444,7 @@ def api_dados():
                 for i in range(0, len(itens_parados_ids), 20):
                     lote = itens_parados_ids[i:i+20]
                     ids_str = ",".join(lote)
-                    url_detalhes = f"https://api.mercadolibre.com/items?ids={ids_str}"
-                    res_detalhes = requests.get(url_detalhes, headers=headers).json()
+                    res_detalhes = requests.get(f"https://api.mercadolibre.com/items?ids={ids_str}", headers=headers).json()
                     for item_obj in res_detalhes:
                         if item_obj.get('code') == 200:
                             body = item_obj['body']
@@ -479,8 +453,7 @@ def api_dados():
                                 'Preco': body.get('price'), 'Disponivel': body.get('available_quantity', 0),
                                 'Link': body.get('permalink', '#')
                             })
-        except Exception as e:
-            print("Aviso Estoque Parado:", e)
+        except: pass
 
         unidades_total = int(df['Giro'].sum()) if not df.empty else 0
         alertas_total = int(len(df[df['Sem_Custo'] == True])) if not df.empty else 0
@@ -496,15 +469,11 @@ def api_dados():
         }
 
         return jsonify({
-            "kpis": kpis, 
-            "tabela": df.to_dict(orient='records') if not df.empty else [], 
-            "grafico": grafico_dados, 
-            "estoque_parado": estoque_parado,
-            "abc": curva_abc,
-            "diagnosticos": diagnosticos,
-            "radar": radar_ruptura 
+            "kpis": kpis, "tabela": df.to_dict(orient='records') if not df.empty else [], 
+            "grafico": grafico_dados, "estoque_parado": estoque_parado,
+            "abc": curva_abc, "diagnosticos": diagnosticos, "radar": radar_ruptura 
         })
+    except Exception as e: return jsonify({"erro": str(e)}), 500
 
-    except Exception as e:
-        return jsonify({"erro": str(e)}), 500
-
+if __name__ == '__main__':
+    app.run(debug=True)

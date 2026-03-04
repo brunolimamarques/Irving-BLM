@@ -139,7 +139,7 @@ def salvar_imposto():
     db.collection('configuracoes').document(uid).set({'imposto_padrao': float(request.json.get('imposto', 0))}, merge=True)
     return jsonify({"status": "sucesso"})
 
-# --- NOVO: ROTA DO RELATÓRIO WHATSAPP ---
+# --- ROTA DO RELATÓRIO WHATSAPP (SOLUÇÃO NATIVA) ---
 @app.route('/api/disparar_whatsapp', methods=['POST'])
 def disparar_whatsapp():
     uid = verificar_token(request)
@@ -147,7 +147,6 @@ def disparar_whatsapp():
     
     dados = request.json
     kpis = dados.get('kpis', {})
-    telefone = dados.get('telefone', 'SEU_NUMERO_AQUI')
     
     mensagem = f"""*Resumo Executivo - Irving (BLM)* 📊
     
@@ -157,16 +156,8 @@ def disparar_whatsapp():
 📢 *Gasto ADS:* {kpis.get('ads')}
 ⚠️ *Alertas Críticos:* {kpis.get('alertas_criticos')}
 
-_Gerado automaticamente pelo motor Irving._"""
+_Gerado pelo motor IA do Irving._"""
 
-    # AQUI VOCÊ PLUGA A SUA API DO WHATSAPP NO FUTURO (Ex: Z-API, Evolution, Twilio)
-    # Exemplo: requests.post('https://api.sua-zapi.com/send-text', json={'phone': telefone, 'message': mensagem})
-    
-    # Por enquanto, imprime no terminal para você confirmar que o motor construiu tudo certo:
-    print("=== MENSAGEM PREPARADA PARA WHATSAPP ===")
-    print(mensagem)
-    print("========================================")
-    
     return jsonify({"status": "sucesso", "mensagem_formatada": mensagem})
 
 
@@ -516,3 +507,4 @@ def api_dados():
 
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
+

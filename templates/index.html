@@ -49,9 +49,9 @@
         <div class="glass-card p-10 rounded-3xl w-full max-w-md text-center hover:shadow-2xl hover:-translate-y-2 relative overflow-hidden">
             <div class="absolute -top-20 -right-20 w-40 h-40 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
             <h1 class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 mb-8 tracking-tighter">Irving <span class="text-2xl font-light text-slate-400 block mt-1 tracking-widest">(BLM)</span></h1>
-            <input type="email" id="email" placeholder="E-mail Acesso" class="w-full mb-4 p-4 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 outline-none transition duration-300 focus:ring-2 focus:ring-cyan-500 focus:border-transparent backdrop-blur-sm">
-            <input type="password" id="senha" placeholder="Palavra-passe" class="w-full mb-8 p-4 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 outline-none transition duration-300 focus:ring-2 focus:ring-cyan-500 focus:border-transparent backdrop-blur-sm">
-            <button onclick="fazerLogin()" class="w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold rounded-xl transition-all duration-300 active:scale-95 shadow-[0_0_20px_rgba(56,189,248,0.4)] hover:shadow-[0_0_30px_rgba(56,189,248,0.6)] uppercase tracking-wider text-sm">Iniciar Sessão</button>
+            <input type="email" id="email" placeholder="E-mail de Acesso" class="w-full mb-4 p-4 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 outline-none transition duration-300 focus:ring-2 focus:ring-cyan-500 focus:border-transparent backdrop-blur-sm">
+            <input type="password" id="senha" placeholder="Senha" class="w-full mb-8 p-4 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 outline-none transition duration-300 focus:ring-2 focus:ring-cyan-500 focus:border-transparent backdrop-blur-sm">
+            <button onclick="fazerLogin()" class="w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold rounded-xl transition-all duration-300 active:scale-95 shadow-[0_0_20px_rgba(56,189,248,0.4)] hover:shadow-[0_0_30px_rgba(56,189,248,0.6)] uppercase tracking-wider text-sm">Fazer Login</button>
             <p id="msg-erro" class="text-red-400 text-sm mt-4 hidden font-medium"></p>
         </div>
     </div>
@@ -194,9 +194,9 @@
                             <p class="text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">Injete uma planilha (.xlsx) com colunas <b>ID</b> e <b>Custo</b> para calibrar a IA instantaneamente.</p>
                         </div>
                         <div class="flex gap-4 w-full md:w-auto">
-                            <button onclick="baixarModeloExcel()" class="px-6 py-3 bg-white/50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 hover:bg-white dark:hover:bg-slate-700 rounded-xl text-sm font-bold transition-all duration-300 shadow-sm whitespace-nowrap backdrop-blur-sm">Download Modelo</button>
+                            <button onclick="baixarModeloExcel()" class="px-6 py-3 bg-white/50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 hover:bg-white dark:hover:bg-slate-700 rounded-xl text-sm font-bold transition-all duration-300 shadow-sm whitespace-nowrap backdrop-blur-sm">Baixar Modelo</button>
                             <label class="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-900 rounded-xl text-sm font-extrabold transition-all duration-300 shadow-[0_0_15px_rgba(16,185,129,0.4)] cursor-pointer whitespace-nowrap text-center flex-1 uppercase tracking-wide">
-                                Upload Planilha
+                                Enviar Planilha
                                 <input type="file" id="upload-excel" accept=".xlsx, .xls, .csv" class="hidden" onchange="processarPlanilha(event)">
                             </label>
                         </div>
@@ -262,7 +262,7 @@
                         <div class="flex justify-between items-center mb-8">
                             <div>
                                 <h3 class="text-2xl font-extrabold flex items-center gap-3"><span class="text-3xl animate-pulse">📡</span> Radar de Ruptura Crítica</h3>
-                                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1.5 font-medium">O algoritmo projeta quais as listagens vão esgotar nos próximos 15 dias com base no giro instantâneo.</p>
+                                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1.5 font-medium">O algoritmo projeta quais anúncios vão esgotar nos próximos 15 dias com base no giro instantâneo.</p>
                             </div>
                         </div>
                         <div class="overflow-x-auto">
@@ -328,14 +328,14 @@
                         <p class="text-slate-500 dark:text-slate-400 text-sm mb-10 font-medium relative z-10">Use a base de dados em tempo real para fundir SKUs, diluir custos fixos assassinos e escalar o ticket médio.</p>
 
                         <div class="p-6 md:p-8 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 mb-8 relative z-10 shadow-lg">
-                            <h4 class="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest mb-6">1. Seleção de Peças do Kit</h4>
+                            <h4 class="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest mb-6">1. Seleção de Produtos do Kit</h4>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                                <select id="kit-item-1" class="p-3.5 rounded-xl border border-slate-200/50 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80 text-sm font-semibold outline-none focus:ring-2 focus:ring-purple-500" onchange="calcularKit()"><option value="0">Add Item Primário...</option></select>
-                                <select id="kit-item-2" class="p-3.5 rounded-xl border border-slate-200/50 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80 text-sm font-semibold outline-none focus:ring-2 focus:ring-purple-500" onchange="calcularKit()"><option value="0">Add Item Secundário...</option></select>
-                                <select id="kit-item-3" class="p-3.5 rounded-xl border border-slate-200/50 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80 text-sm font-semibold outline-none focus:ring-2 focus:ring-purple-500" onchange="calcularKit()"><option value="0">Add Item Opcional 3...</option></select>
+                                <select id="kit-item-1" class="p-3.5 rounded-xl border border-slate-200/50 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80 text-sm font-semibold outline-none focus:ring-2 focus:ring-purple-500" onchange="calcularKit()"><option value="0">Produto Principal...</option></select>
+                                <select id="kit-item-2" class="p-3.5 rounded-xl border border-slate-200/50 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80 text-sm font-semibold outline-none focus:ring-2 focus:ring-purple-500" onchange="calcularKit()"><option value="0">Produto Secundário...</option></select>
+                                <select id="kit-item-3" class="p-3.5 rounded-xl border border-slate-200/50 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80 text-sm font-semibold outline-none focus:ring-2 focus:ring-purple-500" onchange="calcularKit()"><option value="0">Produto Opcional 3...</option></select>
                             </div>
                             <div class="mt-6 pt-6 border-t border-slate-200/50 dark:border-slate-700/50 flex flex-col md:flex-row justify-between items-center gap-4">
-                                <span class="text-sm font-bold text-slate-500 uppercase tracking-wider">Custo de Fabrico do Kit (Soma CMV):</span>
+                                <span class="text-sm font-bold text-slate-500 uppercase tracking-wider">Custo de Compra do Kit (Soma CMV):</span>
                                 <span class="text-2xl font-extrabold text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 px-4 py-1.5 rounded-lg border border-purple-200 dark:border-purple-800/50" id="kit-cmv-total">R$ 0,00</span>
                             </div>
                         </div>
@@ -360,7 +360,7 @@
                         <div class="border-t border-slate-200/50 dark:border-slate-700/50 pt-8 grid grid-cols-1 sm:grid-cols-2 gap-6 relative z-10">
                             <div class="p-6 rounded-2xl bg-slate-900 dark:bg-slate-800 shadow-2xl relative overflow-hidden group">
                                 <div class="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-transparent group-hover:from-blue-600/30 transition-colors"></div>
-                                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 relative z-10">Lucro Absoluto do Kit</p>
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 relative z-10">Lucro Bruto do Kit</p>
                                 <h3 class="text-4xl font-black text-white tracking-tighter relative z-10" id="kit-resultado-lucro">R$ 0,00</h3>
                             </div>
                             <div class="p-6 rounded-2xl bg-slate-900 dark:bg-slate-800 shadow-2xl relative overflow-hidden group">
@@ -376,8 +376,8 @@
                     <div class="glass-card rounded-3xl p-8 mb-8 w-full animate-slide-up relative overflow-hidden">
                         <div class="absolute -right-20 -top-20 w-64 h-64 bg-fuchsia-500/10 rounded-full blur-3xl"></div>
                         <div class="mb-8 relative z-10">
-                            <h3 class="text-3xl font-extrabold flex items-center gap-3"><span class="w-3 h-8 bg-fuchsia-500 rounded-full"></span> Neurónio de Diagnóstico</h3>
-                            <p class="text-sm text-slate-500 dark:text-slate-400 mt-2 font-medium max-w-2xl">A IA processou o *data lake* da sua conta para detetar anomalias de preço, potenciais de escala e riscos de margem subaquática.</p>
+                            <h3 class="text-3xl font-extrabold flex items-center gap-3"><span class="w-3 h-8 bg-fuchsia-500 rounded-full"></span> Neurônio de Diagnóstico</h3>
+                            <p class="text-sm text-slate-500 dark:text-slate-400 mt-2 font-medium max-w-2xl">A IA processou o *data lake* da sua conta para detectar anomalias de preço, potenciais de escala e riscos de margem subaquática.</p>
                         </div>
                         <div id="lista-diagnostico" class="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10"></div>
                     </div>
@@ -411,15 +411,15 @@
                     <div class="glass-card rounded-2xl p-8 mb-8 w-full max-w-5xl animate-slide-up border border-indigo-500/30">
                         <div class="flex justify-between items-center mb-8">
                             <h3 class="text-2xl font-extrabold flex items-center gap-3"><span class="text-indigo-500">🛡️</span> Terminal Root (Multi-Contas)</h3>
-                            <button onclick="carregarClientes()" class="px-5 py-2.5 bg-slate-200 dark:bg-slate-800 text-sm font-bold rounded-xl transition-all active:scale-95 shadow-sm uppercase tracking-wide">↻ Refresh</button>
+                            <button onclick="carregarClientes()" class="px-5 py-2.5 bg-slate-200 dark:bg-slate-800 text-sm font-bold rounded-xl transition-all active:scale-95 shadow-sm uppercase tracking-wide">↻ Atualizar</button>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left text-sm whitespace-nowrap">
                                 <thead>
                                     <tr class="text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-slate-800/50">
-                                        <th class="pb-4 font-bold uppercase tracking-wider text-xs">Cofre Lojista</th>
+                                        <th class="pb-4 font-bold uppercase tracking-wider text-xs">Email Lojista</th>
                                         <th class="pb-4 font-bold uppercase tracking-wider text-xs">Conexão Backend</th>
-                                        <th class="pb-4 font-bold uppercase tracking-wider text-xs text-center">Controlo Override</th>
+                                        <th class="pb-4 font-bold uppercase tracking-wider text-xs text-center">Controle Master</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tabela-clientes-corpo"></tbody>
@@ -429,7 +429,7 @@
                 </div>
 
                 <footer class="w-full mt-10 pt-6 pb-2 text-center text-xs text-slate-400/80 font-bold uppercase tracking-widest animate-fade-in transition-colors html2pdf__page-break-avoid border-t border-slate-200/50 dark:border-slate-800/50">
-                    Engineered by <a href="#" class="text-slate-500 dark:text-slate-300 hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors">Bruno Lima Marques</a>
+                    Desenvolvido por <a href="#" class="text-slate-500 dark:text-slate-300 hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors">Bruno Lima Marques</a>
                 </footer>
 
             </div>
@@ -456,7 +456,6 @@
         let uidClienteAtivo = null;
         let emailClienteAtivo = null;
 
-        // Adiciona defaults brilhantes para o ChartJS combinar com o tema
         Chart.defaults.font.family = "'Outfit', sans-serif";
 
         onAuthStateChanged(auth, (user) => {
@@ -490,7 +489,7 @@
         window.exportarRelatorioPDF = () => {
             const btn = document.getElementById('btn-pdf');
             const textoOriginal = btn.innerHTML;
-            btn.innerHTML = "A Processar Engine...";
+            btn.innerHTML = "Gerando Arquivo...";
             
             const elemento = document.getElementById('pdf-area');
             const opt = {
@@ -602,7 +601,7 @@
         window.renderCurvaABC = () => {
             const tbody = document.getElementById('tabela-abc-corpo'); tbody.innerHTML = '';
             if(dadosABC.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-slate-500 font-medium">Log limpo. Nenhuma movimentação detetada.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-slate-500 font-medium">Histórico limpo. Nenhuma movimentação detectada.</td></tr>';
                 return;
             }
             dadosABC.forEach((row, index) => {
@@ -610,7 +609,6 @@
                 if(row.Classe === 'A') corBadge = 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30';
                 else if(row.Classe === 'B') corBadge = 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600';
                 
-                // Badges de Estratégia ABC
                 const badgeAds = row.Ads_Ativo 
                     ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/30 mr-1 shadow-[0_0_8px_rgba(168,85,247,0.2)]">ADS ON</span>' 
                     : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-500/10 text-slate-500 dark:text-slate-400 border border-slate-500/20 mr-1">ADS OFF</span>';
@@ -639,7 +637,7 @@
             const container = document.getElementById('lista-diagnostico');
             container.innerHTML = '';
             if(dadosDiagnostico.length === 0 && dadosAPI.length > 0) {
-                container.innerHTML = `<div class="col-span-1 md:col-span-2 p-10 text-center rounded-2xl border border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-900/20 backdrop-blur-md"><span class="text-5xl mb-4 block drop-shadow-[0_0_15px_rgba(52,211,153,0.5)]">✨</span><h4 class="font-extrabold text-emerald-600 dark:text-emerald-400 text-xl">Integridade 100%</h4><p class="text-sm text-slate-600 dark:text-slate-400 mt-2 font-medium">Log isento de anomalias críticas de precificação.</p></div>`;
+                container.innerHTML = `<div class="col-span-1 md:col-span-2 p-10 text-center rounded-2xl border border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-900/20 backdrop-blur-md"><span class="text-5xl mb-4 block drop-shadow-[0_0_15px_rgba(52,211,153,0.5)]">✨</span><h4 class="font-extrabold text-emerald-600 dark:text-emerald-400 text-xl">Integridade 100%</h4><p class="text-sm text-slate-600 dark:text-slate-400 mt-2 font-medium">Histórico isento de anomalias críticas de precificação.</p></div>`;
                 return;
             }
             dadosDiagnostico.forEach((diag, index) => {
@@ -673,7 +671,7 @@
         window.processarPlanilha = (event) => {
             const file = event.target.files[0]; if (!file) return;
             const btnUpload = event.target.parentElement; const originalText = btnUpload.innerHTML;
-            btnUpload.innerHTML = "A Injetar Dados..."; btnUpload.classList.add('opacity-80', 'cursor-wait');
+            btnUpload.innerHTML = "Lendo Dados..."; btnUpload.classList.add('opacity-80', 'cursor-wait');
             const reader = new FileReader();
             reader.onload = async (e) => {
                 try {
@@ -685,13 +683,13 @@
                         if(mlb && custo !== undefined) custosMassa[mlb.toString().trim()] = parseFloat(custo);
                     });
                     if(Object.keys(custosMassa).length === 0) {
-                        alert("Erro de sintaxe. Colunas 'ID' ou 'Custo' não detetadas."); btnUpload.innerHTML = originalText; btnUpload.classList.remove('opacity-80', 'cursor-wait'); return;
+                        alert("Erro: Colunas 'ID' ou 'Custo' não detectadas."); btnUpload.innerHTML = originalText; btnUpload.classList.remove('opacity-80', 'cursor-wait'); return;
                     }
                     const token = await usuarioGlobal.getIdToken(); let payload = { custos: custosMassa }; if (uidClienteAtivo) payload.client_uid = uidClienteAtivo;
                     await fetch('/api/salvar_custos_massa', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(payload) });
-                    alert(`Sucesso Master! ${Object.keys(custosMassa).length} nós de custo atualizados na matrix.`);
+                    alert(`Sucesso! ${Object.keys(custosMassa).length} custos atualizados no sistema.`);
                     btnUpload.innerHTML = originalText; btnUpload.classList.remove('opacity-80', 'cursor-wait'); carregarDados(); 
-                } catch (error) { alert("Corrupção na leitura do Excel."); btnUpload.innerHTML = originalText; btnUpload.classList.remove('opacity-80', 'cursor-wait'); }
+                } catch (error) { alert("Erro ao ler o arquivo Excel."); btnUpload.innerHTML = originalText; btnUpload.classList.remove('opacity-80', 'cursor-wait'); }
             }; reader.readAsArrayBuffer(file);
         };
 
@@ -703,30 +701,30 @@
                     tbody.innerHTML += `<tr class="border-b border-slate-100/50 dark:border-slate-800/50 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-colors">
                         <td class="py-5 font-bold text-slate-800 dark:text-white align-middle">${c.email}</td>
                         <td class="py-5 align-middle"><span class="px-3 py-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-bold shadow-[0_0_10px_rgba(16,185,129,0.2)]">Sincronizado</span></td>
-                        <td class="py-5 align-middle text-center"><button onclick="acessarCliente('${c.uid}', '${c.email}')" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-[0_0_15px_rgba(79,70,229,0.4)] uppercase tracking-wide">Infiltrar</button></td>
+                        <td class="py-5 align-middle text-center"><button onclick="acessarCliente('${c.uid}', '${c.email}')" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-[0_0_15px_rgba(79,70,229,0.4)] uppercase tracking-wide">Acessar Cliente</button></td>
                     </tr>`;
                 });
             }
         };
 
-        window.acessarCliente = (uid, email) => { uidClienteAtivo = uid; emailClienteAtivo = email; document.getElementById('workspace-nome').innerHTML = `<span class="text-amber-500">Sub-Operação:</span> <b>${email}</b>`; document.getElementById('btn-voltar-admin').classList.remove('hidden'); mudarAba('visao_geral'); carregarDados(); };
+        window.acessarCliente = (uid, email) => { uidClienteAtivo = uid; emailClienteAtivo = email; document.getElementById('workspace-nome').innerHTML = `<span class="text-amber-500">Visualizando:</span> <b>${email}</b>`; document.getElementById('btn-voltar-admin').classList.remove('hidden'); mudarAba('visao_geral'); carregarDados(); };
         window.voltarParaAdmin = () => { uidClienteAtivo = null; emailClienteAtivo = null; document.getElementById('workspace-nome').innerHTML = `Operação BLM`; document.getElementById('btn-voltar-admin').classList.add('hidden'); document.getElementById('tela-conectar-ml').classList.add('hidden'); document.getElementById('tela-dashboard').classList.remove('hidden'); mudarAba('clientes'); };
 
         window.salvarImposto = async () => {
             const btn = document.getElementById('btn-imposto'); const token = await usuarioGlobal.getIdToken();
-            btn.innerText = "A Encriptar..."; btn.classList.add('opacity-80', 'cursor-wait');
+            btn.innerText = "Salvando..."; btn.classList.add('opacity-80', 'cursor-wait');
             let payload = { imposto: document.getElementById('input-imposto').value }; if (uidClienteAtivo) payload.client_uid = uidClienteAtivo; 
             await fetch('/api/salvar_imposto', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(payload) });
-            btn.innerText = "Gravado ✔"; btn.classList.replace('bg-blue-600', 'bg-emerald-500'); btn.classList.remove('opacity-80', 'cursor-wait', 'shadow-[0_0_15px_rgba(37,99,235,0.4)]'); btn.classList.add('shadow-[0_0_15px_rgba(16,185,129,0.4)]');
+            btn.innerText = "Salvo ✔"; btn.classList.replace('bg-blue-600', 'bg-emerald-500'); btn.classList.remove('opacity-80', 'cursor-wait', 'shadow-[0_0_15px_rgba(37,99,235,0.4)]'); btn.classList.add('shadow-[0_0_15px_rgba(16,185,129,0.4)]');
             setTimeout(() => { btn.innerText = "Gravar Alíquota"; btn.classList.replace('bg-emerald-500', 'bg-blue-600'); btn.classList.replace('shadow-[0_0_15px_rgba(16,185,129,0.4)]', 'shadow-[0_0_15px_rgba(37,99,235,0.4)]'); carregarDados(); }, 1200);
         };
 
         window.salvarCusto = async (itemId) => {
             const btn = document.getElementById(`btn-salvar-${itemId}`); const custo = document.getElementById(`custo-${itemId}`).value; const token = await usuarioGlobal.getIdToken();
-            btn.innerText = "A Sincronizar..."; btn.classList.add('opacity-80', 'cursor-wait');
+            btn.innerText = "Salvando..."; btn.classList.add('opacity-80', 'cursor-wait');
             let payload = { item_id: itemId, custo: custo }; if (uidClienteAtivo) payload.client_uid = uidClienteAtivo;
             await fetch('/api/salvar_custo', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(payload) });
-            btn.innerText = "Sincronizado ✔"; btn.className = "px-6 py-2.5 bg-emerald-500 text-slate-900 rounded-xl text-xs transition-all duration-300 font-extrabold shadow-[0_0_15px_rgba(16,185,129,0.4)] uppercase tracking-wide";
+            btn.innerText = "Salvo ✔"; btn.className = "px-6 py-2.5 bg-emerald-500 text-slate-900 rounded-xl text-xs transition-all duration-300 font-extrabold shadow-[0_0_15px_rgba(16,185,129,0.4)] uppercase tracking-wide";
         };
 
         window.formatarTrend = (v) => {
@@ -735,7 +733,7 @@
             return '';
         };
 
-        let lastGraficoDados = null; // para poder atualizar cor do tema
+        let lastGraficoDados = null;
         function atualizarGrafico(dadosGrafico) {
             lastGraficoDados = dadosGrafico;
             const ctx = document.getElementById('graficoCrescimento').getContext('2d'); if (graficoInstancia) graficoInstancia.destroy(); 
@@ -743,10 +741,9 @@
             const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'; 
             const textColor = isDark ? '#94A3B8' : '#64748B';
             
-            // Gradiente para a barra (Cyansp)
             const gradientBar = ctx.createLinearGradient(0, 0, 0, 400);
-            gradientBar.addColorStop(0, 'rgba(34, 211, 238, 0.8)'); // Cyan-400
-            gradientBar.addColorStop(1, 'rgba(59, 130, 246, 0.4)'); // Blue-500
+            gradientBar.addColorStop(0, 'rgba(34, 211, 238, 0.8)'); 
+            gradientBar.addColorStop(1, 'rgba(59, 130, 246, 0.4)'); 
             
             graficoInstancia = new Chart(ctx, { type: 'bar', data: { labels: dadosGrafico.labels, datasets: [{ label: 'Faturamento Bruto', data: dadosGrafico.faturamento, backgroundColor: gradientBar, borderColor: 'transparent', borderRadius: {topLeft: 6, topRight: 6}, hoverBackgroundColor: 'rgba(34, 211, 238, 1)', order: 2 }, { label: 'Lucro Extraído', data: dadosGrafico.lucro, type: 'line', borderColor: '#34D399', backgroundColor: 'rgba(52, 211, 153, 0.1)', fill: true, borderWidth: 4, tension: 0.4, pointRadius: 0, pointHoverRadius: 8, pointBackgroundColor: '#10B981', pointBorderColor: '#fff', pointBorderWidth: 2, order: 1 }] }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, scales: { y: { beginAtZero: true, grid: { color: gridColor, drawBorder: false }, ticks: { color: textColor, padding: 10, font: {family: 'Outfit', weight: '600'} } }, x: { grid: { display: false, drawBorder: false }, ticks: { color: textColor, padding: 10, font: {family: 'Outfit', weight: '600'} } } }, plugins: { legend: { labels: { color: textColor, font: { family: 'Outfit', weight: '700' }, usePointStyle: true, boxWidth: 8, padding: 20 } }, tooltip: { backgroundColor: isDark ? 'rgba(15,23,42,0.9)' : 'rgba(255,255,255,0.9)', titleColor: isDark ? '#f8fafc' : '#0f172a', bodyColor: isDark ? '#cbd5e1' : '#475569', titleFont: {family: 'Outfit', size: 14, weight: '800'}, bodyFont: {family: 'Outfit', size: 13, weight: '600'}, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', borderWidth: 1, padding: 16, boxPadding: 8, usePointStyle: true, cornerRadius: 12 } } } });
         }
@@ -771,13 +768,13 @@
             btn.innerText = "Gerar Dados"; btn.classList.remove('opacity-80', 'cursor-wait');
 
             if (res.status === 403) { 
-                if (uidClienteAtivo) { alert("Ligação ML em falta neste nó."); voltarParaAdmin(); return; }
+                if (uidClienteAtivo) { alert("Conexão com o ML ausente neste cliente."); voltarParaAdmin(); return; }
                 document.getElementById('tela-conectar-ml').classList.remove('hidden'); return; 
             }
             document.getElementById('tela-conectar-ml').classList.add('hidden');
 
             if (data.erro === "vazio") {
-                document.getElementById('tabela-corpo').innerHTML = "<tr><td colspan='7' class='py-16 text-center text-slate-500 font-medium'>Zero tração detetada no período analisado.</td></tr>";
+                document.getElementById('tabela-corpo').innerHTML = "<tr><td colspan='7' class='py-16 text-center text-slate-500 font-medium'>Nenhuma venda detectada no período selecionado.</td></tr>";
                 if (graficoInstancia) graficoInstancia.destroy(); return;
             }
 
@@ -813,13 +810,14 @@
                 const adsUn = row.Giro > 0 ? (row.Custo_ADS / row.Giro).toFixed(2) : '0.00';
 
                 const custosHTML = `
-                    <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400 space-y-1.5 tracking-wider uppercase">
-                        <div class="flex justify-between w-48 border-b border-slate-200/50 dark:border-slate-700/50 pb-1"><span class="text-slate-700 dark:text-slate-300">CMV Base:</span> <span class="text-slate-900 dark:text-white">R$ ${row.Custo_CMV.toFixed(2)}</span></div>
-                        <div class="flex justify-between w-48 border-b border-slate-200/50 dark:border-slate-700/50 pb-1"><span class="text-slate-700 dark:text-slate-300">Dreno ML:</span> <span class="text-amber-600 dark:text-amber-400 text-[11px]">R$ ${tarifaMLUn}</span></div>
-                        <div class="flex justify-between w-48"><span class="text-slate-700 dark:text-slate-300">F+I+A:</span> <span class="text-slate-900 dark:text-white">R$ ${(parseFloat(freteUn)+parseFloat(impostoUn)+parseFloat(adsUn)).toFixed(2)}</span></div>
+                    <div class="flex flex-col gap-1.5 w-52 bg-slate-50/50 dark:bg-slate-800/30 p-2.5 rounded-lg border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-sm">
+                        <div class="flex justify-between items-center text-[11px]"><span class="text-slate-500 font-semibold flex items-center gap-1.5">📦 CMV</span> <span class="font-bold text-slate-800 dark:text-slate-200">R$ ${row.Custo_CMV.toFixed(2)}</span></div>
+                        <div class="flex justify-between items-center text-[11px]"><span class="text-slate-500 font-semibold flex items-center gap-1.5">🏷️ Tarifa ML</span> <span class="font-bold text-amber-600 dark:text-amber-400">R$ ${tarifaMLUn}</span></div>
+                        <div class="flex justify-between items-center text-[11px]"><span class="text-slate-500 font-semibold flex items-center gap-1.5">🚚 Frete</span> <span class="font-bold text-slate-800 dark:text-slate-200">R$ ${freteUn}</span></div>
+                        <div class="flex justify-between items-center text-[11px]"><span class="text-slate-500 font-semibold flex items-center gap-1.5">🏛️ Imposto</span> <span class="font-bold text-slate-800 dark:text-slate-200">R$ ${impostoUn}</span></div>
+                        <div class="flex justify-between items-center text-[11px] border-t border-slate-200/50 dark:border-slate-700/50 pt-1.5 mt-0.5"><span class="text-slate-500 font-semibold flex items-center gap-1.5">📢 ADS (Méd)</span> <span class="font-bold text-purple-600 dark:text-purple-400">R$ ${adsUn}</span></div>
                     </div>`;
 
-                // Badges da Visão Geral
                 const badgeAds = row.Ads_Ativo 
                     ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/30 mr-1 shadow-[0_0_8px_rgba(168,85,247,0.2)]">ADS ON</span>' 
                     : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-500/10 text-slate-500 dark:text-slate-400 border border-slate-500/20 mr-1">ADS OFF</span>';
@@ -835,7 +833,7 @@
                 tbody.innerHTML += `
                     <tr class="border-b border-slate-100/50 dark:border-slate-800/50 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-colors animate-slide-up opacity-0" style="animation-delay: ${animDelay}s; animation-fill-mode: forwards;">
                         <td class="py-5 align-middle"><p class="font-extrabold text-sm w-48 truncate text-slate-800 dark:text-slate-100" title="${row.Produto}">${row.Produto}</p><p class="text-[9px] font-bold uppercase tracking-widest text-slate-400 mt-1.5">SKU: <span class="select-all">${row.ID}</span></p></td>
-                        <td class="py-5 align-middle"><span class="font-black text-lg text-slate-800 dark:text-white block tracking-tighter">R$ ${row.Faturamento.toFixed(2)}</span><span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 inline-flex items-center mt-1">${row.Giro} Uni. ${formatarTrend(row.Giro_Trend)}</span></td>
+                        <td class="py-5 align-middle"><span class="font-black text-lg text-slate-800 dark:text-white block tracking-tighter">R$ ${row.Faturamento.toFixed(2)}</span><span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 inline-flex items-center mt-1">${row.Giro} Vendas ${formatarTrend(row.Giro_Trend)}</span></td>
                         <td class="py-5 align-middle font-bold text-slate-700 dark:text-slate-300 tracking-wide">R$ ${row.Ticket_Medio.toFixed(2)}</td>
                         <td class="py-5 align-middle">${custosHTML}</td>
                         <td class="py-5 align-middle whitespace-nowrap"><div class="flex flex-col gap-1 items-start">${badgeAds}${badgeCat}</div></td>
@@ -855,9 +853,9 @@
         }
 
         window.popularDropdownsKits = () => {
-            let options = '<option value="0">Add Link no Kit...</option>';
+            let options = '<option value="0">Selecionar Produto...</option>';
             dadosAPI.forEach(item => {
-                options += `<option value="${item.Custo_CMV}">${item.Produto.substring(0,35)}... (Fabricação: R$ ${item.Custo_CMV.toFixed(2)})</option>`;
+                options += `<option value="${item.Custo_CMV}">${item.Produto.substring(0,35)}... (Custo: R$ ${item.Custo_CMV.toFixed(2)})</option>`;
             });
             document.getElementById('kit-item-1').innerHTML = options;
             document.getElementById('kit-item-2').innerHTML = options;
@@ -867,12 +865,12 @@
         window.renderRadar = () => {
             const tbody = document.getElementById('tabela-radar-corpo'); tbody.innerHTML = '';
             if(!dadosRadar || dadosRadar.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="py-12 text-center text-emerald-500 font-bold tracking-wider">Sistemas de inventário estabilizados. Risco zero para os próximos 15 dias.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="py-12 text-center text-emerald-500 font-bold tracking-wider">Estoque saudável. Sem risco para os próximos 15 dias.</td></tr>';
                 return;
             }
             dadosRadar.forEach((row, index) => {
                 let corStatus = row.Dias_Restantes <= 5 ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.2)]' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30';
-                let textoStatus = row.Dias_Restantes <= 0 ? 'Ruptura Absoluta (0d)' : `T-Minus ${row.Dias_Restantes} Dias`;
+                let textoStatus = row.Dias_Restantes <= 0 ? 'Esgotado' : `Restam ${row.Dias_Restantes} Dias`;
                 const animDelay = index * 0.04;
                 tbody.innerHTML += `
                     <tr class="border-b border-slate-100/50 dark:border-slate-800/50 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-colors animate-slide-up opacity-0" style="animation-delay: ${animDelay}s; animation-fill-mode: forwards;">
@@ -880,7 +878,7 @@
                         <td class="py-5 align-middle font-black text-slate-700 dark:text-slate-300 tracking-tight">${row.Giro_Diario} un/dia</td>
                         <td class="py-5 align-middle font-bold text-slate-500 dark:text-slate-400">${row.Estoque} unidades</td>
                         <td class="py-5 align-middle"><span class="px-3 py-1.5 rounded-lg text-[10px] uppercase tracking-widest font-black shadow-sm ${corStatus}">${textoStatus}</span></td>
-                        <td class="py-5 align-middle text-center"><a href="${row.Link}" target="_blank" class="px-5 py-2.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30 hover:bg-blue-500/20 rounded-xl text-xs transition-all font-extrabold shadow-sm inline-block uppercase tracking-wider">Aceder ML</a></td>
+                        <td class="py-5 align-middle text-center"><a href="${row.Link}" target="_blank" class="px-5 py-2.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30 hover:bg-blue-500/20 rounded-xl text-xs transition-all font-extrabold shadow-sm inline-block uppercase tracking-wider">Acessar ML</a></td>
                     </tr>`;
             });
         };
@@ -894,7 +892,7 @@
                     <tr class="border-b border-slate-100/50 dark:border-slate-800/50 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-colors animate-slide-up opacity-0" style="animation-delay: ${animDelay}s; animation-fill-mode: forwards;">
                         <td class="py-4 align-middle"><p class="font-bold text-sm w-72 truncate text-slate-800 dark:text-slate-200" title="${row.Produto}">${row.Produto}</p><p class="text-[10px] text-slate-400 uppercase tracking-widest mt-1.5">ID: <span class="select-all">${row.ID}</span></p></td>
                         <td class="py-4 align-middle"><div class="relative w-36"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">R$</span><input type="number" id="custo-${row.ID}" value="${row.Custo_CMV}" step="0.01" class="w-full p-3 pl-9 rounded-xl border ${borderClass} text-slate-900 dark:text-white outline-none focus:ring-2 transition-all font-bold text-base"></div></td>
-                        <td class="py-4 align-middle"><button onclick="salvarCusto('${row.ID}')" id="btn-salvar-${row.ID}" class="px-5 py-3 bg-slate-200/80 dark:bg-slate-700/80 border border-slate-300/50 dark:border-slate-600/50 hover:border-cyan-500/50 hover:bg-cyan-500/10 text-slate-800 dark:text-slate-200 hover:text-cyan-600 dark:hover:text-cyan-400 rounded-xl text-xs transition-all duration-300 active:scale-95 font-extrabold uppercase tracking-wider backdrop-blur-sm shadow-sm">Overwite</button></td>
+                        <td class="py-4 align-middle"><button onclick="salvarCusto('${row.ID}')" id="btn-salvar-${row.ID}" class="px-5 py-3 bg-slate-200/80 dark:bg-slate-700/80 border border-slate-300/50 dark:border-slate-600/50 hover:border-cyan-500/50 hover:bg-cyan-500/10 text-slate-800 dark:text-slate-200 hover:text-cyan-600 dark:hover:text-cyan-400 rounded-xl text-xs transition-all duration-300 active:scale-95 font-extrabold uppercase tracking-wider backdrop-blur-sm shadow-sm">Salvar</button></td>
                     </tr>`;
             });
         };
@@ -902,7 +900,7 @@
         window.renderEstoqueParado = () => {
             const tbody = document.getElementById('tabela-estoque-corpo'); tbody.innerHTML = '';
             if(dadosEstoque.length === 0) {
-                tbody.innerHTML = "<tr><td colspan='4' class='py-12 text-center text-emerald-500 font-bold tracking-wider'>Zero passivos detetados. Tudo tem giro de caixa.</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='4' class='py-12 text-center text-emerald-500 font-bold tracking-wider'>Nenhum produto parado. Tudo com bom giro!</td></tr>";
                 return;
             }
             dadosEstoque.forEach((row, index) => {
@@ -912,7 +910,7 @@
                         <td class="py-5 align-middle"><p class="font-bold text-sm w-64 truncate text-slate-800 dark:text-slate-200" title="${row.Produto}">${row.Produto}</p><p class="text-[10px] text-slate-400 uppercase tracking-widest mt-1.5">ID: <span class="select-all">${row.ID}</span></p></td>
                         <td class="py-5 align-middle font-extrabold text-slate-700 dark:text-slate-300 tracking-tight">R$ ${row.Preco.toFixed(2)}</td>
                         <td class="py-5 align-middle"><span class="px-3 py-1.5 bg-slate-200/50 dark:bg-slate-700/50 border border-slate-300/50 dark:border-slate-600/50 text-slate-700 dark:text-slate-300 rounded-lg text-[10px] uppercase tracking-widest font-black shadow-sm backdrop-blur-sm">${row.Disponivel} Uni.</span></td>
-                        <td class="py-5 align-middle text-center"><a href="${row.Link}" target="_blank" class="px-5 py-2.5 bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 rounded-xl text-xs transition-all duration-300 font-extrabold uppercase tracking-wider inline-block">Liquidate</a></td>
+                        <td class="py-5 align-middle text-center"><a href="${row.Link}" target="_blank" class="px-5 py-2.5 bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 rounded-xl text-xs transition-all duration-300 font-extrabold uppercase tracking-wider inline-block">Ver Anúncio</a></td>
                     </tr>`;
             });
         };

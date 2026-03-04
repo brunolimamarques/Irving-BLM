@@ -8,7 +8,6 @@ import pandas as pd
 from datetime import datetime, timedelta
 import urllib.parse
 import concurrent.futures
-import re
 
 app = Flask(__name__)
 
@@ -140,59 +139,6 @@ def salvar_imposto():
     db.collection('configuracoes').document(uid).set({'imposto_padrao': float(request.json.get('imposto', 0))}, merge=True)
     return jsonify({"status": "sucesso"})
 
-# --- 4.1. ROTA: STALKER DE CONCORRENTES ---
-@app.route('/api/stalker', methods=['GET', 'POST', 'DELETE'])
-def api_stalker():
-    uid = verificar_token(request)
-    if not uid: return jsonify({"erro": "Acesso Negado"}), 401
-
-    client_uid = request.args.get('client_uid') or (request.json.get('client_uid') if request.is_json else None)
-    if client_uid:
-        try:
-            if auth.get_user(uid).email == ADMIN_EMAIL: uid = client_uid
-        except: pass
-
-    doc_ref = db.collection('stalker').document(uid)
-
-    if request.method == 'POST':
-        mlb_id = request.json.get('mlb_id', '').strip().upper()
-        if not mlb_id: return jsonify({"erro": "ID inválido"}), 400
-        match = re.search(r'MLB-?\d+', mlb_id)
-        if match: mlb_id = match.group(0).replace('-', '')
-        
-        dados = doc_ref.get().to_dict() or {'concorrentes': []}
-        if mlb_id not in dados['concorrentes']:
-            dados['concorrentes'].append(mlb_id)
-            doc_ref.set(dados)
-        return jsonify({"status": "sucesso"})
-
-    if request.method == 'DELETE':
-        mlb_id = request.json.get('mlb_id')
-        dados = doc_ref.get().to_dict() or {'concorrentes': []}
-        if mlb_id in dados['concorrentes']:
-            dados['concorrentes'].remove(mlb_id)
-            doc_ref.set(dados)
-        return jsonify({"status": "sucesso"})
-
-    # GET
-    dados = doc_ref.get().to_dict() or {'concorrentes': []}
-    concorrentes_ids = dados.get('concorrentes', [])
-    if not concorrentes_ids: return jsonify([])
-
-    ids_str = ",".join(concorrentes_ids)
-    res = requests.get(f"https://api.mercadolibre.com/items?ids={ids_str}").json()
-    
-    resultados = []
-    for item in res:
-        if item.get('code') == 200:
-            body = item['body']
-            resultados.append({
-                'id': body.get('id'), 'titulo': body.get('title'),
-                'preco': body.get('price'), 'imagem': body.get('thumbnail'), 'link': body.get('permalink')
-            })
-    return jsonify(resultados)
-
-
 # --- 5. MOTOR FINANCEIRO (DADOS REAIS DA API) ---
 @app.route('/api/dados')
 def api_dados():
@@ -230,50 +176,49 @@ def api_dados():
         
         if not resultados: return jsonify({"erro": "vazio", "imposto_padrao": imposto_padrao_pct})
 
-        # --- BUSCA EXATA DOS FRETES E ESTADOS (MULTITHREADING) ---
+        # --- BUSCA EXATA DOS FRETES (VIA FATURA COM MULTITHREADING) ---
         shipping_ids = [str(o.get('shipping', {}).get('id')) for o in resultados if o.get('shipping', {}).get('id')]
-        infos_envio = {}
+        custos_frete_reais = {}
         
-        def buscar_info_envio(s_id):
-            custo_frete = 0
-            estado = "Não Informado"
+        def buscar_frete_exato(s_id):
             url_costs = f"https://api.mercadolibre.com/shipments/{s_id}/costs"
-            url_ship = f"https://api.mercadolibre.com/shipments/{s_id}"
             headers_frete = {"Authorization": f"Bearer {ml_token}", "x-format-new": "true"}
             
-            # Pega estado e fallback de custo
+            try:
+                res_costs = requests.get(url_costs, headers=headers_frete, timeout=10)
+                if res_costs.status_code == 200:
+                    data = res_costs.json()
+                    if 'senders' in data and data['senders']:
+                        return s_id, sum([float(s.get('cost', 0)) for s in data['senders']])
+                    return s_id, 0
+            except Exception:
+                pass
+            
+            # Fallback de emergência
+            url_ship = f"https://api.mercadolibre.com/shipments/{s_id}"
             try:
                 res_ship = requests.get(url_ship, headers=headers_frete, timeout=5)
                 if res_ship.status_code == 200:
                     body = res_ship.json()
-                    estado = body.get('receiver_address', {}).get('state', {}).get('name', 'Não Informado')
                     base = float(body.get('base_cost') or 0)
                     buyer = float(body.get('shipping_option', {}).get('cost') or 0)
                     list_cost = float(body.get('shipping_option', {}).get('list_cost') or 0)
                     
-                    if buyer == 0: custo_frete = base
-                    elif (list_cost > 0 and buyer >= list_cost) or (list_cost == 0 and buyer >= base): custo_frete = 0
-                    else: custo_frete = max(0, max(base, list_cost) - buyer)
-            except Exception: pass
-            
-            # Tenta pegar custo exato na rota costs para sobrepor
-            try:
-                res_costs = requests.get(url_costs, headers=headers_frete, timeout=5)
-                if res_costs.status_code == 200:
-                    data = res_costs.json()
-                    if 'senders' in data and data['senders']:
-                        custo_frete = sum([float(s.get('cost', 0)) for s in data['senders']])
-            except Exception: pass
-            
-            return s_id, custo_frete, estado
+                    if buyer == 0: return s_id, base
+                    elif (list_cost > 0 and buyer >= list_cost) or (list_cost == 0 and buyer >= base): return s_id, 0
+                    else: return s_id, max(0, max(base, list_cost) - buyer)
+            except Exception:
+                pass
+                
+            return s_id, 0
 
         if shipping_ids:
             shipping_ids = list(set(shipping_ids))
             with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-                futures = [executor.submit(buscar_info_envio, sid) for sid in shipping_ids]
+                futures = [executor.submit(buscar_frete_exato, sid) for sid in shipping_ids]
                 for future in concurrent.futures.as_completed(futures):
-                    sid, custo, estado = future.result()
-                    infos_envio[sid] = {'custo': custo, 'estado': estado}
+                    sid, custo = future.result()
+                    custos_frete_reais[sid] = custo
 
         qty_por_shipment = {}
         for order in resultados:
@@ -283,21 +228,16 @@ def api_dados():
 
         agrupado = {}
         timeline = {}
-        mapa_calor = {}
 
         for order in resultados:
             data_venda = order.get('date_created', '')[:10]
             if data_venda not in timeline: timeline[data_venda] = {'faturamento': 0, 'lucro': 0}
             
             ship_id = str(order.get('shipping', {}).get('id', ''))
-            info_ship = infos_envio.get(ship_id, {'custo': 0, 'estado': 'Não Informado'})
-            frete_total_pedido = info_ship['custo']
-            estado_venda = info_ship['estado']
+            frete_total_pedido = custos_frete_reais.get(ship_id, 0)
             
             total_qty_pack = qty_por_shipment.get(ship_id, 1)
             custo_envio_unidade = frete_total_pedido / total_qty_pack if total_qty_pack > 0 else 0
-            
-            faturamento_pedido = 0
             
             for item in order.get('order_items', []):
                 item_id = item['item']['id']
@@ -312,7 +252,6 @@ def api_dados():
                 
                 lucro_unidade_base = price - custo_cmv - custo_envio_unidade - tarifa_ml_unitaria - imposto_reais
                 
-                faturamento_pedido += (price * qty)
                 timeline[data_venda]['faturamento'] += (price * qty)
                 if custo_cmv > 0: timeline[data_venda]['lucro'] += (lucro_unidade_base * qty)
 
@@ -330,15 +269,15 @@ def api_dados():
                 agrupado[item_id]['Custo_Imposto'] += (imposto_reais * qty)
                 agrupado[item_id]['Margem_Contribuicao'] += (lucro_unidade_base * qty) 
 
-            if estado_venda != 'Não Informado':
-                if estado_venda not in mapa_calor: mapa_calor[estado_venda] = 0
-                mapa_calor[estado_venda] += faturamento_pedido
-
         item_ids_list = list(agrupado.keys())
+        estoque_atual_detalhes = {} # NOVO: Para o Radar de Ruptura
+        
         if item_ids_list:
             for i in range(0, len(item_ids_list), 50):
                 lote_ids = item_ids_list[i:i+50]
                 ids_str = ",".join(lote_ids)
+                
+                # Fetch ADS
                 url_ads = f"https://api.mercadolibre.com/advertising/product_ads/metrics/items?date_from={data_inicio_str}&date_to={data_fim_str}&item_ids={ids_str}"
                 try:
                     res_ads = requests.get(url_ads, headers=headers, timeout=10)
@@ -348,8 +287,22 @@ def api_dados():
                             custo_ads = float(ad_metric.get('metrics', {}).get('cost', 0))
                             if id_anuncio in agrupado: agrupado[id_anuncio]['Custo_ADS'] = custo_ads
                 except Exception as e: print(f"Aviso ADS: {e}")
+                
+                # Fetch Detalhes (Estoque Atual para o Radar)
+                try:
+                    res_detalhes = requests.get(f"https://api.mercadolibre.com/items?ids={ids_str}", headers=headers).json()
+                    for item_obj in res_detalhes:
+                        if item_obj.get('code') == 200:
+                            body = item_obj['body']
+                            estoque_atual_detalhes[body.get('id')] = {
+                                'disponivel': body.get('available_quantity', 0),
+                                'link': body.get('permalink', '#')
+                            }
+                except Exception as e: print(f"Aviso Radar: {e}")
 
         dados_reais = []
+        radar_ruptura = [] # NOVO: Lista do Radar
+        
         for item_id, dados in agrupado.items():
             giro = dados['Giro']
             custo_ads_total = dados['Custo_ADS']
@@ -364,6 +317,23 @@ def api_dados():
                 'Margem_Contribuicao': margem_unitaria_final, 
                 'Giro_Ant': int(giro * 0.85), 'Margem_Ant': margem_unitaria_final * 0.9 
             })
+            
+            # --- PROCESSAMENTO: RADAR DE RUPTURA ---
+            giro_diario = giro / periodo_dias
+            qtd_estoque = estoque_atual_detalhes.get(item_id, {}).get('disponivel', 0)
+            link_anuncio = estoque_atual_detalhes.get(item_id, {}).get('link', '#')
+            
+            if giro_diario > 0:
+                dias_restantes = qtd_estoque / giro_diario
+                if dias_restantes <= 15: # Alerta se durar 15 dias ou menos
+                    radar_ruptura.append({
+                        'ID': item_id, 'Produto': dados['Produto'],
+                        'Giro_Diario': round(giro_diario, 1), 'Estoque': qtd_estoque,
+                        'Dias_Restantes': int(dias_restantes), 'Link': link_anuncio
+                    })
+                    
+        # Ordena o radar para mostrar quem acaba primeiro no topo
+        radar_ruptura = sorted(radar_ruptura, key=lambda x: x['Dias_Restantes'])
 
         df = pd.DataFrame(dados_reais)
         
@@ -395,9 +365,6 @@ def api_dados():
         
         timeline_ordenada = dict(sorted(timeline.items()))
         grafico_dados = { "labels": list(timeline_ordenada.keys()), "faturamento": [v['faturamento'] for v in timeline_ordenada.values()], "lucro": [v['lucro'] for v in timeline_ordenada.values()] }
-
-        # Mapa de Calor Processado
-        mapa_lista = sorted([{"estado": k, "faturamento": v} for k, v in mapa_calor.items()], key=lambda x: x['faturamento'], reverse=True)[:6]
 
         # --- PROCESSAMENTO: CURVA ABC COM TICKET MÉDIO ---
         curva_abc = []
@@ -499,10 +466,10 @@ def api_dados():
             "kpis": kpis, 
             "tabela": df.to_dict(orient='records') if not df.empty else [], 
             "grafico": grafico_dados, 
-            "mapa_calor": mapa_lista,
             "estoque_parado": estoque_parado,
             "abc": curva_abc,
-            "diagnosticos": diagnosticos
+            "diagnosticos": diagnosticos,
+            "radar": radar_ruptura # Adicionado ao Retorno
         })
 
     except Exception as e:

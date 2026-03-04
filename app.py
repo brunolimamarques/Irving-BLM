@@ -270,14 +270,14 @@ def api_dados():
                 agrupado[item_id]['Margem_Contribuicao'] += (lucro_unidade_base * qty) 
 
         item_ids_list = list(agrupado.keys())
-        estoque_atual_detalhes = {} # NOVO: Para o Radar de Ruptura
+        estoque_atual_detalhes = {} 
+        itens_com_ads = set() # NOVO: Rastreio de ADS Ativo
         
         if item_ids_list:
             for i in range(0, len(item_ids_list), 50):
                 lote_ids = item_ids_list[i:i+50]
                 ids_str = ",".join(lote_ids)
                 
-                # Fetch ADS
                 url_ads = f"https://api.mercadolibre.com/advertising/product_ads/metrics/items?date_from={data_inicio_str}&date_to={data_fim_str}&item_ids={ids_str}"
                 try:
                     res_ads = requests.get(url_ads, headers=headers, timeout=10)
@@ -285,29 +285,44 @@ def api_dados():
                         for ad_metric in res_ads.json():
                             id_anuncio = ad_metric.get('item_id')
                             custo_ads = float(ad_metric.get('metrics', {}).get('cost', 0))
-                            if id_anuncio in agrupado: agrupado[id_anuncio]['Custo_ADS'] = custo_ads
+                            if id_anuncio in agrupado: 
+                                agrupado[id_anuncio]['Custo_ADS'] = custo_ads
+                                if custo_ads > 0 or ad_metric.get('metrics', {}).get('impressions', 0) > 0:
+                                    itens_com_ads.add(id_anuncio) # Marca como ADS Ativo
                 except Exception as e: print(f"Aviso ADS: {e}")
                 
-                # Fetch Detalhes (Estoque Atual para o Radar)
                 try:
                     res_detalhes = requests.get(f"https://api.mercadolibre.com/items?ids={ids_str}", headers=headers).json()
                     for item_obj in res_detalhes:
                         if item_obj.get('code') == 200:
                             body = item_obj['body']
-                            estoque_atual_detalhes[body.get('id')] = {
+                            iid = body.get('id')
+                            is_cat = body.get('catalog_listing', False)
+                            
+                            estoque_atual_detalhes[iid] = {
                                 'disponivel': body.get('available_quantity', 0),
-                                'link': body.get('permalink', '#')
+                                'link': body.get('permalink', '#'),
+                                'is_catalog': is_cat
                             }
-                except Exception as e: print(f"Aviso Radar: {e}")
+                except Exception as e: print(f"Aviso Radar/Catalogo: {e}")
 
         dados_reais = []
-        radar_ruptura = [] # NOVO: Lista do Radar
+        radar_ruptura = [] 
         
         for item_id, dados in agrupado.items():
             giro = dados['Giro']
             custo_ads_total = dados['Custo_ADS']
             lucro_total_liquido = dados['Margem_Contribuicao'] - custo_ads_total
             margem_unitaria_final = lucro_total_liquido / giro if giro > 0 else 0
+            
+            # --- LÓGICA DE CATÁLOGO E ADS ---
+            is_catalog = estoque_atual_detalhes.get(item_id, {}).get('is_catalog', False)
+            ads_ativo = item_id in itens_com_ads
+            
+            # Heurística rápida de BuyBox para não estourar o limite da API
+            catalog_status = "Não se aplica"
+            if is_catalog:
+                catalog_status = "Ganhando" if giro > 0 else "Perdendo"
 
             dados_reais.append({
                 'ID': item_id, 'Produto': dados['Produto'], 'Ticket_Medio': dados['Ticket_Medio'],
@@ -315,24 +330,23 @@ def api_dados():
                 'Custo_Tarifa_ML': dados['Custo_Tarifa_ML'], 'Custo_Imposto': dados['Custo_Imposto'], 
                 'Custo_ADS': custo_ads_total, 'Custo_CMV': dados['Custo_CMV'], 'Sem_Custo': dados['Sem_Custo'],
                 'Margem_Contribuicao': margem_unitaria_final, 
-                'Giro_Ant': int(giro * 0.85), 'Margem_Ant': margem_unitaria_final * 0.9 
+                'Giro_Ant': int(giro * 0.85), 'Margem_Ant': margem_unitaria_final * 0.9,
+                'Is_Catalog': is_catalog, 'Catalog_Status': catalog_status, 'Ads_Ativo': ads_ativo
             })
             
-            # --- PROCESSAMENTO: RADAR DE RUPTURA ---
             giro_diario = giro / periodo_dias
             qtd_estoque = estoque_atual_detalhes.get(item_id, {}).get('disponivel', 0)
             link_anuncio = estoque_atual_detalhes.get(item_id, {}).get('link', '#')
             
             if giro_diario > 0:
                 dias_restantes = qtd_estoque / giro_diario
-                if dias_restantes <= 15: # Alerta se durar 15 dias ou menos
+                if dias_restantes <= 15: 
                     radar_ruptura.append({
                         'ID': item_id, 'Produto': dados['Produto'],
                         'Giro_Diario': round(giro_diario, 1), 'Estoque': qtd_estoque,
                         'Dias_Restantes': int(dias_restantes), 'Link': link_anuncio
                     })
                     
-        # Ordena o radar para mostrar quem acaba primeiro no topo
         radar_ruptura = sorted(radar_ruptura, key=lambda x: x['Dias_Restantes'])
 
         df = pd.DataFrame(dados_reais)
@@ -366,7 +380,6 @@ def api_dados():
         timeline_ordenada = dict(sorted(timeline.items()))
         grafico_dados = { "labels": list(timeline_ordenada.keys()), "faturamento": [v['faturamento'] for v in timeline_ordenada.values()], "lucro": [v['lucro'] for v in timeline_ordenada.values()] }
 
-        # --- PROCESSAMENTO: CURVA ABC COM TICKET MÉDIO ---
         curva_abc = []
         if not df.empty:
             df_abc = df[df['Faturamento'] > 0].sort_values(by='Faturamento', ascending=False)
@@ -379,10 +392,10 @@ def api_dados():
                 curva_abc.append({
                     'ID': row['ID'], 'Produto': row['Produto'], 'Faturamento': row['Faturamento'], 
                     'Ticket_Medio': row['Ticket_Medio'],
-                    'Percentual': round(pct_total, 1), 'Classe': classe
+                    'Percentual': round(pct_total, 1), 'Classe': classe,
+                    'Is_Catalog': row['Is_Catalog'], 'Catalog_Status': row['Catalog_Status'], 'Ads_Ativo': row['Ads_Ativo']
                 })
 
-        # --- PROCESSAMENTO: DIAGNÓSTICO DO PREÇO ---
         diagnosticos = []
         sem_cmv_count = 0
         
@@ -469,7 +482,7 @@ def api_dados():
             "estoque_parado": estoque_parado,
             "abc": curva_abc,
             "diagnosticos": diagnosticos,
-            "radar": radar_ruptura # Adicionado ao Retorno
+            "radar": radar_ruptura 
         })
 
     except Exception as e:

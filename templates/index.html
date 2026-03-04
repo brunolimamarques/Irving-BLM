@@ -67,7 +67,7 @@
     </div>
 
     <div id="tela-dashboard" class="flex w-full h-full hidden opacity-0 animate-fade-in relative z-10">
-        <aside class="w-72 bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl border-r border-slate-200/50 dark:border-slate-800/50 flex flex-col justify-between hidden md:flex transition-colors duration-500 shadow-xl z-20">
+        <aside id="menu-lateral" class="w-72 bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl border-r border-slate-200/50 dark:border-slate-800/50 flex flex-col justify-between hidden md:flex transition-all duration-500 shadow-xl z-20">
             <div class="overflow-y-auto">
                 <div class="p-8 pb-4">
                     <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600 mb-1 tracking-tighter drop-shadow-sm">Irving</h1>
@@ -109,17 +109,22 @@
             </div>
         </aside>
 
-        <main class="flex-1 overflow-y-auto p-6 md:p-10 relative scroll-smooth z-0">
-            <header class="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200/50 dark:border-slate-800/50 pb-6 animate-slide-up" style="animation-delay: 0.1s;">
-                <div class="mb-4 md:mb-0">
+        <main id="main-content" class="flex-1 overflow-y-auto p-6 md:p-10 relative scroll-smooth z-0 transition-all duration-500">
+            <header id="cabecalho-principal" class="mb-10 flex flex-col xl:flex-row justify-between items-start xl:items-end border-b border-slate-200/50 dark:border-slate-800/50 pb-6 animate-slide-up" style="animation-delay: 0.1s;">
+                <div class="mb-4 xl:mb-0">
                     <h2 class="text-3xl font-extrabold text-slate-900 dark:text-white transition-colors tracking-tight" id="titulo-pagina">Visão Central</h2>
                     <p class="text-cyan-600 dark:text-cyan-400 text-sm mt-1.5 transition-colors font-medium tracking-wide" id="lbl-periodo">Aguardando comando do utilizador...</p>
                 </div>
-                <div class="flex items-center gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
+                <div class="flex items-center gap-3 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0 flex-wrap">
+                    
                     <select id="seletor-data" class="bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 outline-none text-sm transition-all focus:ring-2 focus:ring-cyan-500 cursor-pointer hover:border-cyan-400 backdrop-blur-md font-semibold">
                         <option value="7">Últimos 7 dias</option><option value="15">Últimos 15 dias</option><option value="30" selected>Últimos 30 dias</option>
                     </select>
                     
+                    <button onclick="enviarRelatorioZap()" id="btn-zap" title="Relatório Executivo WhatsApp" class="px-5 py-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-sm font-bold rounded-xl transition-all duration-300 shadow-sm flex items-center gap-2 active:scale-95 backdrop-blur-md">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 0C5.385 0 0 5.385 0 12.031c0 2.126.551 4.197 1.6 6.022L.15 24l6.101-1.428c1.761.947 3.75 1.447 5.78 1.447 6.646 0 12.031-5.385 12.031-12.031S18.677 0 12.031 0zm4.276 17.15c-.172.483-.984.922-1.42.966-.41.04-.984.143-3.23-.787-2.7-1.115-4.43-3.864-4.562-4.04-.131-.176-1.088-1.45-1.088-2.766 0-1.317.683-1.967.926-2.23.243-.263.528-.328.704-.328.176 0 .352 0 .506.007.161.007.375-.06.574.42.206.495.704 1.725.768 1.855.064.131.106.284.02.46-.085.176-.131.284-.263.438-.132.153-.277.337-.395.46-.131.143-.273.298-.12.56.152.263.678 1.12 1.454 1.815.998.892 1.84 1.173 2.103 1.304.263.131.417.11.57-.06.153-.171.658-.768.834-1.031.176-.263.351-.22.594-.132.243.088 1.536.725 1.799.856.263.131.44.197.505.306.065.11.065.636-.107 1.119z"/></svg> Relatório
+                    </button>
+
                     <button onclick="exportarRelatorioPDF()" id="btn-pdf" title="Exportar Visão Geral para PDF" class="px-5 py-2.5 bg-slate-200/80 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-700 text-slate-800 dark:text-white text-sm font-bold rounded-xl transition-all duration-300 shadow-sm flex items-center gap-2 active:scale-95 backdrop-blur-md border border-slate-300/50 dark:border-slate-600/50">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> PDF
                     </button>
@@ -129,6 +134,10 @@
                     <button onclick="toggleDarkMode()" class="p-2.5 rounded-xl border border-slate-300/50 dark:border-slate-700/50 bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 transition-all duration-300 active:scale-95 group backdrop-blur-md">
                         <svg id="theme-icon" class="w-5 h-5 text-slate-700 dark:text-slate-200 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                     </button>
+
+                    <button onclick="toggleWarRoom()" title="Modo War Room (Fullscreen)" class="p-2.5 rounded-xl border border-slate-300/50 dark:border-slate-700/50 bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 transition-all duration-300 active:scale-95 group backdrop-blur-md">
+                        <span class="text-lg leading-none group-hover:scale-110 inline-block transition-transform">📺</span>
+                    </button>
                 </div>
             </header>
 
@@ -136,7 +145,7 @@
                 
                 <div id="aba-visao_geral" class="w-full">
                     <div id="pdf-area" class="w-full rounded-2xl">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 mb-8">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 mb-8 transition-all duration-500" id="blocos-kpi">
                             <div class="glass-card rounded-2xl p-6 hover:-translate-y-1 animate-slide-up relative overflow-hidden group" style="animation-delay: 0.2s;">
                                 <div class="absolute -right-4 -top-4 w-16 h-16 bg-blue-500/20 rounded-full blur-xl group-hover:bg-blue-500/40 transition-colors"></div>
                                 <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Faturamento</p><h3 class="text-3xl font-extrabold tracking-tight" id="kpi-fat">...</h3>
@@ -159,9 +168,9 @@
                             </div>
                         </div>
 
-                        <div class="glass-card rounded-2xl p-6 md:p-8 mb-8 w-full animate-slide-up transition-all" style="animation-delay: 0.7s;">
+                        <div class="glass-card rounded-2xl p-6 md:p-8 mb-8 w-full animate-slide-up transition-all duration-500" id="container-grafico" style="animation-delay: 0.7s;">
                             <h3 class="text-xl font-extrabold mb-6 flex items-center gap-3"><span class="w-2 h-6 bg-cyan-400 rounded-full"></span> Evolução Diária da Operação</h3>
-                            <div class="relative w-full h-72"><canvas id="graficoCrescimento"></canvas></div>
+                            <div class="relative w-full h-72 transition-all duration-500" id="wrapper-canvas"><canvas id="graficoCrescimento"></canvas></div>
                         </div>
 
                         <div class="glass-card rounded-2xl p-6 md:p-8 animate-slide-up" style="animation-delay: 0.8s;">
@@ -400,6 +409,62 @@
         window.sair = () => signOut(auth);
         window.iniciarAuthML = () => window.location.href = `/conectar-ml?uid=${usuarioGlobal.uid}`;
 
+        // --- MODO WAR ROOM (FULLSCREEN E OCULTA MENU) ---
+        window.toggleWarRoom = () => {
+            const menuLateral = document.getElementById('menu-lateral');
+            const wrapperGrafico = document.getElementById('wrapper-canvas');
+            
+            if (menuLateral.classList.contains('hidden')) {
+                // Sair do War Room
+                menuLateral.classList.remove('hidden');
+                menuLateral.classList.add('md:flex');
+                wrapperGrafico.classList.remove('h-96');
+                wrapperGrafico.classList.add('h-72');
+                if (document.exitFullscreen) { document.exitFullscreen().catch(err => console.log(err)); }
+            } else {
+                // Entrar no War Room
+                menuLateral.classList.add('hidden');
+                menuLateral.classList.remove('md:flex');
+                wrapperGrafico.classList.remove('h-72');
+                wrapperGrafico.classList.add('h-96'); // Grafico maior na TV
+                if (document.documentElement.requestFullscreen) { document.documentElement.requestFullscreen().catch(err => console.log(err)); }
+            }
+            if(graficoInstancia) { setTimeout(() => graficoInstancia.resize(), 500); }
+        };
+
+        // --- DISPARO RELATÓRIO WHATSAPP ---
+        window.enviarRelatorioZap = async () => {
+            if(!dadosAPI || dadosAPI.length === 0) { alert("Gerar Dados antes de enviar relatório!"); return; }
+            const btn = document.getElementById('btn-zap');
+            const textoOriginal = btn.innerHTML;
+            btn.innerHTML = "A Disparar..."; btn.classList.add('opacity-80', 'cursor-wait');
+
+            const kpis = {
+                faturamento: document.getElementById('kpi-fat').textContent,
+                lucro: document.getElementById('kpi-lucro').textContent,
+                unidades: document.getElementById('kpi-unidades').textContent,
+                ads: document.getElementById('kpi-ads').textContent,
+                alertas_criticos: document.getElementById('kpi-alertas').textContent
+            };
+
+            const token = await usuarioGlobal.getIdToken();
+            try {
+                const res = await fetch('/api/disparar_whatsapp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ kpis: kpis, telefone: 'SEU_NUMERO_AQUI' })
+                });
+                const data = await res.json();
+                if(res.ok) {
+                    alert("Relatório executivo gerado com sucesso!\n\n(Verifique o console do seu backend Python. O motor Irving preparou a mensagem. Para enviar via WhatsApp real, integre uma API como Z-API no arquivo app.py).");
+                } else {
+                    alert("Erro ao formatar mensagem.");
+                }
+            } catch(e) { console.error(e); alert("Erro na comunicação com o servidor."); }
+            
+            btn.innerHTML = textoOriginal; btn.classList.remove('opacity-80', 'cursor-wait');
+        };
+
         window.toggleDarkMode = () => {
             document.documentElement.classList.toggle('dark');
             const isDark = document.documentElement.classList.contains('dark');
@@ -433,7 +498,6 @@
         };
 
         window.mudarAba = (aba) => {
-            // Arrays atualizados: sem 'simulador' e sem 'kits', com 'calculadora'
             const abas = ['visao_geral', 'custos', 'estoque', 'calculadora', 'diagnostico', 'abc', 'clientes', 'radar'];
             abas.forEach(a => {
                 document.getElementById(`aba-${a}`).classList.add('hidden');

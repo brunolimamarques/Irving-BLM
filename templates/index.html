@@ -90,15 +90,14 @@
                 </div>
 
                 <nav class="flex flex-col gap-1 mt-2 pb-6 px-4">
-                    <button onclick="mudarAba('visao_geral')" id="btn-visao_geral" class="menu-ativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">📊 Visão Geral</button>
+                    <button onclick="mudarAba('visao_geral')" id="btn-visao_geral" class="menu-ativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">📊 Visão Central</button>
                     <button onclick="mudarAba('custos')" id="btn-custos" class="menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">💰 Engine de Custos</button>
                     <button onclick="mudarAba('estoque')" id="btn-estoque" class="menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">📦 Inventário Parado</button>
                     <button onclick="mudarAba('radar')" id="btn-radar" class="menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">📡 Radar de Ruptura</button>
                     
                     <div class="my-3 border-t border-slate-200/50 dark:border-slate-800/50 mx-4"></div>
                     
-                    <button onclick="mudarAba('simulador')" id="btn-simulador" class="menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">🧮 Simulador IA</button>
-                    <button onclick="mudarAba('kits')" id="btn-kits" class="menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">🧩 Máquina de Kits</button>
+                    <button onclick="mudarAba('calculadora')" id="btn-calculadora" class="menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">🧮 Calculadora BLM</button>
                     <button onclick="mudarAba('diagnostico')" id="btn-diagnostico" class="menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">🧠 Diagnóstico Smart</button>
                     <button onclick="mudarAba('abc')" id="btn-abc" class="menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">📈 Curva ABC</button>
 
@@ -282,92 +281,16 @@
                     </div>
                 </div>
 
-                <div id="aba-simulador" class="hidden w-full">
-                    <div class="glass-card rounded-3xl p-10 mb-8 w-full max-w-4xl mx-auto animate-slide-up relative overflow-hidden">
-                        <div class="absolute -right-20 -top-20 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl"></div>
-                        <h3 class="text-3xl font-extrabold mb-3 tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Simulador IA Predito</h3>
-                        <p class="text-slate-500 dark:text-slate-400 text-sm mb-10 font-medium">Teste o impacto exato na sua tesouraria antes de alterar o preço no Mercado Livre.</p>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 relative z-10">
-                            <div class="bg-slate-50/50 dark:bg-slate-800/30 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-700/50"><label class="block text-xs font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400 mb-2">Preço de Venda (R$)</label><input type="number" id="sim-preco" value="100" class="w-full bg-transparent outline-none text-3xl font-extrabold" oninput="calcularSimulador()"></div>
-                            <div class="bg-slate-50/50 dark:bg-slate-800/30 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-700/50"><label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Custo Compra CMV (R$)</label><input type="number" id="sim-cmv" value="30" class="w-full bg-transparent outline-none text-2xl font-bold" oninput="calcularSimulador()"></div>
-                            <div class="bg-slate-50/50 dark:bg-slate-800/30 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-700/50"><label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Imposto Fiscal (%)</label><input type="number" id="sim-imposto" value="6" class="w-full bg-transparent outline-none text-2xl font-bold" oninput="calcularSimulador()"></div>
-                            <div class="bg-slate-50/50 dark:bg-slate-800/30 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-700/50"><label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Comissão do ML (%)</label><input type="number" id="sim-comissao" value="16" class="w-full bg-transparent outline-none text-2xl font-bold" oninput="calcularSimulador()"></div>
+                <div id="aba-calculadora" class="hidden w-full h-[calc(100vh-[220px])] lg:h-[calc(100vh-[180px])] pb-8">
+                    <div class="glass-card rounded-3xl w-full h-full min-h-[700px] animate-slide-up relative overflow-hidden border border-cyan-500/20 shadow-lg flex flex-col">
+                        <div class="p-4 md:p-6 border-b border-slate-200/50 dark:border-slate-700/50 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md flex justify-between items-center z-10">
+                            <h3 class="text-2xl font-extrabold flex items-center gap-3"><span class="w-2 h-6 bg-cyan-500 rounded-full"></span> Calculadora BLM</h3>
+                            <a href="https://calculadora-blm.vercel.app/" target="_blank" class="text-sm font-bold text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 transition-colors flex items-center gap-1.5">
+                                Abrir Externamente <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                            </a>
                         </div>
-
-                        <div class="flex flex-col sm:flex-row gap-4 mb-10 relative z-10">
-                            <label class="flex-1 flex items-center gap-4 p-5 bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 cursor-pointer hover:border-cyan-500/50 transition-colors backdrop-blur-md">
-                                <input type="checkbox" id="sim-fixo" class="w-6 h-6 rounded text-cyan-500 focus:ring-cyan-500 cursor-pointer" onchange="calcularSimulador()">
-                                <div><span class="block font-extrabold text-sm">Taxa Fixa R$ 6,00</span><span class="block text-[10px] text-slate-400 uppercase mt-1">Aciona automático < R$ 79</span></div>
-                            </label>
-                            <label class="flex-1 flex items-center gap-4 p-5 bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 cursor-pointer hover:border-cyan-500/50 transition-colors backdrop-blur-md">
-                                <input type="checkbox" id="sim-frete" class="w-6 h-6 rounded text-cyan-500 focus:ring-cyan-500 cursor-pointer" onchange="calcularSimulador()">
-                                <div><span class="block font-extrabold text-sm">Frete R$ 18,50</span><span class="block text-[10px] text-slate-400 uppercase mt-1">Lojista assume o frete</span></div>
-                            </label>
-                        </div>
-
-                        <div class="border-t border-slate-200/50 dark:border-slate-700/50 pt-8 relative z-10">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                <div class="p-8 rounded-3xl bg-blue-50/50 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-800/30 text-center backdrop-blur-sm shadow-[inset_0_0_20px_rgba(59,130,246,0.05)]">
-                                    <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Lucro na Veia (Bruto)</p>
-                                    <h3 class="text-5xl font-extrabold text-blue-600 dark:text-blue-400 tracking-tighter" id="sim-resultado-lucro">R$ 0,00</h3>
-                                </div>
-                                <div class="p-8 rounded-3xl bg-emerald-50/50 dark:bg-emerald-900/20 border border-emerald-200/50 dark:border-emerald-800/30 text-center backdrop-blur-sm shadow-[inset_0_0_20px_rgba(16,185,129,0.05)]">
-                                    <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Margem de Retorno</p>
-                                    <h3 class="text-5xl font-extrabold text-emerald-600 dark:text-emerald-400 tracking-tighter" id="sim-resultado-margem">0,0%</h3>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="aba-kits" class="hidden w-full">
-                    <div class="glass-card rounded-3xl p-10 mb-8 w-full max-w-4xl mx-auto animate-slide-up border border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-transparent relative overflow-hidden">
-                        <div class="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl"></div>
-                        <h3 class="text-3xl font-extrabold mb-3 flex items-center gap-3 relative z-10"><span class="text-3xl">🧩</span> Máquina Combinatória de Kits</h3>
-                        <p class="text-slate-500 dark:text-slate-400 text-sm mb-10 font-medium relative z-10">Use a base de dados em tempo real para fundir SKUs, diluir custos fixos assassinos e escalar o ticket médio.</p>
-
-                        <div class="p-6 md:p-8 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 mb-8 relative z-10 shadow-lg">
-                            <h4 class="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest mb-6">1. Seleção de Produtos do Kit</h4>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                                <select id="kit-item-1" class="p-3.5 rounded-xl border border-slate-200/50 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80 text-sm font-semibold outline-none focus:ring-2 focus:ring-purple-500" onchange="calcularKit()"><option value="0">Produto Principal...</option></select>
-                                <select id="kit-item-2" class="p-3.5 rounded-xl border border-slate-200/50 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80 text-sm font-semibold outline-none focus:ring-2 focus:ring-purple-500" onchange="calcularKit()"><option value="0">Produto Secundário...</option></select>
-                                <select id="kit-item-3" class="p-3.5 rounded-xl border border-slate-200/50 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80 text-sm font-semibold outline-none focus:ring-2 focus:ring-purple-500" onchange="calcularKit()"><option value="0">Produto Opcional 3...</option></select>
-                            </div>
-                            <div class="mt-6 pt-6 border-t border-slate-200/50 dark:border-slate-700/50 flex flex-col md:flex-row justify-between items-center gap-4">
-                                <span class="text-sm font-bold text-slate-500 uppercase tracking-wider">Custo de Compra do Kit (Soma CMV):</span>
-                                <span class="text-2xl font-extrabold text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 px-4 py-1.5 rounded-lg border border-purple-200 dark:border-purple-800/50" id="kit-cmv-total">R$ 0,00</span>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 relative z-10">
-                            <div class="bg-slate-50/50 dark:bg-slate-800/30 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-700/50"><label class="block text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 mb-2">Preço Foco do Kit</label><input type="number" id="kit-preco" value="120" class="w-full bg-transparent outline-none text-2xl font-extrabold" oninput="calcularKit()"></div>
-                            <div class="bg-slate-50/50 dark:bg-slate-800/30 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-700/50"><label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Comissão do ML (%)</label><input type="number" id="kit-comissao" value="16" class="w-full bg-transparent outline-none text-xl font-bold" oninput="calcularKit()"></div>
-                            <div class="bg-slate-50/50 dark:bg-slate-800/30 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-700/50"><label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Imposto Fixo (%)</label><input type="number" id="kit-imposto" value="6" class="w-full bg-transparent outline-none text-xl font-bold" oninput="calcularKit()"></div>
-                        </div>
-
-                        <div class="flex flex-col sm:flex-row gap-4 mb-8 relative z-10">
-                            <label class="flex-1 flex items-center gap-4 p-5 bg-white/40 dark:bg-slate-800/40 backdrop-blur-md rounded-2xl border border-slate-200/50 dark:border-slate-700/50 cursor-pointer hover:border-purple-500/50 transition-colors">
-                                <input type="checkbox" id="kit-fixo" class="w-6 h-6 rounded text-purple-600 focus:ring-purple-500 cursor-pointer" onchange="calcularKit()">
-                                <span class="font-extrabold text-sm">Tarifa Fixa R$ 6,00</span>
-                            </label>
-                            <label class="flex-1 flex items-center gap-4 p-5 bg-white/40 dark:bg-slate-800/40 backdrop-blur-md rounded-2xl border border-slate-200/50 dark:border-slate-700/50 cursor-pointer hover:border-purple-500/50 transition-colors">
-                                <input type="checkbox" id="kit-frete" class="w-6 h-6 rounded text-purple-600 focus:ring-purple-500 cursor-pointer" onchange="calcularKit()">
-                                <span class="font-extrabold text-sm">Impacto Frete R$ 18,50</span>
-                            </label>
-                        </div>
-
-                        <div class="border-t border-slate-200/50 dark:border-slate-700/50 pt-8 grid grid-cols-1 sm:grid-cols-2 gap-6 relative z-10">
-                            <div class="p-6 rounded-2xl bg-slate-900 dark:bg-slate-800 shadow-2xl relative overflow-hidden group">
-                                <div class="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-transparent group-hover:from-blue-600/30 transition-colors"></div>
-                                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 relative z-10">Lucro Bruto do Kit</p>
-                                <h3 class="text-4xl font-black text-white tracking-tighter relative z-10" id="kit-resultado-lucro">R$ 0,00</h3>
-                            </div>
-                            <div class="p-6 rounded-2xl bg-slate-900 dark:bg-slate-800 shadow-2xl relative overflow-hidden group">
-                                <div class="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-transparent group-hover:from-emerald-500/30 transition-colors"></div>
-                                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 relative z-10">Poder de Margem</p>
-                                <h3 class="text-4xl font-black text-white tracking-tighter relative z-10" id="kit-resultado-margem">0,0%</h3>
-                            </div>
+                        <div class="flex-1 w-full relative z-0">
+                            <iframe src="https://calculadora-blm.vercel.app/" class="w-full h-full border-0 rounded-b-3xl" allowfullscreen></iframe>
                         </div>
                     </div>
                 </div>
@@ -510,11 +433,12 @@
         };
 
         window.mudarAba = (aba) => {
-            const abas = ['visao_geral', 'custos', 'estoque', 'simulador', 'diagnostico', 'abc', 'clientes', 'radar', 'kits'];
+            // Arrays atualizados: sem 'simulador' e sem 'kits', com 'calculadora'
+            const abas = ['visao_geral', 'custos', 'estoque', 'calculadora', 'diagnostico', 'abc', 'clientes', 'radar'];
             abas.forEach(a => {
                 document.getElementById(`aba-${a}`).classList.add('hidden');
                 if(document.getElementById(`btn-${a}`)) {
-                    document.getElementById(`btn-${a}`).className = "menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300" + (a==='simulador'||a==='clientes' ? " border-t border-slate-200/50 dark:border-slate-800/50 mt-3" : "");
+                    document.getElementById(`btn-${a}`).className = "menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300" + (a==='calculadora'||a==='clientes' ? " border-t border-slate-200/50 dark:border-slate-800/50 mt-3" : "");
                 }
             });
             
@@ -525,77 +449,11 @@
             
             const titulos = {
                 'visao_geral': "Visão Central", 'custos': "Engine de Custos",
-                'estoque': "Inventário Paralisado", 'simulador': "Simulador IA Predito",
+                'estoque': "Inventário Parado", 'calculadora': "Calculadora BLM",
                 'diagnostico': "Diagnóstico Smart", 'abc': "Matriz ABC", 'clientes': "Terminal Root",
-                'radar': "Radar de Ruptura Crítica", 'kits': "Máquina de Kits"
+                'radar': "Radar de Ruptura Crítica"
             };
             document.getElementById('titulo-pagina').innerText = titulos[aba];
-
-            if(aba === 'simulador') calcularSimulador();
-            if(aba === 'kits') calcularKit();
-        };
-
-        window.calcularSimulador = () => {
-            const preco = parseFloat(document.getElementById('sim-preco').value) || 0;
-            const cmv = parseFloat(document.getElementById('sim-cmv').value) || 0;
-            const impostoPct = parseFloat(document.getElementById('sim-imposto').value) || 0;
-            const comissaoPct = parseFloat(document.getElementById('sim-comissao').value) || 0;
-            
-            const fixoCheck = document.getElementById('sim-fixo');
-            if(preco < 79 && !fixoCheck.checked && preco > 0) fixoCheck.checked = true;
-            if(preco >= 79) fixoCheck.checked = false;
-
-            const freteCheck = document.getElementById('sim-frete');
-            if(preco >= 79 && !freteCheck.checked && preco > 0) freteCheck.checked = true;
-
-            const frete = freteCheck.checked ? 18.50 : 0;
-            const custoFixo = fixoCheck.checked ? 6.00 : 0; 
-            const comissaoRS = preco * (comissaoPct / 100);
-            const impostoRS = preco * (impostoPct / 100);
-
-            const lucroBruto = preco - cmv - frete - custoFixo - comissaoRS - impostoRS;
-            const margem = preco > 0 ? (lucroBruto / preco) * 100 : 0;
-
-            const elLucro = document.getElementById('sim-resultado-lucro');
-            const elMargem = document.getElementById('sim-resultado-margem');
-
-            elLucro.innerText = `R$ ${lucroBruto.toFixed(2).replace('.', ',')}`;
-            elMargem.innerText = `${margem.toFixed(1).replace('.', ',')}%`;
-
-            elLucro.className = `text-5xl font-extrabold tracking-tighter ${lucroBruto >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-500'}`;
-            elMargem.className = `text-5xl font-extrabold tracking-tighter ${margem >= 15 ? 'text-emerald-600 dark:text-emerald-400' : (margem >= 0 ? 'text-amber-500' : 'text-red-500')}`;
-        };
-
-        window.calcularKit = () => {
-            const cmv1 = parseFloat(document.getElementById('kit-item-1').value) || 0;
-            const cmv2 = parseFloat(document.getElementById('kit-item-2').value) || 0;
-            const cmv3 = parseFloat(document.getElementById('kit-item-3').value) || 0;
-            
-            const cmvTotal = cmv1 + cmv2 + cmv3;
-            document.getElementById('kit-cmv-total').innerText = `R$ ${cmvTotal.toFixed(2).replace('.',',')}`;
-
-            const preco = parseFloat(document.getElementById('kit-preco').value) || 0;
-            const impostoPct = parseFloat(document.getElementById('kit-imposto').value) / 100 || 0;
-            const comissaoPct = parseFloat(document.getElementById('kit-comissao').value) / 100 || 0;
-            
-            const fixoCheck = document.getElementById('kit-fixo');
-            if(preco < 79 && !fixoCheck.checked && preco > 0) fixoCheck.checked = true;
-            if(preco >= 79) fixoCheck.checked = false;
-
-            const freteCheck = document.getElementById('kit-frete');
-            if(preco >= 79 && !freteCheck.checked && preco > 0) freteCheck.checked = true;
-
-            const frete = freteCheck.checked ? 18.50 : 0;
-            const custoFixo = fixoCheck.checked ? 6.00 : 0; 
-            
-            const lucroBruto = preco - cmvTotal - frete - custoFixo - (preco * comissaoPct) - (preco * impostoPct);
-            const margem = preco > 0 ? (lucroBruto / preco) * 100 : 0;
-            
-            document.getElementById('kit-resultado-lucro').innerText = `R$ ${lucroBruto.toFixed(2).replace('.', ',')}`;
-            document.getElementById('kit-resultado-margem').innerText = `${margem.toFixed(1).replace('.', ',')}%`;
-
-            document.getElementById('kit-resultado-lucro').className = `text-4xl font-black tracking-tighter relative z-10 ${lucroBruto >= 0 ? 'text-white' : 'text-red-400'}`;
-            document.getElementById('kit-resultado-margem').className = `text-4xl font-black tracking-tighter relative z-10 ${margem >= 15 ? 'text-white' : (margem >= 0 ? 'text-amber-400' : 'text-red-400')}`;
         };
 
         window.renderCurvaABC = () => {
@@ -847,20 +705,7 @@
             renderDiagnostico();
             renderCurvaABC();
             renderRadar();
-            popularDropdownsKits();
-            calcularSimulador();
-            calcularKit();
         }
-
-        window.popularDropdownsKits = () => {
-            let options = '<option value="0">Selecionar Produto...</option>';
-            dadosAPI.forEach(item => {
-                options += `<option value="${item.Custo_CMV}">${item.Produto.substring(0,35)}... (Custo: R$ ${item.Custo_CMV.toFixed(2)})</option>`;
-            });
-            document.getElementById('kit-item-1').innerHTML = options;
-            document.getElementById('kit-item-2').innerHTML = options;
-            document.getElementById('kit-item-3').innerHTML = options;
-        };
 
         window.renderRadar = () => {
             const tbody = document.getElementById('tabela-radar-corpo'); tbody.innerHTML = '';

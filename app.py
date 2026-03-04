@@ -139,6 +139,37 @@ def salvar_imposto():
     db.collection('configuracoes').document(uid).set({'imposto_padrao': float(request.json.get('imposto', 0))}, merge=True)
     return jsonify({"status": "sucesso"})
 
+# --- NOVO: ROTA DO RELATÓRIO WHATSAPP ---
+@app.route('/api/disparar_whatsapp', methods=['POST'])
+def disparar_whatsapp():
+    uid = verificar_token(request)
+    if not uid: return jsonify({"erro": "Acesso Negado."}), 401
+    
+    dados = request.json
+    kpis = dados.get('kpis', {})
+    telefone = dados.get('telefone', 'SEU_NUMERO_AQUI')
+    
+    mensagem = f"""*Resumo Executivo - Irving (BLM)* 📊
+    
+💰 *Faturamento:* {kpis.get('faturamento')}
+💎 *Lucro Bruto:* {kpis.get('lucro')}
+📦 *Unidades Vendidas:* {kpis.get('unidades')}
+📢 *Gasto ADS:* {kpis.get('ads')}
+⚠️ *Alertas Críticos:* {kpis.get('alertas_criticos')}
+
+_Gerado automaticamente pelo motor Irving._"""
+
+    # AQUI VOCÊ PLUGA A SUA API DO WHATSAPP NO FUTURO (Ex: Z-API, Evolution, Twilio)
+    # Exemplo: requests.post('https://api.sua-zapi.com/send-text', json={'phone': telefone, 'message': mensagem})
+    
+    # Por enquanto, imprime no terminal para você confirmar que o motor construiu tudo certo:
+    print("=== MENSAGEM PREPARADA PARA WHATSAPP ===")
+    print(mensagem)
+    print("========================================")
+    
+    return jsonify({"status": "sucesso", "mensagem_formatada": mensagem})
+
+
 # --- 5. MOTOR FINANCEIRO (DADOS REAIS DA API) ---
 @app.route('/api/dados')
 def api_dados():
@@ -271,7 +302,7 @@ def api_dados():
 
         item_ids_list = list(agrupado.keys())
         estoque_atual_detalhes = {} 
-        itens_com_ads = set() # NOVO: Rastreio de ADS Ativo
+        itens_com_ads = set() 
         
         if item_ids_list:
             for i in range(0, len(item_ids_list), 50):
@@ -288,7 +319,7 @@ def api_dados():
                             if id_anuncio in agrupado: 
                                 agrupado[id_anuncio]['Custo_ADS'] = custo_ads
                                 if custo_ads > 0 or ad_metric.get('metrics', {}).get('impressions', 0) > 0:
-                                    itens_com_ads.add(id_anuncio) # Marca como ADS Ativo
+                                    itens_com_ads.add(id_anuncio) 
                 except Exception as e: print(f"Aviso ADS: {e}")
                 
                 try:
@@ -315,11 +346,9 @@ def api_dados():
             lucro_total_liquido = dados['Margem_Contribuicao'] - custo_ads_total
             margem_unitaria_final = lucro_total_liquido / giro if giro > 0 else 0
             
-            # --- LÓGICA DE CATÁLOGO E ADS ---
             is_catalog = estoque_atual_detalhes.get(item_id, {}).get('is_catalog', False)
             ads_ativo = item_id in itens_com_ads
             
-            # Heurística rápida de BuyBox para não estourar o limite da API
             catalog_status = "Não se aplica"
             if is_catalog:
                 catalog_status = "Ganhando" if giro > 0 else "Perdendo"

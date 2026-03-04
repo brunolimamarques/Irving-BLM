@@ -432,12 +432,12 @@
             if(graficoInstancia) { setTimeout(() => graficoInstancia.resize(), 500); }
         };
 
-        // --- DISPARO RELATÓRIO WHATSAPP ---
+// --- DISPARO RELATÓRIO WHATSAPP (FRONTEND NATIVO) ---
         window.enviarRelatorioZap = async () => {
             if(!dadosAPI || dadosAPI.length === 0) { alert("Gerar Dados antes de enviar relatório!"); return; }
             const btn = document.getElementById('btn-zap');
             const textoOriginal = btn.innerHTML;
-            btn.innerHTML = "A Disparar..."; btn.classList.add('opacity-80', 'cursor-wait');
+            btn.innerHTML = "Preparando..."; btn.classList.add('opacity-80', 'cursor-wait');
 
             const kpis = {
                 faturamento: document.getElementById('kpi-fat').textContent,
@@ -452,19 +452,35 @@
                 const res = await fetch('/api/disparar_whatsapp', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                    body: JSON.stringify({ kpis: kpis, telefone: 'SEU_NUMERO_AQUI' })
+                    body: JSON.stringify({ kpis: kpis })
                 });
                 const data = await res.json();
-                if(res.ok) {
-                    alert("Relatório executivo gerado com sucesso!\n\n(Verifique o console do seu backend Python. O motor Irving preparou a mensagem. Para enviar via WhatsApp real, integre uma API como Z-API no arquivo app.py).");
+                if(res.ok && data.mensagem_formatada) {
+                    // Codifica o texto para formato de link
+                    const textoCodificado = encodeURIComponent(data.mensagem_formatada);
+                    
+                    // Pergunta se quer enviar para um número específico ou escolher na lista
+                    const numero = prompt("O relatório está pronto! 🚀\n\nDigite o número do WhatsApp com DDD (Ex: 11999999999) para abrir a conversa direta, ou deixe em branco e clique em OK para escolher um contato da sua lista:");
+                    
+                    let linkWa = `https://api.whatsapp.com/send?text=${textoCodificado}`; // Deixou em branco (abre lista)
+                    
+                    if(numero && numero.trim() !== "") {
+                        let numLimpo = numero.replace(/\D/g, ''); // Remove traços e espaços
+                        if(numLimpo.length >= 10) { 
+                            linkWa = `https://api.whatsapp.com/send?phone=55${numLimpo}&text=${textoCodificado}`; 
+                        }
+                    }
+                    
+                    // Abre a janela do WhatsApp
+                    window.open(linkWa, '_blank');
                 } else {
-                    alert("Erro ao formatar mensagem.");
+                    alert("Erro ao formatar mensagem no servidor.");
                 }
             } catch(e) { console.error(e); alert("Erro na comunicação com o servidor."); }
             
             btn.innerHTML = textoOriginal; btn.classList.remove('opacity-80', 'cursor-wait');
         };
-
+        
         window.toggleDarkMode = () => {
             document.documentElement.classList.toggle('dark');
             const isDark = document.documentElement.classList.contains('dark');
@@ -826,3 +842,4 @@
     </script>
 </body>
 </html>
+

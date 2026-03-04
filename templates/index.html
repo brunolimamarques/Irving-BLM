@@ -98,7 +98,7 @@
                     <div class="my-3 border-t border-slate-200/50 dark:border-slate-800/50 mx-4"></div>
                     
                     <button onclick="mudarAba('calculadora')" id="btn-calculadora" class="menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">🧮 Calculadora BLM</button>
-                    <button onclick="mudarAba('diagnostico')" id="btn-diagnostico" class="menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">🧠 Diagnóstico Smart</button>
+                    <button onclick="mudarAba('diagnostico')" id="btn-diagnostico" class="menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">🧠 Diagnóstico do Preço</button>
                     <button onclick="mudarAba('abc')" id="btn-abc" class="menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">📈 Curva ABC</button>
 
                     <button onclick="mudarAba('clientes')" id="btn-clientes" class="hidden menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300 border-t border-slate-200/50 dark:border-slate-800/50 mt-3">👥 Terminal Master</button>
@@ -164,7 +164,7 @@
                             </div>
                             <div class="glass-card rounded-2xl p-6 hover:-translate-y-1 animate-slide-up relative overflow-hidden group" style="animation-delay: 0.6s;">
                                 <div class="absolute -right-4 -top-4 w-16 h-16 bg-purple-500/20 rounded-full blur-xl group-hover:bg-purple-500/40 transition-colors"></div>
-                                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Gasto ADS</p><h3 class="text-3xl font-extrabold text-purple-500 dark:text-purple-400 tracking-tight" id="kpi-ads">...</h3>
+                                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Gasto ADS Total</p><h3 class="text-3xl font-extrabold text-purple-500 dark:text-purple-400 tracking-tight" id="kpi-ads">...</h3>
                             </div>
                         </div>
 
@@ -184,7 +184,7 @@
                                             <th class="pb-4 font-bold uppercase tracking-wider text-xs">Ticket</th>
                                             <th class="pb-4 font-bold uppercase tracking-wider text-xs">Custos da Operação</th>
                                             <th class="pb-4 font-bold uppercase tracking-wider text-xs">Estratégia (Ads/Catálogo)</th>
-                                            <th class="pb-4 font-bold uppercase tracking-wider text-xs">Margem Real</th>
+                                            <th class="pb-4 font-bold uppercase tracking-wider text-xs">Margem de Contribuição</th>
                                             <th class="pb-4 font-bold uppercase tracking-wider text-xs">Promo Limit</th>
                                         </tr>
                                     </thead>
@@ -246,7 +246,7 @@
                         <div class="flex justify-between items-center mb-6">
                             <div>
                                 <h3 class="text-2xl font-extrabold flex items-center gap-3"><span class="w-2 h-6 bg-slate-400 rounded-full"></span> Inventário Paralisado</h3>
-                                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1.5 font-medium">Anúncios perfeitamente ativos na plataforma que não geraram 1 única venda no período. Capital empatado.</p>
+                                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1.5 font-medium">Anúncios ativos que não geraram vendas no período. Descubra quais estão a drenar o seu orçamento de ADS sem dar retorno.</p>
                             </div>
                         </div>
                         <div class="overflow-x-auto">
@@ -256,6 +256,7 @@
                                         <th class="pb-4 font-bold uppercase tracking-wider text-xs">Produto (SKU)</th>
                                         <th class="pb-4 font-bold uppercase tracking-wider text-xs">Preço Praticado</th>
                                         <th class="pb-4 font-bold uppercase tracking-wider text-xs">Quantidade Parada</th>
+                                        <th class="pb-4 font-bold uppercase tracking-wider text-xs text-red-500">Ralo de ADS (R$)</th>
                                         <th class="pb-4 font-bold uppercase tracking-wider text-xs text-center">Intervenção</th>
                                     </tr>
                                 </thead>
@@ -312,7 +313,7 @@
                     <div class="glass-card rounded-3xl p-8 mb-8 w-full animate-slide-up relative overflow-hidden">
                         <div class="absolute -right-20 -top-20 w-64 h-64 bg-fuchsia-500/10 rounded-full blur-3xl"></div>
                         <div class="mb-8 relative z-10">
-                            <h3 class="text-3xl font-extrabold flex items-center gap-3"><span class="w-3 h-8 bg-fuchsia-500 rounded-full"></span> Neurônio de Diagnóstico</h3>
+                            <h3 class="text-3xl font-extrabold flex items-center gap-3"><span class="w-3 h-8 bg-fuchsia-500 rounded-full"></span> Diagnóstico do Preço</h3>
                             <p class="text-sm text-slate-500 dark:text-slate-400 mt-2 font-medium max-w-2xl">A IA processou o *data lake* da sua conta para detectar anomalias de preço, potenciais de escala e riscos de margem subaquática.</p>
                         </div>
                         <div id="lista-diagnostico" class="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10"></div>
@@ -520,7 +521,7 @@
             const titulos = {
                 'visao_geral': "Visão Central", 'custos': "Engine de Custos",
                 'estoque': "Inventário Parado", 'calculadora': "Calculadora BLM",
-                'diagnostico': "Diagnóstico Smart", 'abc': "Matriz ABC", 'clientes': "Terminal Root",
+                'diagnostico': "Diagnóstico do Preço", 'abc': "Matriz ABC", 'clientes': "Terminal Root",
                 'radar': "Radar Supply Chain"
             };
             document.getElementById('titulo-pagina').innerText = titulos[aba];
@@ -868,16 +869,21 @@
         window.renderEstoqueParado = () => {
             const tbody = document.getElementById('tabela-estoque-corpo'); tbody.innerHTML = '';
             if(dadosEstoque.length === 0) {
-                tbody.innerHTML = "<tr><td colspan='4' class='py-12 text-center text-emerald-500 font-bold tracking-wider'>Nenhum produto parado. Tudo com bom giro!</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='5' class='py-12 text-center text-emerald-500 font-bold tracking-wider'>Nenhum produto parado. Tudo com bom giro!</td></tr>";
                 return;
             }
             dadosEstoque.forEach((row, index) => {
                 const animDelay = index * 0.04;
+                const alertaAds = row.Gasto_Ads > 0 
+                    ? `<span class="px-3 py-1.5 bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 rounded-lg text-[11px] font-black shadow-sm animate-pulse">R$ ${row.Gasto_Ads.toFixed(2)}</span>`
+                    : `<span class="text-slate-400 text-[10px] font-bold">R$ 0.00</span>`;
+
                 tbody.innerHTML += `
                     <tr class="border-b border-slate-100/50 dark:border-slate-800/50 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-colors animate-slide-up opacity-0" style="animation-delay: ${animDelay}s; animation-fill-mode: forwards;">
                         <td class="py-5 align-middle"><p class="font-bold text-sm w-64 truncate text-slate-800 dark:text-slate-200" title="${row.Produto}">${row.Produto}</p><p class="text-[10px] text-slate-400 uppercase tracking-widest mt-1.5">ID: <span class="select-all">${row.ID}</span></p></td>
                         <td class="py-5 align-middle font-extrabold text-slate-700 dark:text-slate-300 tracking-tight">R$ ${row.Preco.toFixed(2)}</td>
                         <td class="py-5 align-middle"><span class="px-3 py-1.5 bg-slate-200/50 dark:bg-slate-700/50 border border-slate-300/50 dark:border-slate-600/50 text-slate-700 dark:text-slate-300 rounded-lg text-[10px] uppercase tracking-widest font-black shadow-sm backdrop-blur-sm">${row.Disponivel} Uni.</span></td>
+                        <td class="py-5 align-middle">${alertaAds}</td>
                         <td class="py-5 align-middle text-center"><a href="${row.Link}" target="_blank" class="px-5 py-2.5 bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 rounded-xl text-xs transition-all duration-300 font-extrabold uppercase tracking-wider inline-block">Ver Anúncio</a></td>
                     </tr>`;
             });

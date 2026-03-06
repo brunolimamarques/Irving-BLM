@@ -100,6 +100,7 @@
                     <button onclick="mudarAba('calculadora')" id="btn-calculadora" class="menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">🧮 Calculadora BLM</button>
                     <button onclick="mudarAba('diagnostico')" id="btn-diagnostico" class="menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">🧠 Diagnóstico do Preço</button>
                     <button onclick="mudarAba('abc')" id="btn-abc" class="menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">📈 Curva ABC</button>
+                    <button onclick="mudarAba('kits')" id="btn-kits" class="menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">🎁 Mapeador de Kits</button>
 
                     <button onclick="mudarAba('clientes')" id="btn-clientes" class="hidden menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300 border-t border-slate-200/50 dark:border-slate-800/50 mt-3">👥 Terminal Master</button>
                 </nav>
@@ -344,6 +345,29 @@
                     </div>
                 </div>
 
+                <div id="aba-kits" class="hidden w-full">
+                    <div class="glass-card rounded-2xl p-8 mb-8 w-full animate-slide-up border border-fuchsia-500/30 bg-gradient-to-r from-fuchsia-500/5 to-transparent">
+                        <div class="mb-8">
+                            <h3 class="text-2xl font-extrabold flex items-center gap-3"><span class="text-fuchsia-500">🎁</span> Mapeador Inteligente de Kits (Bundling)</h3>
+                            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1.5 font-medium">A IA rastreou os carrinhos dos seus clientes. Estes são os produtos frequentemente comprados juntos. Crie anúncios de kits com eles para monopolizar a BuyBox, economizar no frete e aumentar o Ticket Médio.</p>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm whitespace-nowrap">
+                                <thead>
+                                    <tr class="text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-slate-800/50">
+                                        <th class="pb-4 font-bold uppercase tracking-wider text-xs">Produto A (Isca principal)</th>
+                                        <th class="pb-4 font-bold uppercase tracking-wider text-xs">Produto B (Complemento)</th>
+                                        <th class="pb-4 font-bold uppercase tracking-wider text-xs text-center">Vezes Comprados Juntos</th>
+                                        <th class="pb-4 font-bold uppercase tracking-wider text-xs">Soma Individual</th>
+                                        <th class="pb-4 font-bold uppercase tracking-wider text-xs text-fuchsia-500">Preço Sugerido (Kit)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabela-kits-corpo"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="aba-clientes" class="hidden w-full">
                     <div class="glass-card rounded-2xl p-8 mb-8 w-full max-w-5xl animate-slide-up border border-indigo-500/30">
                         <div class="flex justify-between items-center mb-8">
@@ -388,6 +412,7 @@
         let dadosABC = [];
         let dadosDiagnostico = [];
         let dadosRadar = [];
+        let dadosKits = [];
         let graficoInstancia = null;
         let uidClienteAtivo = null;
         let emailClienteAtivo = null;
@@ -505,7 +530,7 @@
         };
 
         window.mudarAba = (aba) => {
-            const abas = ['visao_geral', 'custos', 'estoque', 'calculadora', 'diagnostico', 'abc', 'clientes', 'radar'];
+            const abas = ['visao_geral', 'custos', 'estoque', 'calculadora', 'diagnostico', 'abc', 'clientes', 'radar', 'kits'];
             abas.forEach(a => {
                 document.getElementById(`aba-${a}`).classList.add('hidden');
                 if(document.getElementById(`btn-${a}`)) {
@@ -522,7 +547,7 @@
                 'visao_geral': "Visão Central", 'custos': "Engine de Custos",
                 'estoque': "Inventário Parado", 'calculadora': "Calculadora BLM",
                 'diagnostico': "Diagnóstico do Preço", 'abc': "Matriz ABC", 'clientes': "Terminal Root",
-                'radar': "Radar Supply Chain"
+                'radar': "Radar Supply Chain", 'kits': "Mapeador de Kits"
             };
             document.getElementById('titulo-pagina').innerText = titulos[aba];
         };
@@ -768,6 +793,7 @@
             dadosABC = data.abc || [];
             dadosDiagnostico = data.diagnosticos || [];
             dadosRadar = data.radar || []; 
+            dadosKits = data.kits || [];
             
             const tbody = document.getElementById('tabela-corpo'); tbody.innerHTML = ''; 
             
@@ -822,7 +848,27 @@
             renderDiagnostico();
             renderCurvaABC();
             renderRadar();
+            renderKits();
         }
+
+        window.renderKits = () => {
+            const tbody = document.getElementById('tabela-kits-corpo'); tbody.innerHTML = '';
+            if(!dadosKits || dadosKits.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="py-12 text-center text-slate-500 font-bold tracking-wider">Ainda não há volume suficiente de compras conjuntas (carrinhos) no período selecionado.</td></tr>';
+                return;
+            }
+            dadosKits.forEach((row, index) => {
+                const animDelay = index * 0.05;
+                tbody.innerHTML += `
+                    <tr class="border-b border-slate-100/50 dark:border-slate-800/50 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-colors animate-slide-up opacity-0" style="animation-delay: ${animDelay}s; animation-fill-mode: forwards;">
+                        <td class="py-5 align-middle"><p class="font-bold text-sm w-56 truncate text-slate-800 dark:text-slate-200" title="${row.Produto_1}">${row.Produto_1}</p></td>
+                        <td class="py-5 align-middle"><p class="font-bold text-sm w-56 truncate text-slate-800 dark:text-slate-200" title="${row.Produto_2}">${row.Produto_2}</p></td>
+                        <td class="py-5 align-middle text-center"><span class="px-4 py-1.5 bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400 border border-fuchsia-500/30 rounded-lg text-sm font-black shadow-sm">${row.Frequencia}x</span></td>
+                        <td class="py-5 align-middle font-bold text-slate-500 line-through decoration-slate-400/50">R$ ${row.Preco_Somado.toFixed(2)}</td>
+                        <td class="py-5 align-middle font-black text-fuchsia-600 dark:text-fuchsia-400 text-lg">R$ ${row.Sugestao_Kit.toFixed(2)}</td>
+                    </tr>`;
+            });
+        };
 
         window.renderRadar = () => {
             const tbody = document.getElementById('tabela-radar-corpo'); tbody.innerHTML = '';

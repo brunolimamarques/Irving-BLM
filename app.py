@@ -8,6 +8,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import urllib.parse
 import concurrent.futures
+import itertools
 
 app = Flask(__name__)
 
@@ -254,6 +255,8 @@ def api_dados():
 
         agrupado = {}
         timeline = {}
+        pacotes_agrupados = {}
+        detalhes_produtos_kit = {}
 
         for order in resultados:
             data_venda = order.get('date_created', '')[:10]
@@ -270,6 +273,15 @@ def api_dados():
                 title = item['item']['title']
                 qty = item['quantity']
                 price = float(item['unit_price'])
+                
+                # --- CAPTURA DE DADOS PARA OS KITS ---
+                if item_id not in detalhes_produtos_kit:
+                    detalhes_produtos_kit[item_id] = {'title': title, 'price': price}
+                    
+                if ship_id:
+                    if ship_id not in pacotes_agrupados:
+                        pacotes_agrupados[ship_id] = set()
+                    pacotes_agrupados[ship_id].add(item_id)
                 
                 custo_cmv = float(custos_db.get(item_id, 0))
                 tarifa_ml_unitaria = float(item.get('sale_fee', 0))
@@ -500,7 +512,6 @@ def api_dados():
             detalhes = estoque_atual_detalhes.get(iid, {})
             if detalhes:
                 gasto_ads_parado = ads_geral_dict.get(iid, 0)
-                # Adiciona à lista se tiver saldo OU se estiver drenando dinheiro no ADS
                 if detalhes.get('disponivel', 0) > 0 or gasto_ads_parado > 0:
                     estoque_parado.append({
                         'ID': iid, 
@@ -510,7 +521,6 @@ def api_dados():
                         'Gasto_Ads': gasto_ads_parado,
                         'Link': detalhes.get('link', '#')
                     })
-        # Quem mais gasta ADS fica no topo
         estoque_parado = sorted(estoque_parado, key=lambda x: x['Gasto_Ads'], reverse=True)
 
         unidades_total = int(df['Giro'].sum()) if not df.empty else 0
@@ -526,10 +536,36 @@ def api_dados():
             "imposto_padrao": imposto_padrao_pct
         }
 
+        # --- PROCESSAMENTO DO MAPEADOR DE KITS ---
+        pares_comprados_juntos = {}
+        for items_no_pacote in pacotes_agrupados.values():
+            if len(items_no_pacote) > 1:
+                for par in itertools.combinations(sorted(list(items_no_pacote)), 2):
+                    pares_comprados_juntos[par] = pares_comprados_juntos.get(par, 0) + 1
+        
+        kits_sugeridos = []
+        pares_ordenados = sorted(pares_comprados_juntos.items(), key=lambda x: x[1], reverse=True)[:10]
+        
+        for par, frequencia in pares_ordenados:
+            id1, id2 = par
+            p1 = detalhes_produtos_kit.get(id1, {})
+            p2 = detalhes_produtos_kit.get(id2, {})
+            preco_combo = p1.get('price', 0) + p2.get('price', 0)
+            
+            kits_sugeridos.append({
+                'Produto_1': p1.get('title', id1),
+                'Produto_2': p2.get('title', id2),
+                'Frequencia': frequencia,
+                'Preco_Somado': preco_combo,
+                'Sugestao_Kit': preco_combo * 0.92 
+            })
+        # -----------------------------------------
+
         return jsonify({
             "kpis": kpis, "tabela": df.to_dict(orient='records') if not df.empty else [], 
             "grafico": grafico_dados, "estoque_parado": estoque_parado,
-            "abc": curva_abc, "diagnosticos": diagnosticos, "radar": radar_ruptura 
+            "abc": curva_abc, "diagnosticos": diagnosticos, "radar": radar_ruptura,
+            "kits": kits_sugeridos
         })
     except Exception as e: return jsonify({"erro": str(e)}), 500
 

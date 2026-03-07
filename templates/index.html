@@ -179,34 +179,64 @@
                                 <h3 class="text-xl font-extrabold flex items-center gap-3"><span class="w-2 h-6 bg-blue-500 rounded-full"></span> Raio-X com Estratégia Avançada</h3>
                             </div>
 
-                            <div class="mb-6 bg-white/40 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-md shadow-sm">
-                                <div class="flex items-center gap-2 mb-3">
+                            <div class="mb-6 bg-white/40 dark:bg-slate-800/40 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-md shadow-sm">
+                                <div class="flex items-center gap-2 mb-4">
                                     <svg class="w-4 h-4 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
-                                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Painel de Filtros</span>
+                                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Painel Master de Filtragem</span>
                                 </div>
-                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
-                                    <div class="lg:col-span-2 relative">
-                                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
-                                        <input type="text" id="filtro-raiox-busca" onkeyup="renderRaioX()" placeholder="Buscar Produto ou SKU..." class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 transition-all text-slate-700 dark:text-slate-200 shadow-sm font-medium">
+                                <div class="flex flex-col gap-3">
+                                    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                                        <div class="lg:col-span-2 relative">
+                                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+                                            <input type="text" id="filtro-raiox-busca" onkeyup="renderRaioX()" placeholder="Buscar Produto ou SKU..." class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 transition-all text-slate-700 dark:text-slate-200 shadow-sm font-medium">
+                                        </div>
+                                        <select id="filtro-raiox-status" onchange="renderRaioX()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer">
+                                            <option value="todos">Qualquer Status</option>
+                                            <option value="saudavel">🔵 Saudável</option>
+                                            <option value="escalar">🟢 Escalar ADS</option>
+                                            <option value="alerta">⚠️ Alerta Margem/CMV</option>
+                                            <option value="erro">🔴 Erro de Preço</option>
+                                        </select>
+                                        <select id="filtro-raiox-ordem" onchange="renderRaioX()" class="lg:col-span-2 w-full py-2.5 px-3 rounded-xl bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-cyan-700 dark:text-cyan-400 font-extrabold shadow-sm cursor-pointer">
+                                            <option value="faturamento_desc">⬇️ Ordenar: Maior Faturamento</option>
+                                            <option value="faturamento_asc">⬆️ Ordenar: Menor Faturamento</option>
+                                            <option value="giro_desc">⬇️ Ordenar: Maior Volume (Giro)</option>
+                                            <option value="giro_asc">⬆️ Ordenar: Menor Volume (Giro)</option>
+                                            <option value="margem_desc">⬇️ Ordenar: Maior Margem (R$)</option>
+                                            <option value="margem_asc">⬆️ Ordenar: Menor Margem (R$)</option>
+                                            <option value="ticket_desc">⬇️ Ordenar: Maior Ticket Médio</option>
+                                            <option value="ticket_asc">⬆️ Ordenar: Menor Ticket Médio</option>
+                                            <option value="promo_desc">⬇️ Ordenar: Maior Promo Limit</option>
+                                            <option value="frete_desc">⬇️ Ordenar: Maior Custo de Frete</option>
+                                            <option value="tarifa_desc">⬇️ Ordenar: Maior Tarifa ML</option>
+                                        </select>
                                     </div>
-                                    <select id="filtro-raiox-status" onchange="renderRaioX()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer">
-                                        <option value="todos">Status: Todos</option>
-                                        <option value="saudavel">🔵 Saudável</option>
-                                        <option value="escalar">🟢 Escalar ADS</option>
-                                        <option value="alerta">⚠️ Alerta Margem/CMV</option>
-                                        <option value="erro">🔴 Erro de Preço</option>
-                                    </select>
-                                    <select id="filtro-raiox-ads" onchange="renderRaioX()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer">
-                                        <option value="todos">ADS: Todos</option>
-                                        <option value="on">ADS: Ligado</option>
-                                        <option value="off">ADS: Desligado</option>
-                                    </select>
-                                    <select id="filtro-raiox-ordem" onchange="renderRaioX()" class="w-full py-2.5 px-3 rounded-xl bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-cyan-700 dark:text-cyan-400 font-extrabold shadow-sm cursor-pointer">
-                                        <option value="faturamento_desc">Ordenar: Faturamento</option>
-                                        <option value="giro_desc">Ordenar: Maior Giro</option>
-                                        <option value="margem_desc">Ordenar: Maior Margem</option>
-                                        <option value="margem_asc">Ordenar: Menor Margem</option>
-                                    </select>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                                        <select id="filtro-raiox-ads" onchange="renderRaioX()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer">
+                                            <option value="todos">ADS: Todos</option>
+                                            <option value="on">📢 ADS: Ligado</option>
+                                            <option value="off">🔇 ADS: Desligado</option>
+                                        </select>
+                                        <select id="filtro-raiox-cat" onchange="renderRaioX()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer">
+                                            <option value="todos">Catálogo: Todos</option>
+                                            <option value="sim">🏆 É Catálogo</option>
+                                            <option value="nao">⚪ S/ Catálogo</option>
+                                        </select>
+                                        <select id="filtro-raiox-margem" onchange="renderRaioX()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer">
+                                            <option value="todos">Faixa de Margem: Todas</option>
+                                            <option value="negativa">🔴 Negativa (< 0%)</option>
+                                            <option value="baixa">🟡 Baixa (0% a 15%)</option>
+                                            <option value="media">🔵 Média (15% a 30%)</option>
+                                            <option value="alta">🟢 Alta (> 30%)</option>
+                                        </select>
+                                        <select id="filtro-raiox-giro" onchange="renderRaioX()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer">
+                                            <option value="todos">Faixa de Vendas: Todas</option>
+                                            <option value="zero">Estagnado (0 un)</option>
+                                            <option value="baixo">Baixo Giro (1 a 10 un)</option>
+                                            <option value="medio">Médio Giro (11 a 50 un)</option>
+                                            <option value="alto">Alto Giro (> 50 un)</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
 
@@ -362,26 +392,42 @@
                             <p class="text-sm text-slate-500 dark:text-slate-400 mt-1.5 font-medium">Os produtos vitais que ancoram o seu faturamento. <b>A:</b> Puxam 80%. <b>B:</b> Até 95%. <b>C:</b> Long Tail 5%.</p>
                         </div>
                         
-                        <div class="mb-6 bg-white/40 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-md shadow-sm">
-                            <div class="flex items-center gap-2 mb-3">
+                        <div class="mb-6 bg-white/40 dark:bg-slate-800/40 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-md shadow-sm">
+                            <div class="flex items-center gap-2 mb-4">
                                 <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
-                                <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Painel de Filtros</span>
+                                <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Painel Master de Filtragem</span>
                             </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                                <div class="lg:col-span-2 relative">
-                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
-                                    <input type="text" id="filtro-abc-busca" onkeyup="renderCurvaABC()" placeholder="Buscar Produto ou SKU..." class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 transition-all text-slate-700 dark:text-slate-200 shadow-sm font-medium">
+                            <div class="flex flex-col gap-3">
+                                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                                    <div class="lg:col-span-2 relative">
+                                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+                                        <input type="text" id="filtro-abc-busca" onkeyup="renderCurvaABC()" placeholder="Buscar Produto ou SKU..." class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 transition-all text-slate-700 dark:text-slate-200 shadow-sm font-medium">
+                                    </div>
+                                    <select id="filtro-abc-classe" onchange="renderCurvaABC()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer">
+                                        <option value="todos">Classe ABC: Todas</option>
+                                        <option value="A">⭐ Apenas Curva A (80%)</option>
+                                        <option value="B">🟢 Apenas Curva B (15%)</option>
+                                        <option value="C">⚪ Apenas Curva C (5%)</option>
+                                    </select>
+                                    <select id="filtro-abc-ordem" onchange="renderCurvaABC()" class="lg:col-span-2 w-full py-2.5 px-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-sm outline-none focus:ring-2 focus:ring-amber-500 text-amber-700 dark:text-amber-400 font-extrabold shadow-sm cursor-pointer">
+                                        <option value="faturamento_desc">⬇️ Ordenar: Peso Financeiro (Fat)</option>
+                                        <option value="giro_desc">⬇️ Ordenar: Volume (Unidades Vendidas)</option>
+                                        <option value="ticket_desc">⬇️ Ordenar: Maior Ticket</option>
+                                        <option value="percentual_desc">⬇️ Ordenar: Maior % do Todo</option>
+                                    </select>
                                 </div>
-                                <select id="filtro-abc-classe" onchange="renderCurvaABC()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer">
-                                    <option value="todos">Classe ABC: Todas</option>
-                                    <option value="A">Apenas Curva A (80%)</option>
-                                    <option value="B">Apenas Curva B (15%)</option>
-                                    <option value="C">Apenas Curva C (5%)</option>
-                                </select>
-                                <select id="filtro-abc-ordem" onchange="renderCurvaABC()" class="w-full py-2.5 px-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-amber-700 dark:text-amber-400 font-extrabold shadow-sm cursor-pointer">
-                                    <option value="faturamento_desc">Ordenar: Peso Financeiro</option>
-                                    <option value="giro_desc">Ordenar: Volume de Unidades</option>
-                                </select>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <select id="filtro-abc-ads" onchange="renderCurvaABC()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer">
+                                        <option value="todos">Filtro de ADS: Todos</option>
+                                        <option value="on">📢 Somente com ADS Ligado</option>
+                                        <option value="off">🔇 Somente com ADS Desligado</option>
+                                    </select>
+                                    <select id="filtro-abc-cat" onchange="renderCurvaABC()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer">
+                                        <option value="todos">Filtro de Catálogo: Todos</option>
+                                        <option value="sim">🏆 É de Catálogo</option>
+                                        <option value="nao">⚪ Não é Catálogo</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
@@ -393,7 +439,7 @@
                                         <th class="pb-4 font-bold uppercase tracking-wider text-xs">Posição ABC</th>
                                         <th class="pb-4 font-bold uppercase tracking-wider text-xs">Tag Estratégia</th>
                                         <th class="pb-4 font-bold uppercase tracking-wider text-xs">Ticket (R$)</th>
-                                        <th class="pb-4 font-bold uppercase tracking-wider text-xs">Giro (Un)</th>
+                                        <th class="pb-4 font-bold uppercase tracking-wider text-xs">Vendas (Giro)</th>
                                         <th class="pb-4 font-bold uppercase tracking-wider text-xs">Peso Gerado</th>
                                         <th class="pb-4 font-bold uppercase tracking-wider text-xs">% Total</th>
                                     </tr>
@@ -696,33 +742,68 @@
             const termoBusca = document.getElementById('filtro-raiox-busca') ? document.getElementById('filtro-raiox-busca').value.toLowerCase() : '';
             const filtroStatus = document.getElementById('filtro-raiox-status') ? document.getElementById('filtro-raiox-status').value : 'todos';
             const filtroAds = document.getElementById('filtro-raiox-ads') ? document.getElementById('filtro-raiox-ads').value : 'todos';
+            const filtroCat = document.getElementById('filtro-raiox-cat') ? document.getElementById('filtro-raiox-cat').value : 'todos';
+            const filtroMargem = document.getElementById('filtro-raiox-margem') ? document.getElementById('filtro-raiox-margem').value : 'todos';
+            const filtroGiro = document.getElementById('filtro-raiox-giro') ? document.getElementById('filtro-raiox-giro').value : 'todos';
             const filtroOrdem = document.getElementById('filtro-raiox-ordem') ? document.getElementById('filtro-raiox-ordem').value : 'faturamento_desc';
 
             // Aplica Filtros
             let dadosFiltrados = dadosAPI.filter(row => {
+                // 1. Busca textual
                 if (termoBusca && !row.Produto.toLowerCase().includes(termoBusca) && !row.ID.toLowerCase().includes(termoBusca)) return false;
+                
+                // 2. Status do Alerta
                 if (filtroStatus !== 'todos') {
                     if (filtroStatus === 'saudavel' && !row.Status.includes('🔵')) return false;
                     if (filtroStatus === 'escalar' && !row.Status.includes('🟢')) return false;
                     if (filtroStatus === 'erro' && !row.Status.includes('🔴')) return false;
                     if (filtroStatus === 'alerta' && (!row.Status.includes('⚠️') && !row.Status.includes('🟡'))) return false;
                 }
+                
+                // 3. Flags Físicas
                 if (filtroAds === 'on' && !row.Ads_Ativo) return false;
                 if (filtroAds === 'off' && row.Ads_Ativo) return false;
+                if (filtroCat === 'sim' && !row.Is_Catalog) return false;
+                if (filtroCat === 'nao' && row.Is_Catalog) return false;
+
+                // 4. Faixa de Margem (%)
+                if(filtroMargem !== 'todos') {
+                    const margemPct = row.Ticket_Medio > 0 ? (row.Margem_Contribuicao / row.Ticket_Medio) * 100 : 0;
+                    if(filtroMargem === 'negativa' && margemPct >= 0) return false;
+                    if(filtroMargem === 'baixa' && (margemPct < 0 || margemPct >= 15)) return false;
+                    if(filtroMargem === 'media' && (margemPct < 15 || margemPct >= 30)) return false;
+                    if(filtroMargem === 'alta' && margemPct < 30) return false;
+                }
+
+                // 5. Faixa de Giro
+                if(filtroGiro !== 'todos') {
+                    if(filtroGiro === 'zero' && row.Giro !== 0) return false;
+                    if(filtroGiro === 'baixo' && (row.Giro === 0 || row.Giro > 10)) return false;
+                    if(filtroGiro === 'medio' && (row.Giro <= 10 || row.Giro > 50)) return false;
+                    if(filtroGiro === 'alto' && row.Giro <= 50) return false;
+                }
+
                 return true;
             });
 
-            // Aplica Ordenação
+            // Aplica Ordenação Universal
             dadosFiltrados.sort((a, b) => {
-                if (filtroOrdem === 'faturamento_desc') return b.Faturamento - a.Faturamento;
-                if (filtroOrdem === 'giro_desc') return b.Giro - a.Giro;
-                if (filtroOrdem === 'margem_asc') return a.Margem_Contribuicao - b.Margem_Contribuicao;
-                if (filtroOrdem === 'margem_desc') return b.Margem_Contribuicao - a.Margem_Contribuicao;
-                return 0;
+                const [campo, direcao] = filtroOrdem.split('_');
+                let valA = 0, valB = 0;
+                
+                if(campo === 'faturamento') { valA = a.Faturamento; valB = b.Faturamento; }
+                else if(campo === 'giro') { valA = a.Giro; valB = b.Giro; }
+                else if(campo === 'margem') { valA = a.Margem_Contribuicao; valB = b.Margem_Contribuicao; }
+                else if(campo === 'ticket') { valA = a.Ticket_Medio; valB = b.Ticket_Medio; }
+                else if(campo === 'promo') { valA = a.Desconto_Max_Grafico; valB = b.Desconto_Max_Grafico; }
+                else if(campo === 'frete') { valA = a.Giro > 0 ? a.Custo_Frete / a.Giro : 0; valB = b.Giro > 0 ? b.Custo_Frete / b.Giro : 0; }
+                else if(campo === 'tarifa') { valA = a.Giro > 0 ? a.Custo_Tarifa_ML / a.Giro : 0; valB = b.Giro > 0 ? b.Custo_Tarifa_ML / b.Giro : 0; }
+                
+                return direcao === 'desc' ? valB - valA : valA - valB;
             });
 
             if(dadosFiltrados.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="py-12 text-center text-slate-500 font-medium tracking-wide">Nenhum produto atende aos critérios do filtro.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="py-12 text-center text-slate-500 font-medium tracking-wide">Nenhum produto atende aos critérios exatos deste filtro.</td></tr>';
                 return;
             }
 
@@ -783,9 +864,11 @@
             // Lê os filtros
             const termoBusca = document.getElementById('filtro-abc-busca') ? document.getElementById('filtro-abc-busca').value.toLowerCase() : '';
             const filtroClasse = document.getElementById('filtro-abc-classe') ? document.getElementById('filtro-abc-classe').value : 'todos';
+            const filtroAds = document.getElementById('filtro-abc-ads') ? document.getElementById('filtro-abc-ads').value : 'todos';
+            const filtroCat = document.getElementById('filtro-abc-cat') ? document.getElementById('filtro-abc-cat').value : 'todos';
             const filtroOrdem = document.getElementById('filtro-abc-ordem') ? document.getElementById('filtro-abc-ordem').value : 'faturamento_desc';
 
-            // Enriquece os dados ABC buscando o Giro na dadosAPI principal (Cross-reference invisível)
+            // Enriquece os dados ABC buscando o Giro na dadosAPI principal (Cross-reference invisível e instantâneo)
             let dadosEnriquecidos = dadosABC.map(row => {
                 const apiRow = dadosAPI.find(api => api.ID === row.ID);
                 return { ...row, Giro: apiRow ? apiRow.Giro : 0 };
@@ -795,6 +878,10 @@
             let dadosFiltrados = dadosEnriquecidos.filter(row => {
                 if (termoBusca && !row.Produto.toLowerCase().includes(termoBusca) && !row.ID.toLowerCase().includes(termoBusca)) return false;
                 if (filtroClasse !== 'todos' && row.Classe !== filtroClasse) return false;
+                if (filtroAds === 'on' && !row.Ads_Ativo) return false;
+                if (filtroAds === 'off' && row.Ads_Ativo) return false;
+                if (filtroCat === 'sim' && !row.Is_Catalog) return false;
+                if (filtroCat === 'nao' && row.Is_Catalog) return false;
                 return true;
             });
 
@@ -802,6 +889,8 @@
             dadosFiltrados.sort((a, b) => {
                 if (filtroOrdem === 'faturamento_desc') return b.Faturamento - a.Faturamento;
                 if (filtroOrdem === 'giro_desc') return b.Giro - a.Giro;
+                if (filtroOrdem === 'ticket_desc') return b.Ticket_Medio - a.Ticket_Medio;
+                if (filtroOrdem === 'percentual_desc') return b.Percentual - a.Percentual;
                 return 0;
             });
 

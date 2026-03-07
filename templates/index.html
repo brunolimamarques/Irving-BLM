@@ -175,29 +175,39 @@
                         </div>
 
                         <div class="glass-card rounded-2xl p-6 md:p-8 animate-slide-up" style="animation-delay: 0.8s;">
-                            <h3 class="text-xl font-extrabold mb-6 flex items-center gap-3"><span class="w-2 h-6 bg-blue-500 rounded-full"></span> Raio-X com Estratégia Avançada</h3>
-                            
-                            <div class="flex flex-wrap gap-3 mb-6 bg-slate-50/50 dark:bg-slate-800/30 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-sm">
-                                <div class="flex-1 min-w-[200px]">
-                                    <input type="text" id="filtro-raiox-busca" onkeyup="renderRaioX()" placeholder="🔍 Buscar Produto ou SKU..." class="w-full p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-cyan-500 transition-shadow text-slate-700 dark:text-slate-200">
+                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                                <h3 class="text-xl font-extrabold flex items-center gap-3"><span class="w-2 h-6 bg-blue-500 rounded-full"></span> Raio-X com Estratégia Avançada</h3>
+                            </div>
+
+                            <div class="mb-6 bg-white/40 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-md shadow-sm">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <svg class="w-4 h-4 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Painel de Filtros</span>
                                 </div>
-                                <select id="filtro-raiox-status" onchange="renderRaioX()" class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-medium">
-                                    <option value="todos">Todos os Status</option>
-                                    <option value="saudavel">🔵 Saudável</option>
-                                    <option value="escalar">🟢 Escalar ADS</option>
-                                    <option value="alerta">⚠️ Alertas (Margem/CMV)</option>
-                                    <option value="erro">🔴 Erro de Preço</option>
-                                </select>
-                                <select id="filtro-raiox-ads" onchange="renderRaioX()" class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-medium">
-                                    <option value="todos">ADS: Todos</option>
-                                    <option value="on">ADS: Ligado</option>
-                                    <option value="off">ADS: Desligado</option>
-                                </select>
-                                <select id="filtro-raiox-cat" onchange="renderRaioX()" class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-medium">
-                                    <option value="todos">Catálogo: Todos</option>
-                                    <option value="sim">É Catálogo</option>
-                                    <option value="nao">S/ Catálogo</option>
-                                </select>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+                                    <div class="lg:col-span-2 relative">
+                                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+                                        <input type="text" id="filtro-raiox-busca" onkeyup="renderRaioX()" placeholder="Buscar Produto ou SKU..." class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 transition-all text-slate-700 dark:text-slate-200 shadow-sm font-medium">
+                                    </div>
+                                    <select id="filtro-raiox-status" onchange="renderRaioX()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer">
+                                        <option value="todos">Status: Todos</option>
+                                        <option value="saudavel">🔵 Saudável</option>
+                                        <option value="escalar">🟢 Escalar ADS</option>
+                                        <option value="alerta">⚠️ Alerta Margem/CMV</option>
+                                        <option value="erro">🔴 Erro de Preço</option>
+                                    </select>
+                                    <select id="filtro-raiox-ads" onchange="renderRaioX()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer">
+                                        <option value="todos">ADS: Todos</option>
+                                        <option value="on">ADS: Ligado</option>
+                                        <option value="off">ADS: Desligado</option>
+                                    </select>
+                                    <select id="filtro-raiox-ordem" onchange="renderRaioX()" class="w-full py-2.5 px-3 rounded-xl bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-cyan-700 dark:text-cyan-400 font-extrabold shadow-sm cursor-pointer">
+                                        <option value="faturamento_desc">Ordenar: Faturamento</option>
+                                        <option value="giro_desc">Ordenar: Maior Giro</option>
+                                        <option value="margem_desc">Ordenar: Maior Margem</option>
+                                        <option value="margem_asc">Ordenar: Menor Margem</option>
+                                    </select>
+                                </div>
                             </div>
 
                             <div class="overflow-x-auto pb-4">
@@ -352,21 +362,27 @@
                             <p class="text-sm text-slate-500 dark:text-slate-400 mt-1.5 font-medium">Os produtos vitais que ancoram o seu faturamento. <b>A:</b> Puxam 80%. <b>B:</b> Até 95%. <b>C:</b> Long Tail 5%.</p>
                         </div>
                         
-                        <div class="flex flex-wrap gap-3 mb-6 bg-slate-50/50 dark:bg-slate-800/30 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-sm">
-                            <div class="flex-1 min-w-[200px]">
-                                <input type="text" id="filtro-abc-busca" onkeyup="renderCurvaABC()" placeholder="🔍 Buscar Produto ou SKU..." class="w-full p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-cyan-500 transition-shadow text-slate-700 dark:text-slate-200">
+                        <div class="mb-6 bg-white/40 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-md shadow-sm">
+                            <div class="flex items-center gap-2 mb-3">
+                                <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                                <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Painel de Filtros</span>
                             </div>
-                            <select id="filtro-abc-classe" onchange="renderCurvaABC()" class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-medium">
-                                <option value="todos">Todas as Classes</option>
-                                <option value="A">Apenas Curva A</option>
-                                <option value="B">Apenas Curva B</option>
-                                <option value="C">Apenas Curva C</option>
-                            </select>
-                             <select id="filtro-abc-ads" onchange="renderCurvaABC()" class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-medium">
-                                <option value="todos">ADS: Todos</option>
-                                <option value="on">ADS: Ligado</option>
-                                <option value="off">ADS: Desligado</option>
-                            </select>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                                <div class="lg:col-span-2 relative">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+                                    <input type="text" id="filtro-abc-busca" onkeyup="renderCurvaABC()" placeholder="Buscar Produto ou SKU..." class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 transition-all text-slate-700 dark:text-slate-200 shadow-sm font-medium">
+                                </div>
+                                <select id="filtro-abc-classe" onchange="renderCurvaABC()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer">
+                                    <option value="todos">Classe ABC: Todas</option>
+                                    <option value="A">Apenas Curva A (80%)</option>
+                                    <option value="B">Apenas Curva B (15%)</option>
+                                    <option value="C">Apenas Curva C (5%)</option>
+                                </select>
+                                <select id="filtro-abc-ordem" onchange="renderCurvaABC()" class="w-full py-2.5 px-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-amber-700 dark:text-amber-400 font-extrabold shadow-sm cursor-pointer">
+                                    <option value="faturamento_desc">Ordenar: Peso Financeiro</option>
+                                    <option value="giro_desc">Ordenar: Volume de Unidades</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div class="overflow-x-auto">
@@ -377,6 +393,7 @@
                                         <th class="pb-4 font-bold uppercase tracking-wider text-xs">Posição ABC</th>
                                         <th class="pb-4 font-bold uppercase tracking-wider text-xs">Tag Estratégia</th>
                                         <th class="pb-4 font-bold uppercase tracking-wider text-xs">Ticket (R$)</th>
+                                        <th class="pb-4 font-bold uppercase tracking-wider text-xs">Giro (Un)</th>
                                         <th class="pb-4 font-bold uppercase tracking-wider text-xs">Peso Gerado</th>
                                         <th class="pb-4 font-bold uppercase tracking-wider text-xs">% Total</th>
                                     </tr>
@@ -679,10 +696,10 @@
             const termoBusca = document.getElementById('filtro-raiox-busca') ? document.getElementById('filtro-raiox-busca').value.toLowerCase() : '';
             const filtroStatus = document.getElementById('filtro-raiox-status') ? document.getElementById('filtro-raiox-status').value : 'todos';
             const filtroAds = document.getElementById('filtro-raiox-ads') ? document.getElementById('filtro-raiox-ads').value : 'todos';
-            const filtroCat = document.getElementById('filtro-raiox-cat') ? document.getElementById('filtro-raiox-cat').value : 'todos';
+            const filtroOrdem = document.getElementById('filtro-raiox-ordem') ? document.getElementById('filtro-raiox-ordem').value : 'faturamento_desc';
 
             // Aplica Filtros
-            const dadosFiltrados = dadosAPI.filter(row => {
+            let dadosFiltrados = dadosAPI.filter(row => {
                 if (termoBusca && !row.Produto.toLowerCase().includes(termoBusca) && !row.ID.toLowerCase().includes(termoBusca)) return false;
                 if (filtroStatus !== 'todos') {
                     if (filtroStatus === 'saudavel' && !row.Status.includes('🔵')) return false;
@@ -692,13 +709,20 @@
                 }
                 if (filtroAds === 'on' && !row.Ads_Ativo) return false;
                 if (filtroAds === 'off' && row.Ads_Ativo) return false;
-                if (filtroCat === 'sim' && !row.Is_Catalog) return false;
-                if (filtroCat === 'nao' && row.Is_Catalog) return false;
                 return true;
             });
 
+            // Aplica Ordenação
+            dadosFiltrados.sort((a, b) => {
+                if (filtroOrdem === 'faturamento_desc') return b.Faturamento - a.Faturamento;
+                if (filtroOrdem === 'giro_desc') return b.Giro - a.Giro;
+                if (filtroOrdem === 'margem_asc') return a.Margem_Contribuicao - b.Margem_Contribuicao;
+                if (filtroOrdem === 'margem_desc') return b.Margem_Contribuicao - a.Margem_Contribuicao;
+                return 0;
+            });
+
             if(dadosFiltrados.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-slate-500 font-medium">Nenhum produto encontrado com estes filtros.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="py-12 text-center text-slate-500 font-medium tracking-wide">Nenhum produto atende aos critérios do filtro.</td></tr>';
                 return;
             }
 
@@ -752,26 +776,37 @@
         window.renderCurvaABC = () => {
             const tbody = document.getElementById('tabela-abc-corpo'); tbody.innerHTML = '';
             if(!dadosABC || dadosABC.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-slate-500 font-medium">Histórico limpo. Nenhuma movimentação detectada.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-slate-500 font-medium">Histórico limpo. Nenhuma movimentação detectada.</td></tr>';
                 return;
             }
 
             // Lê os filtros
             const termoBusca = document.getElementById('filtro-abc-busca') ? document.getElementById('filtro-abc-busca').value.toLowerCase() : '';
             const filtroClasse = document.getElementById('filtro-abc-classe') ? document.getElementById('filtro-abc-classe').value : 'todos';
-            const filtroAds = document.getElementById('filtro-abc-ads') ? document.getElementById('filtro-abc-ads').value : 'todos';
+            const filtroOrdem = document.getElementById('filtro-abc-ordem') ? document.getElementById('filtro-abc-ordem').value : 'faturamento_desc';
+
+            // Enriquece os dados ABC buscando o Giro na dadosAPI principal (Cross-reference invisível)
+            let dadosEnriquecidos = dadosABC.map(row => {
+                const apiRow = dadosAPI.find(api => api.ID === row.ID);
+                return { ...row, Giro: apiRow ? apiRow.Giro : 0 };
+            });
 
             // Aplica os filtros
-            const dadosFiltrados = dadosABC.filter(row => {
+            let dadosFiltrados = dadosEnriquecidos.filter(row => {
                 if (termoBusca && !row.Produto.toLowerCase().includes(termoBusca) && !row.ID.toLowerCase().includes(termoBusca)) return false;
                 if (filtroClasse !== 'todos' && row.Classe !== filtroClasse) return false;
-                if (filtroAds === 'on' && !row.Ads_Ativo) return false;
-                if (filtroAds === 'off' && row.Ads_Ativo) return false;
                 return true;
             });
 
+            // Aplica Ordenação
+            dadosFiltrados.sort((a, b) => {
+                if (filtroOrdem === 'faturamento_desc') return b.Faturamento - a.Faturamento;
+                if (filtroOrdem === 'giro_desc') return b.Giro - a.Giro;
+                return 0;
+            });
+
             if(dadosFiltrados.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-slate-500 font-medium">Nenhum produto encontrado com estes filtros.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="py-12 text-center text-slate-500 font-medium tracking-wide">Nenhum produto atende aos critérios do filtro.</td></tr>';
                 return;
             }
 
@@ -798,6 +833,7 @@
                         <td class="py-4 align-middle"><span class="px-3 py-1 rounded-lg text-xs font-black shadow-sm ${corBadge}">Curva ${row.Classe}</span></td>
                         <td class="py-4 align-middle whitespace-nowrap">${badgeAds}${badgeCat}</td>
                         <td class="py-4 align-middle font-bold text-slate-600 dark:text-slate-400">R$ ${(row.Ticket_Medio || 0).toFixed(2).replace('.',',')}</td>
+                        <td class="py-4 align-middle font-black text-slate-700 dark:text-slate-300 text-lg">${row.Giro} <span class="text-[10px] uppercase font-bold text-slate-400">un</span></td>
                         <td class="py-4 align-middle font-extrabold text-slate-800 dark:text-slate-200">R$ ${row.Faturamento.toFixed(2).replace('.',',')}</td>
                         <td class="py-4 align-middle font-bold text-cyan-600 dark:text-cyan-500">${row.Percentual}%</td>
                     </tr>`;

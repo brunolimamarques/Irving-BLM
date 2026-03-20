@@ -12,8 +12,18 @@
             theme: {
                 extend: {
                     fontFamily: { sans: ['Outfit', 'sans-serif'] },
-                    animation: { 'fade-in': 'fadeIn 0.5s ease-out forwards', 'slide-up': 'slideUp 0.6s ease-out forwards', 'pulse-glow': 'pulseGlow 3s ease-in-out infinite' },
-                    keyframes: { fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } }, slideUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }, pulseGlow: { '0%, 100%': { boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }, '50%': { boxShadow: '0 0 25px rgba(59, 130, 246, 0.8)' } } }
+                    animation: { 
+                        'fade-in': 'fadeIn 0.6s ease-out forwards', 
+                        'slide-up': 'slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards', 
+                        'pulse-glow': 'pulseGlow 3s ease-in-out infinite',
+                        'float': 'float 6s ease-in-out infinite'
+                    },
+                    keyframes: { 
+                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } }, 
+                        slideUp: { '0%': { opacity: '0', transform: 'translateY(30px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }, 
+                        pulseGlow: { '0%, 100%': { boxShadow: '0 0 15px rgba(59, 130, 246, 0.4)' }, '50%': { boxShadow: '0 0 30px rgba(59, 130, 246, 0.7)' } },
+                        float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-5px)' } }
+                    }
                 }
             }
         }
@@ -23,35 +33,93 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
-        body { font-family: 'Outfit', sans-serif; transition: background-color 0.4s ease, color 0.4s ease; background-image: radial-gradient(circle at top right, rgba(30,58,138,0.1), transparent 40%), radial-gradient(circle at bottom left, rgba(16,185,129,0.05), transparent 40%); }
-        .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 8px 32px 0 rgba(0,0,0,0.05); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-        .dark body { background-color: #0B1120; background-image: radial-gradient(circle at top right, rgba(56,189,248,0.05), transparent 50%), radial-gradient(circle at bottom left, rgba(139,92,246,0.05), transparent 50%); }
-        .dark .glass-card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 8px 32px 0 rgba(0,0,0,0.3); }
-        .dark .glass-card:hover { border-color: rgba(56, 189, 248, 0.3); box-shadow: 0 8px 32px 0 rgba(56, 189, 248, 0.1); }
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            transition: background-color 0.6s cubic-bezier(0.4, 0, 0.2, 1), color 0.6s cubic-bezier(0.4, 0, 0.2, 1); 
+            background-image: radial-gradient(circle at top right, rgba(30,58,138,0.08), transparent 40%), radial-gradient(circle at bottom left, rgba(16,185,129,0.04), transparent 40%); 
+        }
         
-        .menu-ativo { background: linear-gradient(90deg, rgba(56,189,248,0.1) 0%, transparent 100%); color: #0F172A; border-left: 4px solid #38BDF8; font-weight: 700; }
+        /* Sistema de Partículas Canvas no Fundo */
+        #particles-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; opacity: 0.6; }
+
+        /* Efeito Glassmorphism Premium com Mouse Tracking */
+        .glass-card { 
+            background: rgba(255, 255, 255, 0.8); 
+            backdrop-filter: blur(20px); 
+            border: 1px solid rgba(255,255,255,0.6); 
+            box-shadow: 0 8px 32px 0 rgba(0,0,0,0.04); 
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s ease; 
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .dark body { 
+            background-color: #070B14; 
+            background-image: radial-gradient(circle at top right, rgba(56,189,248,0.08), transparent 50%), radial-gradient(circle at bottom left, rgba(139,92,246,0.06), transparent 50%); 
+        }
+        
+        .dark .glass-card { 
+            background: rgba(13, 19, 33, 0.65); 
+            backdrop-filter: blur(24px); 
+            border: 1px solid rgba(255, 255, 255, 0.04); 
+            box-shadow: 0 10px 40px 0 rgba(0,0,0,0.4); 
+        }
+
+        /* Efeito de Luz Magnética (Injetado via JS no hover) */
+        .glass-card::before {
+            content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: inherit;
+            background: radial-gradient(600px circle at var(--mouse-x, -500px) var(--mouse-y, -500px), rgba(56, 189, 248, 0.12), transparent 40%);
+            z-index: 0; opacity: 0; transition: opacity 0.5s ease; pointer-events: none;
+        }
+        .dark .glass-card::before {
+            background: radial-gradient(600px circle at var(--mouse-x, -500px) var(--mouse-y, -500px), rgba(56, 189, 248, 0.08), transparent 40%);
+        }
+        .glass-card:hover::before { opacity: 1; }
+        
+        .glass-card:hover { 
+            border-color: rgba(56, 189, 248, 0.4); 
+            box-shadow: 0 15px 45px 0 rgba(56, 189, 248, 0.12); 
+            transform: translateY(-4px);
+        }
+        
+        /* Menus Ativos */
+        .menu-ativo { background: linear-gradient(90deg, rgba(56,189,248,0.1) 0%, transparent 100%); color: #0F172A; border-left: 4px solid #38BDF8; font-weight: 700; position: relative; overflow: hidden; }
+        .menu-ativo::after { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 100%; background: linear-gradient(90deg, rgba(56,189,248,0.2), transparent); transform: translateX(-100%); animation: shine 2.5s infinite; pointer-events: none; }
+        @keyframes shine { 100% { transform: translateX(100%); } }
+        
         .dark .menu-ativo { background: linear-gradient(90deg, rgba(56,189,248,0.15) 0%, transparent 100%); color: #38BDF8; border-left: 4px solid #38BDF8; text-shadow: 0 0 10px rgba(56,189,248,0.3); }
         .menu-inativo { color: #64748B; border-left: 4px solid transparent; font-weight: 500; }
         .dark .menu-inativo { color: #94A3B8; }
         .menu-inativo:hover { color: #0F172A; padding-left: 1.75rem; }
         .dark .menu-inativo:hover { color: #E2E8F0; padding-left: 1.75rem; }
         
+        /* Elementos de UI fluidos */
+        input, select, button { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        select:hover { transform: scale(1.02); }
+        
         /* Scrollbar Cyberpunk */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.3); border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(56, 189, 248, 0.6); }
+
+        /* Garante que o conteúdo fique por cima do efeito de luz do card */
+        .glass-card > * { position: relative; z-index: 1; }
     </style>
 </head>
-<body class="flex h-screen overflow-hidden text-slate-900 dark:text-slate-100 transition-colors duration-500">
+<body class="flex h-screen overflow-hidden text-slate-900 dark:text-slate-100 transition-colors duration-500 relative">
+
+    <canvas id="particles-bg"></canvas>
 
     <div id="tela-login" class="flex w-full h-full items-center justify-center hidden animate-fade-in relative z-50">
-        <div class="glass-card p-10 rounded-3xl w-full max-w-md text-center hover:shadow-2xl hover:-translate-y-2 relative overflow-hidden">
+        <div class="glass-card p-10 rounded-3xl w-full max-w-md text-center hover:shadow-2xl relative overflow-hidden">
             <div class="absolute -top-20 -right-20 w-40 h-40 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
-            <h1 class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 mb-8 tracking-tighter">Irving <span class="text-2xl font-light text-slate-400 block mt-1 tracking-widest">(BLM)</span></h1>
-            <input type="email" id="email" placeholder="E-mail de Acesso" class="w-full mb-4 p-4 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 outline-none transition duration-300 focus:ring-2 focus:ring-cyan-500 focus:border-transparent backdrop-blur-sm">
-            <input type="password" id="senha" placeholder="Senha" class="w-full mb-8 p-4 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 outline-none transition duration-300 focus:ring-2 focus:ring-cyan-500 focus:border-transparent backdrop-blur-sm">
-            <button onclick="fazerLogin()" class="w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold rounded-xl transition-all duration-300 active:scale-95 shadow-[0_0_20px_rgba(56,189,248,0.4)] hover:shadow-[0_0_30px_rgba(56,189,248,0.6)] uppercase tracking-wider text-sm">Fazer Login</button>
+            <h1 class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 mb-8 tracking-tighter animate-float">Irving <span class="text-2xl font-light text-slate-400 block mt-1 tracking-widest">(BLM)</span></h1>
+            <input type="email" id="email" placeholder="E-mail de Acesso" class="w-full mb-4 p-4 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 outline-none transition duration-300 focus:ring-2 focus:ring-cyan-500 focus:border-transparent backdrop-blur-sm focus:scale-[1.02]">
+            <input type="password" id="senha" placeholder="Senha" class="w-full mb-8 p-4 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 outline-none transition duration-300 focus:ring-2 focus:ring-cyan-500 focus:border-transparent backdrop-blur-sm focus:scale-[1.02]">
+            <button onclick="fazerLogin()" class="w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold rounded-xl transition-all duration-300 active:scale-95 shadow-[0_0_20px_rgba(56,189,248,0.4)] hover:shadow-[0_0_35px_rgba(56,189,248,0.7)] uppercase tracking-wider text-sm flex items-center justify-center gap-2">
+                Acessar Sistema <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+            </button>
             <p id="msg-erro" class="text-red-400 text-sm mt-4 hidden font-medium"></p>
         </div>
     </div>
@@ -70,26 +138,26 @@
         <aside id="menu-lateral" class="w-72 bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl border-r border-slate-200/50 dark:border-slate-800/50 flex flex-col justify-between hidden md:flex transition-all duration-500 shadow-xl z-20">
             <div class="overflow-y-auto">
                 <div class="p-8 pb-4">
-                    <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600 mb-1 tracking-tighter drop-shadow-sm">Irving</h1>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 font-semibold tracking-widest uppercase mb-1" id="workspace-nome">Operação BLM</p>
+                    <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600 mb-1 tracking-tighter drop-shadow-sm animate-pulse-glow w-fit">Irving</h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 font-semibold tracking-widest uppercase mb-1 transition-all" id="workspace-nome">Operação BLM</p>
                     <button onclick="voltarParaAdmin()" id="btn-voltar-admin" class="hidden text-[11px] font-bold text-amber-500 hover:text-amber-400 flex items-center gap-1 mt-3 transition-all">
                         <svg class="w-3 h-3 transition-transform hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg> Sair da Conta Cliente
                     </button>
                 </div>
                 
                 <div class="px-8 mb-6">
-                    <div class="bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-md">
+                    <div class="bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-md group hover:border-cyan-500/30 transition-all">
                         <div class="flex items-center gap-3 mb-2">
                             <div class="w-3 h-3 bg-emerald-400 rounded-full shadow-[0_0_12px_rgba(52,211,153,0.8)] animate-pulse"></div>
-                            <span class="text-sm font-bold text-slate-800 dark:text-white tracking-wide">API Conectada</span>
+                            <span class="text-sm font-bold text-slate-800 dark:text-white tracking-wide group-hover:text-cyan-500 transition-colors">API Conectada</span>
                         </div>
-                        <button onclick="iniciarAuthML()" class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 transition-all flex items-center gap-1.5 w-full uppercase tracking-wider mt-2">
+                        <button onclick="iniciarAuthML()" class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 transition-all flex items-center gap-1.5 w-full uppercase tracking-wider mt-2 group-hover:translate-x-1">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Reconectar
                         </button>
                     </div>
                 </div>
 
-                <nav class="flex flex-col gap-1 mt-2 pb-6 px-4">
+                <nav class="flex flex-col gap-1 mt-2 pb-6 px-4 relative z-10">
                     <button onclick="mudarAba('visao_geral')" id="btn-visao_geral" class="menu-ativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">📊 Visão Central</button>
                     <button onclick="mudarAba('custos')" id="btn-custos" class="menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">💰 Engine de Custos</button>
                     <button onclick="mudarAba('estoque')" id="btn-estoque" class="menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">📦 Inventário Parado</button>
@@ -106,7 +174,9 @@
                 </nav>
             </div>
             <div class="p-8 border-t border-slate-200/50 dark:border-slate-800/50">
-                <button onclick="sair()" class="w-full py-3 bg-slate-200/50 dark:bg-slate-800/50 text-slate-800 dark:text-white rounded-xl text-sm hover:bg-slate-300/50 dark:hover:bg-slate-700/50 transition-all duration-300 active:scale-95 font-bold uppercase tracking-wider backdrop-blur-sm">Sair do Sistema</button>
+                <button onclick="sair()" class="w-full py-3 bg-slate-200/50 dark:bg-slate-800/50 text-slate-800 dark:text-white rounded-xl text-sm hover:bg-slate-300/50 dark:hover:bg-slate-700/50 transition-all duration-300 active:scale-95 font-bold uppercase tracking-wider backdrop-blur-sm group overflow-hidden relative">
+                    <span class="relative z-10 group-hover:-translate-x-1 inline-block transition-transform">Sair do Sistema</span>
+                </button>
             </div>
         </aside>
 
@@ -118,25 +188,27 @@
                 </div>
                 <div class="flex items-center gap-3 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0 flex-wrap">
                     
-                    <select id="seletor-data" class="bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 outline-none text-sm transition-all focus:ring-2 focus:ring-cyan-500 cursor-pointer hover:border-cyan-400 backdrop-blur-md font-semibold">
+                    <select id="seletor-data" class="bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 outline-none text-sm transition-all focus:ring-2 focus:ring-cyan-500 cursor-pointer hover:border-cyan-400 backdrop-blur-md font-semibold hover:-translate-y-0.5 shadow-sm">
                         <option value="7">Últimos 7 dias</option><option value="15">Últimos 15 dias</option><option value="30" selected>Últimos 30 dias</option>
                     </select>
                     
-                    <button onclick="enviarRelatorioZap()" id="btn-zap" title="Relatório Executivo WhatsApp" class="px-5 py-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-sm font-bold rounded-xl transition-all duration-300 shadow-sm flex items-center gap-2 active:scale-95 backdrop-blur-md">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 0C5.385 0 0 5.385 0 12.031c0 2.126.551 4.197 1.6 6.022L.15 24l6.101-1.428c1.761.947 3.75 1.447 5.78 1.447 6.646 0 12.031-5.385 12.031-12.031S18.677 0 12.031 0zm4.276 17.15c-.172.483-.984.922-1.42.966-.41.04-.984.143-3.23-.787-2.7-1.115-4.43-3.864-4.562-4.04-.131-.176-1.088-1.45-1.088-2.766 0-1.317.683-1.967.926-2.23.243-.263.528-.328.704-.328.176 0 .352 0 .506.007.161.007.375-.06.574.42.206.495.704 1.725.768 1.855.064.131.106.284.02.46-.085.176-.131.284-.263.438-.132.153-.277.337-.395.46-.131.143-.273.298-.12.56.152.263.678 1.12 1.454 1.815.998.892 1.84 1.173 2.103 1.304.263.131.417.11.57-.06.153-.171.658-.768.834-1.031.176-.263.351-.22.594-.132.243.088 1.536.725 1.799.856.263.131.44.197.505.306.065.11.065.636-.107 1.119z"/></svg> Relatório
+                    <button onclick="enviarRelatorioZap()" id="btn-zap" title="Relatório Executivo WhatsApp" class="px-5 py-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-sm font-bold rounded-xl transition-all duration-300 shadow-sm flex items-center gap-2 active:scale-95 backdrop-blur-md hover:-translate-y-0.5 group">
+                        <svg class="w-4 h-4 group-hover:rotate-12 transition-transform" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 0C5.385 0 0 5.385 0 12.031c0 2.126.551 4.197 1.6 6.022L.15 24l6.101-1.428c1.761.947 3.75 1.447 5.78 1.447 6.646 0 12.031-5.385 12.031-12.031S18.677 0 12.031 0zm4.276 17.15c-.172.483-.984.922-1.42.966-.41.04-.984.143-3.23-.787-2.7-1.115-4.43-3.864-4.562-4.04-.131-.176-1.088-1.45-1.088-2.766 0-1.317.683-1.967.926-2.23.243-.263.528-.328.704-.328.176 0 .352 0 .506.007.161.007.375-.06.574.42.206.495.704 1.725.768 1.855.064.131.106.284.02.46-.085.176-.131.284-.263.438-.132.153-.277.337-.395.46-.131.143-.273.298-.12.56.152.263.678 1.12 1.454 1.815.998.892 1.84 1.173 2.103 1.304.263.131.417.11.57-.06.153-.171.658-.768.834-1.031.176-.263.351-.22.594-.132.243.088 1.536.725 1.799.856.263.131.44.197.505.306.065.11.065.636-.107 1.119z"/></svg> Relatório
                     </button>
 
-                    <button onclick="exportarRelatorioPDF()" id="btn-pdf" title="Exportar Visão Geral para PDF" class="px-5 py-2.5 bg-slate-200/80 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-700 text-slate-800 dark:text-white text-sm font-bold rounded-xl transition-all duration-300 shadow-sm flex items-center gap-2 active:scale-95 backdrop-blur-md border border-slate-300/50 dark:border-slate-600/50">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> PDF
+                    <button onclick="exportarRelatorioPDF()" id="btn-pdf" title="Exportar Visão Geral para PDF" class="px-5 py-2.5 bg-slate-200/80 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-700 text-slate-800 dark:text-white text-sm font-bold rounded-xl transition-all duration-300 shadow-sm flex items-center gap-2 active:scale-95 backdrop-blur-md border border-slate-300/50 dark:border-slate-600/50 hover:-translate-y-0.5 group">
+                        <svg class="w-4 h-4 group-hover:-translate-y-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> PDF
                     </button>
 
-                    <button onclick="carregarDados()" id="btn-gerar" class="px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-sm font-extrabold rounded-xl transition-all duration-300 shadow-[0_0_15px_rgba(56,189,248,0.3)] hover:shadow-[0_0_25px_rgba(56,189,248,0.5)] active:scale-95 uppercase tracking-wide">Gerar Dados</button>
+                    <button onclick="carregarDados()" id="btn-gerar" class="px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-sm font-extrabold rounded-xl transition-all duration-300 shadow-[0_0_15px_rgba(56,189,248,0.3)] hover:shadow-[0_0_30px_rgba(56,189,248,0.6)] active:scale-95 uppercase tracking-wide hover:-translate-y-0.5 flex items-center gap-2 group">
+                        Gerar Dados <svg class="w-4 h-4 group-hover:rotate-180 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    </button>
                     
-                    <button onclick="toggleDarkMode()" class="p-2.5 rounded-xl border border-slate-300/50 dark:border-slate-700/50 bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 transition-all duration-300 active:scale-95 group backdrop-blur-md">
-                        <svg id="theme-icon" class="w-5 h-5 text-slate-700 dark:text-slate-200 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <button onclick="toggleDarkMode()" class="p-2.5 rounded-xl border border-slate-300/50 dark:border-slate-700/50 bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 transition-all duration-300 active:scale-95 group backdrop-blur-md hover:-translate-y-0.5 shadow-sm">
+                        <svg id="theme-icon" class="w-5 h-5 text-slate-700 dark:text-slate-200 group-hover:rotate-[360deg] transition-transform duration-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                     </button>
 
-                    <button onclick="toggleWarRoom()" title="Modo War Room (Fullscreen)" class="p-2.5 rounded-xl border border-slate-300/50 dark:border-slate-700/50 bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 transition-all duration-300 active:scale-95 group backdrop-blur-md">
+                    <button onclick="toggleWarRoom()" title="Modo War Room (Fullscreen)" class="p-2.5 rounded-xl border border-slate-300/50 dark:border-slate-700/50 bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 transition-all duration-300 active:scale-95 group backdrop-blur-md hover:-translate-y-0.5 shadow-sm">
                         <span class="text-lg leading-none group-hover:scale-110 inline-block transition-transform">📺</span>
                     </button>
                 </div>
@@ -147,57 +219,57 @@
                 <div id="aba-visao_geral" class="w-full">
                     <div id="pdf-area" class="w-full rounded-2xl">
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 mb-8 transition-all duration-500" id="blocos-kpi">
+                            <div class="glass-card rounded-2xl p-6 hover:-translate-y-1 animate-slide-up relative overflow-hidden group" style="animation-delay: 0.1s;">
+                                <div class="absolute -right-4 -top-4 w-16 h-16 bg-blue-500/20 rounded-full blur-xl group-hover:bg-blue-500/40 transition-colors duration-500"></div>
+                                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 transition-colors group-hover:text-blue-500">Faturamento</p><h3 class="text-3xl font-extrabold tracking-tight transition-all duration-300" id="kpi-fat">...</h3>
+                            </div>
                             <div class="glass-card rounded-2xl p-6 hover:-translate-y-1 animate-slide-up relative overflow-hidden group" style="animation-delay: 0.2s;">
-                                <div class="absolute -right-4 -top-4 w-16 h-16 bg-blue-500/20 rounded-full blur-xl group-hover:bg-blue-500/40 transition-colors"></div>
-                                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Faturamento</p><h3 class="text-3xl font-extrabold tracking-tight" id="kpi-fat">...</h3>
+                                <div class="absolute -right-4 -top-4 w-16 h-16 bg-emerald-500/20 rounded-full blur-xl group-hover:bg-emerald-500/40 transition-colors duration-500"></div>
+                                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 transition-colors group-hover:text-emerald-500">Lucro Bruto</p><h3 class="text-3xl font-extrabold text-emerald-500 dark:text-emerald-400 tracking-tight transition-all duration-300" id="kpi-lucro">...</h3>
                             </div>
                             <div class="glass-card rounded-2xl p-6 hover:-translate-y-1 animate-slide-up relative overflow-hidden group" style="animation-delay: 0.3s;">
-                                <div class="absolute -right-4 -top-4 w-16 h-16 bg-emerald-500/20 rounded-full blur-xl group-hover:bg-emerald-500/40 transition-colors"></div>
-                                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Lucro Bruto</p><h3 class="text-3xl font-extrabold text-emerald-500 dark:text-emerald-400 tracking-tight" id="kpi-lucro">...</h3>
+                                <div class="absolute -right-4 -top-4 w-16 h-16 bg-cyan-500/20 rounded-full blur-xl group-hover:bg-cyan-500/40 transition-colors duration-500"></div>
+                                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 transition-colors group-hover:text-cyan-500">Unidades</p><h3 class="text-3xl font-extrabold tracking-tight transition-all duration-300" id="kpi-unidades">...</h3>
                             </div>
-                            <div class="glass-card rounded-2xl p-6 hover:-translate-y-1 animate-slide-up relative overflow-hidden group" style="animation-delay: 0.4s;">
-                                <div class="absolute -right-4 -top-4 w-16 h-16 bg-cyan-500/20 rounded-full blur-xl group-hover:bg-cyan-500/40 transition-colors"></div>
-                                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Unidades</p><h3 class="text-3xl font-extrabold tracking-tight" id="kpi-unidades">...</h3>
+                            <div class="glass-card rounded-2xl p-6 border-l-4 border-red-500/80 hover:-translate-y-1 animate-slide-up relative overflow-hidden group" style="animation-delay: 0.4s;">
+                                <div class="absolute -right-4 -top-4 w-16 h-16 bg-red-500/20 rounded-full blur-xl group-hover:bg-red-500/40 transition-colors duration-500"></div>
+                                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 transition-colors group-hover:text-red-500">Avisos CMV</p><h3 class="text-3xl font-extrabold text-red-500 dark:text-red-400 tracking-tight transition-all duration-300" id="kpi-alertas">...</h3>
                             </div>
-                            <div class="glass-card rounded-2xl p-6 border-l-4 border-red-500/80 hover:-translate-y-1 animate-slide-up relative overflow-hidden group" style="animation-delay: 0.5s;">
-                                <div class="absolute -right-4 -top-4 w-16 h-16 bg-red-500/20 rounded-full blur-xl group-hover:bg-red-500/40 transition-colors"></div>
-                                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Avisos CMV</p><h3 class="text-3xl font-extrabold text-red-500 dark:text-red-400 tracking-tight" id="kpi-alertas">...</h3>
-                            </div>
-                            <div class="glass-card rounded-2xl p-6 hover:-translate-y-1 animate-slide-up relative overflow-hidden group" style="animation-delay: 0.6s;">
-                                <div class="absolute -right-4 -top-4 w-16 h-16 bg-purple-500/20 rounded-full blur-xl group-hover:bg-purple-500/40 transition-colors"></div>
-                                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Gasto ADS Total</p><h3 class="text-3xl font-extrabold text-purple-500 dark:text-purple-400 tracking-tight" id="kpi-ads">...</h3>
+                            <div class="glass-card rounded-2xl p-6 hover:-translate-y-1 animate-slide-up relative overflow-hidden group" style="animation-delay: 0.5s;">
+                                <div class="absolute -right-4 -top-4 w-16 h-16 bg-purple-500/20 rounded-full blur-xl group-hover:bg-purple-500/40 transition-colors duration-500"></div>
+                                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 transition-colors group-hover:text-purple-500">Gasto ADS Total</p><h3 class="text-3xl font-extrabold text-purple-500 dark:text-purple-400 tracking-tight transition-all duration-300" id="kpi-ads">...</h3>
                             </div>
                         </div>
 
-                        <div class="glass-card rounded-2xl p-6 md:p-8 mb-8 w-full animate-slide-up transition-all duration-500" id="container-grafico" style="animation-delay: 0.7s;">
+                        <div class="glass-card rounded-2xl p-6 md:p-8 mb-8 w-full animate-slide-up transition-all duration-500" id="container-grafico" style="animation-delay: 0.6s;">
                             <h3 class="text-xl font-extrabold mb-6 flex items-center gap-3"><span class="w-2 h-6 bg-cyan-400 rounded-full"></span> Evolução Diária da Operação</h3>
                             <div class="relative w-full h-72 transition-all duration-500" id="wrapper-canvas"><canvas id="graficoCrescimento"></canvas></div>
                         </div>
 
-                        <div class="glass-card rounded-2xl p-6 md:p-8 animate-slide-up" style="animation-delay: 0.8s;">
+                        <div class="glass-card rounded-2xl p-6 md:p-8 animate-slide-up" style="animation-delay: 0.7s;">
                             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                                 <h3 class="text-xl font-extrabold flex items-center gap-3"><span class="w-2 h-6 bg-blue-500 rounded-full"></span> Raio-X com Estratégia Avançada</h3>
                             </div>
 
-                            <div class="mb-6 bg-white/40 dark:bg-slate-800/40 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-md shadow-sm">
+                            <div class="mb-6 bg-white/40 dark:bg-slate-800/40 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-md shadow-sm transition-all hover:border-cyan-500/30 group">
                                 <div class="flex items-center gap-2 mb-4">
-                                    <svg class="w-4 h-4 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                                    <svg class="w-4 h-4 text-cyan-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
                                     <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Painel Master de Filtragem</span>
                                 </div>
                                 <div class="flex flex-col gap-3">
                                     <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
                                         <div class="lg:col-span-2 relative">
-                                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+                                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-cyan-500">🔍</span>
                                             <input type="text" id="filtro-raiox-busca" onkeyup="renderRaioX()" placeholder="Buscar Produto ou SKU..." class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 transition-all text-slate-700 dark:text-slate-200 shadow-sm font-medium">
                                         </div>
-                                        <select id="filtro-raiox-status" onchange="renderRaioX()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer">
+                                        <select id="filtro-raiox-status" onchange="renderRaioX()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer hover:border-cyan-400 transition-colors">
                                             <option value="todos">Qualquer Status</option>
                                             <option value="saudavel">🔵 Saudável</option>
                                             <option value="escalar">🟢 Escalar ADS</option>
                                             <option value="alerta">⚠️ Alerta Margem/CMV</option>
                                             <option value="erro">🔴 Erro de Preço</option>
                                         </select>
-                                        <select id="filtro-raiox-ordem" onchange="renderRaioX()" class="lg:col-span-2 w-full py-2.5 px-3 rounded-xl bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-cyan-700 dark:text-cyan-400 font-extrabold shadow-sm cursor-pointer">
+                                        <select id="filtro-raiox-ordem" onchange="renderRaioX()" class="lg:col-span-2 w-full py-2.5 px-3 rounded-xl bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-cyan-700 dark:text-cyan-400 font-extrabold shadow-sm cursor-pointer hover:border-cyan-400 transition-colors">
                                             <option value="faturamento_desc">⬇️ Ordenar: Maior Faturamento</option>
                                             <option value="faturamento_asc">⬆️ Ordenar: Menor Faturamento</option>
                                             <option value="giro_desc">⬇️ Ordenar: Maior Volume (Giro)</option>
@@ -212,24 +284,24 @@
                                         </select>
                                     </div>
                                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                                        <select id="filtro-raiox-ads" onchange="renderRaioX()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer">
+                                        <select id="filtro-raiox-ads" onchange="renderRaioX()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer hover:border-cyan-400 transition-colors">
                                             <option value="todos">ADS: Todos</option>
                                             <option value="on">📢 ADS: Ligado</option>
                                             <option value="off">🔇 ADS: Desligado</option>
                                         </select>
-                                        <select id="filtro-raiox-cat" onchange="renderRaioX()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer">
+                                        <select id="filtro-raiox-cat" onchange="renderRaioX()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer hover:border-cyan-400 transition-colors">
                                             <option value="todos">Catálogo: Todos</option>
                                             <option value="sim">🏆 É Catálogo</option>
                                             <option value="nao">⚪ S/ Catálogo</option>
                                         </select>
-                                        <select id="filtro-raiox-margem" onchange="renderRaioX()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer">
+                                        <select id="filtro-raiox-margem" onchange="renderRaioX()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer hover:border-cyan-400 transition-colors">
                                             <option value="todos">Faixa de Margem: Todas</option>
                                             <option value="negativa">🔴 Negativa (< 0%)</option>
                                             <option value="baixa">🟡 Baixa (0% a 15%)</option>
                                             <option value="media">🔵 Média (15% a 30%)</option>
                                             <option value="alta">🟢 Alta (> 30%)</option>
                                         </select>
-                                        <select id="filtro-raiox-giro" onchange="renderRaioX()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer">
+                                        <select id="filtro-raiox-giro" onchange="renderRaioX()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer hover:border-cyan-400 transition-colors">
                                             <option value="todos">Faixa de Vendas: Todas</option>
                                             <option value="zero">Estagnado (0 un)</option>
                                             <option value="baixo">Baixo Giro (1 a 10 un)</option>
@@ -268,7 +340,7 @@
                         </div>
                         <div class="flex gap-4 w-full md:w-auto">
                             <button onclick="baixarModeloExcel()" class="px-6 py-3 bg-white/50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 hover:bg-white dark:hover:bg-slate-700 rounded-xl text-sm font-bold transition-all duration-300 shadow-sm whitespace-nowrap backdrop-blur-sm">Baixar Modelo</button>
-                            <label class="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-900 rounded-xl text-sm font-extrabold transition-all duration-300 shadow-[0_0_15px_rgba(16,185,129,0.4)] cursor-pointer whitespace-nowrap text-center flex-1 uppercase tracking-wide">
+                            <label class="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-900 rounded-xl text-sm font-extrabold transition-all duration-300 shadow-[0_0_15px_rgba(16,185,129,0.4)] cursor-pointer whitespace-nowrap text-center flex-1 uppercase tracking-wide hover:-translate-y-1">
                                 Enviar Planilha
                                 <input type="file" id="upload-excel" accept=".xlsx, .xls, .csv" class="hidden" onchange="processarPlanilha(event)">
                             </label>
@@ -280,11 +352,11 @@
                             <h3 class="text-xl font-extrabold text-blue-600 dark:text-blue-400 mb-2">Imposto Base</h3>
                             <p class="text-sm text-slate-500 dark:text-slate-400 mb-6 font-medium">Alíquota fiscal (Simples Nacional, Lucro Presumido) descontada da venda cheia.</p>
                             <div class="flex flex-col gap-3">
-                                <div class="relative">
-                                    <input type="number" id="input-imposto" placeholder="Ex: 6.0" step="0.1" class="w-full p-4 rounded-xl bg-white/50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 outline-none focus:ring-2 focus:ring-cyan-500 font-bold text-xl backdrop-blur-sm pl-4 pr-12">
-                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xl">%</span>
+                                <div class="relative group">
+                                    <input type="number" id="input-imposto" placeholder="Ex: 6.0" step="0.1" class="w-full p-4 rounded-xl bg-white/50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 outline-none focus:ring-2 focus:ring-cyan-500 font-bold text-xl backdrop-blur-sm pl-4 pr-12 transition-all">
+                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xl group-focus-within:text-cyan-500 transition-colors">%</span>
                                 </div>
-                                <button onclick="salvarImposto()" id="btn-imposto" class="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-extrabold transition-all duration-300 shadow-[0_0_15px_rgba(37,99,235,0.4)] uppercase tracking-wide">Gravar Alíquota</button>
+                                <button onclick="salvarImposto()" id="btn-imposto" class="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-extrabold transition-all duration-300 shadow-[0_0_15px_rgba(37,99,235,0.4)] uppercase tracking-wide hover:-translate-y-1">Gravar Alíquota</button>
                             </div>
                         </div>
 
@@ -338,7 +410,7 @@
                                 <h3 class="text-2xl font-extrabold flex items-center gap-3"><span class="text-3xl animate-pulse">📡</span> Radar Supply Chain</h3>
                                 <p class="text-sm text-slate-500 dark:text-slate-400 mt-1.5 font-medium">O algoritmo cruza o tempo de entrega do fornecedor com o seu giro diário para sugerir compras exatas para 30 dias.</p>
                             </div>
-                            <button onclick="gerarPedidoFornecedor()" class="px-6 py-3 bg-red-500 hover:bg-red-400 text-white font-extrabold rounded-xl transition-all shadow-[0_0_15px_rgba(239,68,68,0.4)] flex items-center gap-2 active:scale-95 uppercase tracking-wide text-sm">
+                            <button onclick="gerarPedidoFornecedor()" class="px-6 py-3 bg-red-500 hover:bg-red-400 text-white font-extrabold rounded-xl transition-all shadow-[0_0_15px_rgba(239,68,68,0.4)] flex items-center gap-2 active:scale-95 uppercase tracking-wide text-sm hover:-translate-y-1">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                                 Gerar Pedido (WhatsApp)
                             </button>
@@ -364,8 +436,8 @@
                     <div class="glass-card rounded-3xl w-full h-full min-h-[700px] animate-slide-up relative overflow-hidden border border-cyan-500/20 shadow-lg flex flex-col">
                         <div class="p-4 md:p-6 border-b border-slate-200/50 dark:border-slate-700/50 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md flex justify-between items-center z-10">
                             <h3 class="text-2xl font-extrabold flex items-center gap-3"><span class="w-2 h-6 bg-cyan-500 rounded-full"></span> Calculadora BLM</h3>
-                            <a href="https://calculadora-blm.vercel.app/" target="_blank" class="text-sm font-bold text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 transition-colors flex items-center gap-1.5">
-                                Abrir Externamente <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                            <a href="https://calculadora-blm.vercel.app/" target="_blank" class="text-sm font-bold text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 transition-colors flex items-center gap-1.5 group">
+                                Abrir Externamente <svg class="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                             </a>
                         </div>
                         <div class="flex-1 w-full relative z-0">
@@ -376,7 +448,7 @@
 
                 <div id="aba-diagnostico" class="hidden w-full">
                     <div class="glass-card rounded-3xl p-8 mb-8 w-full animate-slide-up relative overflow-hidden">
-                        <div class="absolute -right-20 -top-20 w-64 h-64 bg-fuchsia-500/10 rounded-full blur-3xl"></div>
+                        <div class="absolute -right-20 -top-20 w-64 h-64 bg-fuchsia-500/10 rounded-full blur-3xl animate-pulse"></div>
                         <div class="mb-8 relative z-10">
                             <h3 class="text-3xl font-extrabold flex items-center gap-3"><span class="w-3 h-8 bg-fuchsia-500 rounded-full"></span> Diagnóstico do Preço</h3>
                             <p class="text-sm text-slate-500 dark:text-slate-400 mt-2 font-medium max-w-2xl">A IA processou o *data lake* da sua conta para detectar anomalias de preço, potenciais de escala e riscos de margem subaquática.</p>
@@ -392,24 +464,24 @@
                             <p class="text-sm text-slate-500 dark:text-slate-400 mt-1.5 font-medium">Os produtos vitais que ancoram o seu faturamento. <b>A:</b> Puxam 80%. <b>B:</b> Até 95%. <b>C:</b> Long Tail 5%.</p>
                         </div>
                         
-                        <div class="mb-6 bg-white/40 dark:bg-slate-800/40 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-md shadow-sm">
+                        <div class="mb-6 bg-white/40 dark:bg-slate-800/40 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-md shadow-sm transition-all hover:border-amber-500/30 group">
                             <div class="flex items-center gap-2 mb-4">
-                                <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                                <svg class="w-4 h-4 text-amber-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
                                 <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Painel Master de Filtragem</span>
                             </div>
                             <div class="flex flex-col gap-3">
                                 <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
                                     <div class="lg:col-span-2 relative">
-                                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
-                                        <input type="text" id="filtro-abc-busca" onkeyup="renderCurvaABC()" placeholder="Buscar Produto ou SKU..." class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 transition-all text-slate-700 dark:text-slate-200 shadow-sm font-medium">
+                                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-amber-500">🔍</span>
+                                        <input type="text" id="filtro-abc-busca" onkeyup="renderCurvaABC()" placeholder="Buscar Produto ou SKU..." class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-amber-500 transition-all text-slate-700 dark:text-slate-200 shadow-sm font-medium">
                                     </div>
-                                    <select id="filtro-abc-classe" onchange="renderCurvaABC()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer">
+                                    <select id="filtro-abc-classe" onchange="renderCurvaABC()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-amber-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer hover:border-amber-400 transition-colors">
                                         <option value="todos">Classe ABC: Todas</option>
                                         <option value="A">⭐ Apenas Curva A (80%)</option>
                                         <option value="B">🟢 Apenas Curva B (15%)</option>
                                         <option value="C">⚪ Apenas Curva C (5%)</option>
                                     </select>
-                                    <select id="filtro-abc-ordem" onchange="renderCurvaABC()" class="lg:col-span-2 w-full py-2.5 px-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-sm outline-none focus:ring-2 focus:ring-amber-500 text-amber-700 dark:text-amber-400 font-extrabold shadow-sm cursor-pointer">
+                                    <select id="filtro-abc-ordem" onchange="renderCurvaABC()" class="lg:col-span-2 w-full py-2.5 px-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-sm outline-none focus:ring-2 focus:ring-amber-500 text-amber-700 dark:text-amber-400 font-extrabold shadow-sm cursor-pointer hover:border-amber-400 transition-colors">
                                         <option value="faturamento_desc">⬇️ Ordenar: Peso Financeiro (Fat)</option>
                                         <option value="giro_desc">⬇️ Ordenar: Volume (Unidades Vendidas)</option>
                                         <option value="ticket_desc">⬇️ Ordenar: Maior Ticket</option>
@@ -417,12 +489,12 @@
                                     </select>
                                 </div>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <select id="filtro-abc-ads" onchange="renderCurvaABC()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer">
+                                    <select id="filtro-abc-ads" onchange="renderCurvaABC()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-amber-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer hover:border-amber-400 transition-colors">
                                         <option value="todos">Filtro de ADS: Todos</option>
                                         <option value="on">📢 Somente com ADS Ligado</option>
                                         <option value="off">🔇 Somente com ADS Desligado</option>
                                     </select>
-                                    <select id="filtro-abc-cat" onchange="renderCurvaABC()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer">
+                                    <select id="filtro-abc-cat" onchange="renderCurvaABC()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-amber-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer hover:border-amber-400 transition-colors">
                                         <option value="todos">Filtro de Catálogo: Todos</option>
                                         <option value="sim">🏆 É de Catálogo</option>
                                         <option value="nao">⚪ Não é Catálogo</option>
@@ -453,7 +525,7 @@
                 <div id="aba-kits" class="hidden w-full">
                     <div class="glass-card rounded-2xl p-8 mb-8 w-full animate-slide-up border border-fuchsia-500/30 bg-gradient-to-r from-fuchsia-500/5 to-transparent">
                         <div class="mb-8">
-                            <h3 class="text-2xl font-extrabold flex items-center gap-3"><span class="text-fuchsia-500">🎁</span> Mapeador Inteligente de Kits (Bundling)</h3>
+                            <h3 class="text-2xl font-extrabold flex items-center gap-3"><span class="text-fuchsia-500 animate-bounce">🎁</span> Mapeador Inteligente de Kits (Bundling)</h3>
                             <p class="text-sm text-slate-500 dark:text-slate-400 mt-1.5 font-medium">A IA rastreou os carrinhos dos seus clientes. Estes são os produtos frequentemente comprados juntos. Crie anúncios de kits com eles para monopolizar a BuyBox, economizar no frete e aumentar o Ticket Médio.</p>
                         </div>
                         <div class="overflow-x-auto">
@@ -477,7 +549,7 @@
                     <div class="glass-card rounded-2xl p-8 mb-8 w-full max-w-5xl animate-slide-up border border-indigo-500/30">
                         <div class="flex justify-between items-center mb-8">
                             <h3 class="text-2xl font-extrabold flex items-center gap-3"><span class="text-indigo-500">🛡️</span> Terminal Root (Multi-Contas)</h3>
-                            <button onclick="carregarClientes()" class="px-5 py-2.5 bg-slate-200 dark:bg-slate-800 text-sm font-bold rounded-xl transition-all active:scale-95 shadow-sm uppercase tracking-wide">↻ Atualizar</button>
+                            <button onclick="carregarClientes()" class="px-5 py-2.5 bg-slate-200 dark:bg-slate-800 text-sm font-bold rounded-xl transition-all active:scale-95 shadow-sm uppercase tracking-wide hover:-translate-y-0.5">↻ Atualizar</button>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left text-sm whitespace-nowrap">
@@ -494,7 +566,7 @@
                     </div>
                 </div>
 
-                <footer class="w-full mt-10 pt-6 pb-2 text-center text-xs text-slate-400/80 font-bold uppercase tracking-widest animate-fade-in transition-colors html2pdf__page-break-avoid border-t border-slate-200/50 dark:border-slate-800/50">
+                <footer class="w-full mt-10 pt-6 pb-2 text-center text-xs text-slate-400/80 font-bold uppercase tracking-widest animate-fade-in transition-colors html2pdf__page-break-avoid border-t border-slate-200/50 dark:border-slate-800/50 relative z-10">
                     Desenvolvido por <a href="#" class="text-slate-500 dark:text-slate-300 hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors">Bruno Lima Marques</a>
                 </footer>
 
@@ -523,6 +595,31 @@
         let emailClienteAtivo = null;
 
         Chart.defaults.font.family = "'Outfit', sans-serif";
+
+        // --- SISTEMA DE MOTION DESIGN: Rastreamento do Mouse ---
+        document.getElementById('tela-dashboard').addEventListener('mousemove', e => {
+            for(const card of document.querySelectorAll('.glass-card')) {
+                const rect = card.getBoundingClientRect(), x = e.clientX - rect.left, y = e.clientY - rect.top;
+                card.style.setProperty("--mouse-x", `${x}px`);
+                card.style.setProperty("--mouse-y", `${y}px`);
+            }
+        });
+
+        // --- SISTEMA DE MOTION DESIGN: Animação de Números Fluida ---
+        function animarContador(id, endValue, prefix = '', suffix = '') {
+            const obj = document.getElementById(id);
+            if (!obj) return;
+            
+            // Efeito de "Scramble/Blur" leve no inicio da transição
+            obj.style.filter = "blur(2px)";
+            obj.style.transform = "scale(0.95)";
+            
+            setTimeout(() => {
+                obj.style.filter = "blur(0px)";
+                obj.style.transform = "scale(1)";
+                obj.textContent = prefix + endValue + suffix;
+            }, 150); // Troca super rápida mas orgânica
+        }
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -675,7 +772,30 @@
             gradientBar.addColorStop(0, 'rgba(34, 211, 238, 0.8)'); 
             gradientBar.addColorStop(1, 'rgba(59, 130, 246, 0.4)'); 
             
-            graficoInstancia = new Chart(ctx, { type: 'bar', data: { labels: dadosGrafico.labels, datasets: [{ label: 'Faturamento Bruto', data: dadosGrafico.faturamento, backgroundColor: gradientBar, borderColor: 'transparent', borderRadius: {topLeft: 6, topRight: 6}, hoverBackgroundColor: 'rgba(34, 211, 238, 1)', order: 2 }, { label: 'Lucro Extraído', data: dadosGrafico.lucro, type: 'line', borderColor: '#34D399', backgroundColor: 'rgba(52, 211, 153, 0.1)', fill: true, borderWidth: 4, tension: 0.4, pointRadius: 0, pointHoverRadius: 8, pointBackgroundColor: '#10B981', pointBorderColor: '#fff', pointBorderWidth: 2, order: 1 }] }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, scales: { y: { beginAtZero: true, grid: { color: gridColor, drawBorder: false }, ticks: { color: textColor, padding: 10, font: {family: 'Outfit', weight: '600'} } }, x: { grid: { display: false, drawBorder: false }, ticks: { color: textColor, padding: 10, font: {family: 'Outfit', weight: '600'} } } }, plugins: { legend: { labels: { color: textColor, font: { family: 'Outfit', weight: '700' }, usePointStyle: true, boxWidth: 8, padding: 20 } }, tooltip: { backgroundColor: isDark ? 'rgba(15,23,42,0.9)' : 'rgba(255,255,255,0.9)', titleColor: isDark ? '#f8fafc' : '#0f172a', bodyColor: isDark ? '#cbd5e1' : '#475569', titleFont: {family: 'Outfit', size: 14, weight: '800'}, bodyFont: {family: 'Outfit', size: 13, weight: '600'}, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', borderWidth: 1, padding: 16, boxPadding: 8, usePointStyle: true, cornerRadius: 12 } } } });
+            // Motion Design no Gráfico: Easing elástico suave
+            graficoInstancia = new Chart(ctx, { 
+                type: 'bar', 
+                data: { 
+                    labels: dadosGrafico.labels, 
+                    datasets: [
+                        { label: 'Faturamento Bruto', data: dadosGrafico.faturamento, backgroundColor: gradientBar, borderColor: 'transparent', borderRadius: {topLeft: 6, topRight: 6}, hoverBackgroundColor: 'rgba(34, 211, 238, 1)', order: 2 }, 
+                        { label: 'Lucro Extraído', data: dadosGrafico.lucro, type: 'line', borderColor: '#34D399', backgroundColor: 'rgba(52, 211, 153, 0.1)', fill: true, borderWidth: 4, tension: 0.4, pointRadius: 0, pointHoverRadius: 8, pointBackgroundColor: '#10B981', pointBorderColor: '#fff', pointBorderWidth: 2, order: 1 }
+                    ] 
+                }, 
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    animation: { duration: 1500, easing: 'easeOutQuart' }, // Efeito fluido
+                    interaction: { mode: 'index', intersect: false }, 
+                    scales: { 
+                        y: { beginAtZero: true, grid: { color: gridColor, drawBorder: false }, ticks: { color: textColor, padding: 10, font: {family: 'Outfit', weight: '600'} } }, 
+                        x: { grid: { display: false, drawBorder: false }, ticks: { color: textColor, padding: 10, font: {family: 'Outfit', weight: '600'} } } 
+                    }, 
+                    plugins: { 
+                        legend: { labels: { color: textColor, font: { family: 'Outfit', weight: '700' }, usePointStyle: true, boxWidth: 8, padding: 20 } }, 
+                        tooltip: { backgroundColor: isDark ? 'rgba(15,23,42,0.9)' : 'rgba(255,255,255,0.9)', titleColor: isDark ? '#f8fafc' : '#0f172a', bodyColor: isDark ? '#cbd5e1' : '#475569', titleFont: {family: 'Outfit', size: 14, weight: '800'}, bodyFont: {family: 'Outfit', size: 13, weight: '600'}, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', borderWidth: 1, padding: 16, boxPadding: 8, usePointStyle: true, cornerRadius: 12 } 
+                    } 
+                } 
+            });
         }
         
         function atualizarGraficoApenasCor() {
@@ -695,7 +815,8 @@
             const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
             const data = await res.json();
             
-            btn.innerText = "Gerar Dados"; btn.classList.remove('opacity-80', 'cursor-wait');
+            btn.innerHTML = `Gerar Dados <svg class="w-4 h-4 group-hover:rotate-180 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>`; 
+            btn.classList.remove('opacity-80', 'cursor-wait');
 
             if (res.status === 403) { 
                 if (uidClienteAtivo) { alert("Conexão com o ML ausente neste cliente."); voltarParaAdmin(); return; }
@@ -710,11 +831,13 @@
 
             document.getElementById('input-imposto').value = data.kpis.imposto_padrao;
             document.getElementById('lbl-periodo').textContent = "Dados Sincronizados: " + data.kpis.periodo_nome;
-            document.getElementById('kpi-unidades').textContent = data.kpis.unidades;
-            document.getElementById('kpi-fat').textContent = data.kpis.faturamento;
-            document.getElementById('kpi-lucro').textContent = data.kpis.lucro;
-            document.getElementById('kpi-ads').textContent = data.kpis.ads;
-            document.getElementById('kpi-alertas').textContent = data.kpis.alertas_criticos;
+            
+            // Applica Motion Design nos números (em vez de troca seca)
+            animarContador('kpi-unidades', data.kpis.unidades);
+            animarContador('kpi-fat', data.kpis.faturamento);
+            animarContador('kpi-lucro', data.kpis.lucro);
+            animarContador('kpi-ads', data.kpis.ads);
+            animarContador('kpi-alertas', data.kpis.alertas_criticos);
 
             atualizarGrafico(data.grafico);
 
@@ -749,24 +872,18 @@
 
             // Aplica Filtros
             let dadosFiltrados = dadosAPI.filter(row => {
-                // 1. Busca textual
                 if (termoBusca && !row.Produto.toLowerCase().includes(termoBusca) && !row.ID.toLowerCase().includes(termoBusca)) return false;
-                
-                // 2. Status do Alerta
                 if (filtroStatus !== 'todos') {
                     if (filtroStatus === 'saudavel' && !row.Status.includes('🔵')) return false;
                     if (filtroStatus === 'escalar' && !row.Status.includes('🟢')) return false;
                     if (filtroStatus === 'erro' && !row.Status.includes('🔴')) return false;
                     if (filtroStatus === 'alerta' && (!row.Status.includes('⚠️') && !row.Status.includes('🟡'))) return false;
                 }
-                
-                // 3. Flags Físicas
                 if (filtroAds === 'on' && !row.Ads_Ativo) return false;
                 if (filtroAds === 'off' && row.Ads_Ativo) return false;
                 if (filtroCat === 'sim' && !row.Is_Catalog) return false;
                 if (filtroCat === 'nao' && row.Is_Catalog) return false;
 
-                // 4. Faixa de Margem (%)
                 if(filtroMargem !== 'todos') {
                     const margemPct = row.Ticket_Medio > 0 ? (row.Margem_Contribuicao / row.Ticket_Medio) * 100 : 0;
                     if(filtroMargem === 'negativa' && margemPct >= 0) return false;
@@ -775,18 +892,16 @@
                     if(filtroMargem === 'alta' && margemPct < 30) return false;
                 }
 
-                // 5. Faixa de Giro
                 if(filtroGiro !== 'todos') {
                     if(filtroGiro === 'zero' && row.Giro !== 0) return false;
                     if(filtroGiro === 'baixo' && (row.Giro === 0 || row.Giro > 10)) return false;
                     if(filtroGiro === 'medio' && (row.Giro <= 10 || row.Giro > 50)) return false;
                     if(filtroGiro === 'alto' && row.Giro <= 50) return false;
                 }
-
                 return true;
             });
 
-            // Aplica Ordenação Universal
+            // Aplica Ordenação
             dadosFiltrados.sort((a, b) => {
                 const [campo, direcao] = filtroOrdem.split('_');
                 let valA = 0, valB = 0;
@@ -812,7 +927,7 @@
                 if(row.Status.includes('🔵')) statusColor = 'text-blue-600 dark:text-blue-400 font-extrabold';
                 
                 const p = row.Desconto_Max_Grafico; const cor = p > 15 ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' : (p > 5 ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]');
-                const espacoPromo = row.Sem_Custo ? `<span class="text-xs text-slate-500 font-bold uppercase tracking-wider">Aguardando CMV</span>` : `<div class="flex items-center gap-3"><div class="w-full bg-slate-200/50 dark:bg-slate-700/50 rounded-full h-1.5"><div class="${cor} h-1.5 rounded-full transition-all duration-1000 ease-out" style="width: ${Math.min(p, 100)}%"></div></div><span class="text-[10px] font-black tracking-widest">${p.toFixed(1)}%</span></div>`;
+                const espacoPromo = row.Sem_Custo ? `<span class="text-xs text-slate-500 font-bold uppercase tracking-wider">Aguardando CMV</span>` : `<div class="flex items-center gap-3"><div class="w-full bg-slate-200/50 dark:bg-slate-700/50 rounded-full h-1.5 overflow-hidden"><div class="${cor} h-1.5 rounded-full transition-all duration-1000 ease-out" style="width: ${Math.min(p, 100)}%"></div></div><span class="text-[10px] font-black tracking-widest">${p.toFixed(1)}%</span></div>`;
                 const margemValor = row.Sem_Custo ? `<span class="text-slate-500 text-xs font-bold uppercase tracking-wider">Pendente</span>` : `<span class="font-extrabold text-lg block tracking-tight">R$ ${row.Margem_Contribuicao.toFixed(2)}</span><span class="inline-block mt-0.5">${formatarTrend(row.MC_Trend)}</span>`;
 
                 const freteUn = (row.Custo_Frete / row.Giro).toFixed(2); 
@@ -821,7 +936,7 @@
                 const adsUn = row.Giro > 0 ? (row.Custo_ADS / row.Giro).toFixed(2) : '0.00';
 
                 const custosHTML = `
-                    <div class="flex flex-col gap-1.5 w-52 bg-slate-50/50 dark:bg-slate-800/30 p-2.5 rounded-lg border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-sm">
+                    <div class="flex flex-col gap-1.5 w-52 bg-slate-50/50 dark:bg-slate-800/30 p-2.5 rounded-lg border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-sm hover:border-cyan-500/30 transition-colors">
                         <div class="flex justify-between items-center text-[11px]"><span class="text-slate-500 font-semibold flex items-center gap-1.5">📦 CMV</span> <span class="font-bold text-slate-800 dark:text-slate-200">R$ ${row.Custo_CMV.toFixed(2)}</span></div>
                         <div class="flex justify-between items-center text-[11px]"><span class="text-slate-500 font-semibold flex items-center gap-1.5">🏷️ Tarifa ML</span> <span class="font-bold text-amber-600 dark:text-amber-400">R$ ${tarifaMLUn}</span></div>
                         <div class="flex justify-between items-center text-[11px]"><span class="text-slate-500 font-semibold flex items-center gap-1.5">🚚 Frete</span> <span class="font-bold text-slate-800 dark:text-slate-200">R$ ${freteUn}</span></div>
@@ -840,10 +955,11 @@
                         : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30">⚠️ Perde BuyBox</span>';
                 }
 
-                const animDelay = index * 0.04;
+                // Ajuste no delay para uma cascata fluida e elegante
+                const animDelay = Math.min(index * 0.05, 1.5); 
                 tbody.innerHTML += `
                     <tr class="border-b border-slate-100/50 dark:border-slate-800/50 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-colors animate-slide-up opacity-0" style="animation-delay: ${animDelay}s; animation-fill-mode: forwards;">
-                        <td class="py-5 align-middle"><p class="font-extrabold text-sm w-48 truncate text-slate-800 dark:text-slate-100" title="${row.Produto}">${row.Produto}</p><p class="text-[9px] font-bold uppercase tracking-widest text-slate-400 mt-1.5">SKU: <span class="select-all">${row.ID}</span></p></td>
+                        <td class="py-5 align-middle group cursor-default"><p class="font-extrabold text-sm w-48 truncate text-slate-800 dark:text-slate-100 group-hover:text-cyan-500 transition-colors" title="${row.Produto}">${row.Produto}</p><p class="text-[9px] font-bold uppercase tracking-widest text-slate-400 mt-1.5">SKU: <span class="select-all">${row.ID}</span></p></td>
                         <td class="py-5 align-middle"><span class="font-black text-lg text-slate-800 dark:text-white block tracking-tighter">R$ ${row.Faturamento.toFixed(2)}</span><span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 inline-flex items-center mt-1">${row.Giro} Vendas ${formatarTrend(row.Giro_Trend)}</span></td>
                         <td class="py-5 align-middle font-bold text-slate-700 dark:text-slate-300 tracking-wide">R$ ${row.Ticket_Medio.toFixed(2)}</td>
                         <td class="py-5 align-middle">${custosHTML}</td>
@@ -861,20 +977,17 @@
                 return;
             }
 
-            // Lê os filtros
             const termoBusca = document.getElementById('filtro-abc-busca') ? document.getElementById('filtro-abc-busca').value.toLowerCase() : '';
             const filtroClasse = document.getElementById('filtro-abc-classe') ? document.getElementById('filtro-abc-classe').value : 'todos';
             const filtroAds = document.getElementById('filtro-abc-ads') ? document.getElementById('filtro-abc-ads').value : 'todos';
             const filtroCat = document.getElementById('filtro-abc-cat') ? document.getElementById('filtro-abc-cat').value : 'todos';
             const filtroOrdem = document.getElementById('filtro-abc-ordem') ? document.getElementById('filtro-abc-ordem').value : 'faturamento_desc';
 
-            // Enriquece os dados ABC buscando o Giro na dadosAPI principal (Cross-reference invisível e instantâneo)
             let dadosEnriquecidos = dadosABC.map(row => {
                 const apiRow = dadosAPI.find(api => api.ID === row.ID);
                 return { ...row, Giro: apiRow ? apiRow.Giro : 0 };
             });
 
-            // Aplica os filtros
             let dadosFiltrados = dadosEnriquecidos.filter(row => {
                 if (termoBusca && !row.Produto.toLowerCase().includes(termoBusca) && !row.ID.toLowerCase().includes(termoBusca)) return false;
                 if (filtroClasse !== 'todos' && row.Classe !== filtroClasse) return false;
@@ -885,7 +998,6 @@
                 return true;
             });
 
-            // Aplica Ordenação
             dadosFiltrados.sort((a, b) => {
                 if (filtroOrdem === 'faturamento_desc') return b.Faturamento - a.Faturamento;
                 if (filtroOrdem === 'giro_desc') return b.Giro - a.Giro;
@@ -901,7 +1013,7 @@
 
             dadosFiltrados.forEach((row, index) => {
                 let corBadge = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
-                if(row.Classe === 'A') corBadge = 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30';
+                if(row.Classe === 'A') corBadge = 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.2)]';
                 else if(row.Classe === 'B') corBadge = 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600';
                 
                 const badgeAds = row.Ads_Ativo 
@@ -915,11 +1027,11 @@
                         : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30">⚠️ Perde BuyBox</span>';
                 }
 
-                const animDelay = index * 0.03;
+                const animDelay = Math.min(index * 0.05, 1.5);
                 tbody.innerHTML += `
                     <tr class="border-b border-slate-100/50 dark:border-slate-800/50 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-colors animate-slide-up opacity-0" style="animation-delay: ${animDelay}s; animation-fill-mode: forwards;">
-                        <td class="py-4 align-middle"><p class="font-bold text-sm w-56 truncate text-slate-800 dark:text-slate-200" title="${row.Produto}">${row.Produto}</p><p class="text-[10px] text-slate-400 uppercase tracking-widest mt-1">ID: ${row.ID}</p></td>
-                        <td class="py-4 align-middle"><span class="px-3 py-1 rounded-lg text-xs font-black shadow-sm ${corBadge}">Curva ${row.Classe}</span></td>
+                        <td class="py-4 align-middle group cursor-default"><p class="font-bold text-sm w-56 truncate text-slate-800 dark:text-slate-200 group-hover:text-amber-500 transition-colors" title="${row.Produto}">${row.Produto}</p><p class="text-[10px] text-slate-400 uppercase tracking-widest mt-1">ID: ${row.ID}</p></td>
+                        <td class="py-4 align-middle"><span class="px-3 py-1 rounded-lg text-xs font-black transition-all ${corBadge}">Curva ${row.Classe}</span></td>
                         <td class="py-4 align-middle whitespace-nowrap">${badgeAds}${badgeCat}</td>
                         <td class="py-4 align-middle font-bold text-slate-600 dark:text-slate-400">R$ ${(row.Ticket_Medio || 0).toFixed(2).replace('.',',')}</td>
                         <td class="py-4 align-middle font-black text-slate-700 dark:text-slate-300 text-lg">${row.Giro} <span class="text-[10px] uppercase font-bold text-slate-400">un</span></td>
@@ -937,21 +1049,21 @@
                 return;
             }
             dadosDiagnostico.forEach((diag, index) => {
-                let corBorder = 'border-amber-400/50 bg-amber-50/50 dark:bg-amber-900/20';
+                let corBorder = 'border-amber-400/50 bg-amber-50/50 dark:bg-amber-900/20 hover:border-amber-400/80';
                 let corTexto = 'text-amber-600 dark:text-amber-400';
                 let icone = '⚠️';
                 
                 if (diag.tipo === 'escala') {
-                    corBorder = 'border-blue-400/50 bg-blue-50/50 dark:bg-blue-900/20';
+                    corBorder = 'border-blue-400/50 bg-blue-50/50 dark:bg-blue-900/20 hover:border-blue-400/80';
                     corTexto = 'text-blue-600 dark:text-blue-400';
                     icone = '🚀';
                 } else if (diag.tipo === 'prejuizo') {
-                    corBorder = 'border-red-500/50 bg-red-50/50 dark:bg-red-900/20 shadow-[0_0_15px_rgba(239,68,68,0.15)]';
+                    corBorder = 'border-red-500/50 bg-red-50/50 dark:bg-red-900/20 hover:border-red-500/80 shadow-[0_0_15px_rgba(239,68,68,0.15)]';
                     corTexto = 'text-red-600 dark:text-red-400';
                     icone = '🔴';
                 }
 
-                container.innerHTML += `<div class="p-6 rounded-2xl border ${corBorder} hover:-translate-y-1 transition-all animate-slide-up opacity-0 backdrop-blur-md" style="animation-delay: ${index * 0.05}s; animation-fill-mode: forwards;">
+                container.innerHTML += `<div class="p-6 rounded-2xl border ${corBorder} transition-all duration-300 hover:-translate-y-2 hover:shadow-lg animate-slide-up opacity-0 backdrop-blur-md cursor-default" style="animation-delay: ${index * 0.1}s; animation-fill-mode: forwards;">
                     <div class="flex items-center gap-3 mb-3"><span class="text-2xl">${icone}</span><h4 class="font-extrabold tracking-tight text-lg ${corTexto}">${diag.titulo}</h4></div>
                     <p class="font-bold text-slate-800 dark:text-slate-200 text-sm mb-2 truncate" title="${diag.produto}">${diag.produto}</p>
                     <p class="text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed">${diag.mensagem}</p>
@@ -1076,11 +1188,11 @@
                 return;
             }
             dadosKits.forEach((row, index) => {
-                const animDelay = index * 0.05;
+                const animDelay = Math.min(index * 0.05, 1.5);
                 tbody.innerHTML += `
-                    <tr class="border-b border-slate-100/50 dark:border-slate-800/50 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-colors animate-slide-up opacity-0" style="animation-delay: ${animDelay}s; animation-fill-mode: forwards;">
-                        <td class="py-5 align-middle"><p class="font-bold text-sm w-56 truncate text-slate-800 dark:text-slate-200" title="${row.Produto_1}">${row.Produto_1}</p></td>
-                        <td class="py-5 align-middle"><p class="font-bold text-sm w-56 truncate text-slate-800 dark:text-slate-200" title="${row.Produto_2}">${row.Produto_2}</p></td>
+                    <tr class="border-b border-slate-100/50 dark:border-slate-800/50 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-colors animate-slide-up opacity-0 group" style="animation-delay: ${animDelay}s; animation-fill-mode: forwards;">
+                        <td class="py-5 align-middle"><p class="font-bold text-sm w-56 truncate text-slate-800 dark:text-slate-200 transition-colors group-hover:text-fuchsia-500" title="${row.Produto_1}">${row.Produto_1}</p></td>
+                        <td class="py-5 align-middle"><p class="font-bold text-sm w-56 truncate text-slate-800 dark:text-slate-200 transition-colors group-hover:text-fuchsia-500" title="${row.Produto_2}">${row.Produto_2}</p></td>
                         <td class="py-5 align-middle text-center"><span class="px-4 py-1.5 bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400 border border-fuchsia-500/30 rounded-lg text-sm font-black shadow-sm">${row.Frequencia}x</span></td>
                         <td class="py-5 align-middle font-bold text-slate-500 line-through decoration-slate-400/50">R$ ${row.Preco_Somado.toFixed(2)}</td>
                         <td class="py-5 align-middle font-black text-fuchsia-600 dark:text-fuchsia-400 text-lg">R$ ${row.Sugestao_Kit.toFixed(2)}</td>
@@ -1099,18 +1211,18 @@
                 let corStatus = isCritico ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.2)] animate-pulse' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30';
                 let textoStatus = isCritico ? '⚠️ Pedir Fornecedor' : `Seguro por ${row.Dias_Restantes}d`;
                 
-                const animDelay = index * 0.04;
+                const animDelay = Math.min(index * 0.05, 1.5);
                 tbody.innerHTML += `
                     <tr class="border-b border-slate-100/50 dark:border-slate-800/50 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-colors animate-slide-up opacity-0" style="animation-delay: ${animDelay}s; animation-fill-mode: forwards;">
                         <td class="py-5 align-middle"><p class="font-bold text-sm w-56 truncate text-slate-800 dark:text-slate-200" title="${row.Produto}">${row.Produto}</p><p class="text-[10px] text-slate-400 uppercase tracking-widest mt-1">ID: ${row.ID}</p></td>
                         <td class="py-5 align-middle font-black text-slate-700 dark:text-slate-300 tracking-tight">${row.Giro_Diario} un/dia</td>
                         <td class="py-5 align-middle">
                             <div class="flex items-center gap-2">
-                                <input type="number" id="lt-${row.ID}" value="${row.Lead_Time}" class="w-16 p-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-center text-sm font-bold outline-none focus:ring-2 focus:ring-cyan-500">
-                                <button onclick="salvarLeadTime('${row.ID}')" id="btn-lt-${row.ID}" class="px-3 py-2 bg-slate-200/50 dark:bg-slate-800/50 hover:bg-cyan-500/20 text-slate-600 dark:text-slate-300 hover:text-cyan-600 rounded-lg text-xs font-bold transition-all">OK</button>
+                                <input type="number" id="lt-${row.ID}" value="${row.Lead_Time}" class="w-16 p-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-center text-sm font-bold outline-none focus:ring-2 focus:ring-cyan-500 transition-all focus:scale-105">
+                                <button onclick="salvarLeadTime('${row.ID}')" id="btn-lt-${row.ID}" class="px-3 py-2 bg-slate-200/50 dark:bg-slate-800/50 hover:bg-cyan-500/20 text-slate-600 dark:text-slate-300 hover:text-cyan-600 rounded-lg text-xs font-bold transition-all active:scale-95">OK</button>
                             </div>
                         </td>
-                        <td class="py-5 align-middle"><span class="px-3 py-1.5 rounded-lg text-[10px] uppercase tracking-widest font-black shadow-sm ${corStatus}">${textoStatus}</span><p class="text-[10px] text-slate-500 mt-1 font-bold ml-1">${row.Estoque} un. físicas</p></td>
+                        <td class="py-5 align-middle"><span class="px-3 py-1.5 rounded-lg text-[10px] uppercase tracking-widest font-black shadow-sm transition-all ${corStatus}">${textoStatus}</span><p class="text-[10px] text-slate-500 mt-1 font-bold ml-1">${row.Estoque} un. físicas</p></td>
                         <td class="py-5 align-middle font-black text-cyan-600 dark:text-cyan-400 text-lg">${row.Sugestao_Compra} <span class="text-xs text-slate-400 uppercase tracking-widest font-bold">un</span></td>
                     </tr>`;
             });
@@ -1120,12 +1232,12 @@
             const tbody = document.getElementById('tabela-custos'); tbody.innerHTML = '';
             dadosAPI.forEach((row, index) => {
                 const borderClass = row.Sem_Custo ? 'border-amber-500/50 bg-amber-500/10 focus:ring-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'border-slate-300/50 dark:border-slate-600/50 bg-white/50 dark:bg-slate-800/50 focus:ring-cyan-500 backdrop-blur-sm';
-                const animDelay = index * 0.02;
+                const animDelay = Math.min(index * 0.03, 1.5);
                 tbody.innerHTML += `
                     <tr class="border-b border-slate-100/50 dark:border-slate-800/50 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-colors animate-slide-up opacity-0" style="animation-delay: ${animDelay}s; animation-fill-mode: forwards;">
                         <td class="py-4 align-middle"><p class="font-bold text-sm w-72 truncate text-slate-800 dark:text-slate-200" title="${row.Produto}">${row.Produto}</p><p class="text-[10px] text-slate-400 uppercase tracking-widest mt-1.5">ID: <span class="select-all">${row.ID}</span></p></td>
-                        <td class="py-4 align-middle"><div class="relative w-36"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">R$</span><input type="number" id="custo-${row.ID}" value="${row.Custo_CMV}" step="0.01" class="w-full p-3 pl-9 rounded-xl border ${borderClass} text-slate-900 dark:text-white outline-none focus:ring-2 transition-all font-bold text-base"></div></td>
-                        <td class="py-4 align-middle"><button onclick="salvarCusto('${row.ID}')" id="btn-salvar-${row.ID}" class="px-5 py-3 bg-slate-200/80 dark:bg-slate-700/80 border border-slate-300/50 dark:border-slate-600/50 hover:border-cyan-500/50 hover:bg-cyan-500/10 text-slate-800 dark:text-slate-200 hover:text-cyan-600 dark:hover:text-cyan-400 rounded-xl text-xs transition-all duration-300 active:scale-95 font-extrabold uppercase tracking-wider backdrop-blur-sm shadow-sm">Salvar</button></td>
+                        <td class="py-4 align-middle"><div class="relative w-36 group"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm group-focus-within:text-cyan-500 transition-colors">R$</span><input type="number" id="custo-${row.ID}" value="${row.Custo_CMV}" step="0.01" class="w-full p-3 pl-9 rounded-xl border ${borderClass} text-slate-900 dark:text-white outline-none focus:ring-2 transition-all font-bold text-base hover:border-cyan-400"></div></td>
+                        <td class="py-4 align-middle"><button onclick="salvarCusto('${row.ID}')" id="btn-salvar-${row.ID}" class="px-5 py-3 bg-slate-200/80 dark:bg-slate-700/80 border border-slate-300/50 dark:border-slate-600/50 hover:border-cyan-500/50 hover:bg-cyan-500/10 text-slate-800 dark:text-slate-200 hover:text-cyan-600 dark:hover:text-cyan-400 rounded-xl text-xs transition-all duration-300 active:scale-95 font-extrabold uppercase tracking-wider backdrop-blur-sm shadow-sm hover:-translate-y-0.5">Salvar</button></td>
                     </tr>`;
             });
         };
@@ -1137,21 +1249,77 @@
                 return;
             }
             dadosEstoque.forEach((row, index) => {
-                const animDelay = index * 0.04;
+                const animDelay = Math.min(index * 0.05, 1.5);
                 const alertaAds = row.Gasto_Ads > 0 
                     ? `<span class="px-3 py-1.5 bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 rounded-lg text-[11px] font-black shadow-sm animate-pulse">R$ ${row.Gasto_Ads.toFixed(2)}</span>`
                     : `<span class="text-slate-400 text-[10px] font-bold">R$ 0.00</span>`;
 
                 tbody.innerHTML += `
-                    <tr class="border-b border-slate-100/50 dark:border-slate-800/50 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-colors animate-slide-up opacity-0" style="animation-delay: ${animDelay}s; animation-fill-mode: forwards;">
-                        <td class="py-5 align-middle"><p class="font-bold text-sm w-64 truncate text-slate-800 dark:text-slate-200" title="${row.Produto}">${row.Produto}</p><p class="text-[10px] text-slate-400 uppercase tracking-widest mt-1.5">ID: <span class="select-all">${row.ID}</span></p></td>
+                    <tr class="border-b border-slate-100/50 dark:border-slate-800/50 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-colors animate-slide-up opacity-0 group" style="animation-delay: ${animDelay}s; animation-fill-mode: forwards;">
+                        <td class="py-5 align-middle"><p class="font-bold text-sm w-64 truncate text-slate-800 dark:text-slate-200 transition-colors group-hover:text-cyan-500" title="${row.Produto}">${row.Produto}</p><p class="text-[10px] text-slate-400 uppercase tracking-widest mt-1.5">ID: <span class="select-all">${row.ID}</span></p></td>
                         <td class="py-5 align-middle font-extrabold text-slate-700 dark:text-slate-300 tracking-tight">R$ ${row.Preco.toFixed(2)}</td>
                         <td class="py-5 align-middle"><span class="px-3 py-1.5 bg-slate-200/50 dark:bg-slate-700/50 border border-slate-300/50 dark:border-slate-600/50 text-slate-700 dark:text-slate-300 rounded-lg text-[10px] uppercase tracking-widest font-black shadow-sm backdrop-blur-sm">${row.Disponivel} Uni.</span></td>
                         <td class="py-5 align-middle">${alertaAds}</td>
-                        <td class="py-5 align-middle text-center"><a href="${row.Link}" target="_blank" class="px-5 py-2.5 bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 rounded-xl text-xs transition-all duration-300 font-extrabold uppercase tracking-wider inline-block">Ver Anúncio</a></td>
+                        <td class="py-5 align-middle text-center"><a href="${row.Link}" target="_blank" class="px-5 py-2.5 bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 rounded-xl text-xs transition-all duration-300 font-extrabold uppercase tracking-wider inline-block hover:-translate-y-0.5">Ver Anúncio</a></td>
                     </tr>`;
             });
         };
+
+        // --- SISTEMA DE MOTION DESIGN: Partículas Background (Data Flow) ---
+        function initParticles() {
+            const canvas = document.getElementById('particles-bg');
+            const ctx = canvas.getContext('2d');
+            let particlesArray = [];
+            
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            class Particle {
+                constructor() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = canvas.height + Math.random() * canvas.height;
+                    this.size = Math.random() * 2 + 0.5;
+                    this.speedY = Math.random() * -0.5 - 0.1;
+                    this.speedX = (Math.random() - 0.5) * 0.3;
+                    this.opacity = Math.random() * 0.5 + 0.1;
+                }
+                update() {
+                    this.y += this.speedY;
+                    this.x += this.speedX;
+                    if (this.y < 0) {
+                        this.y = canvas.height;
+                        this.x = Math.random() * canvas.width;
+                    }
+                }
+                draw() {
+                    const isDark = document.documentElement.classList.contains('dark');
+                    ctx.fillStyle = isDark ? `rgba(56, 189, 248, ${this.opacity})` : `rgba(15, 23, 42, ${this.opacity})`;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            for (let i = 0; i < 60; i++) particlesArray.push(new Particle());
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                for (let i = 0; i < particlesArray.length; i++) {
+                    particlesArray[i].update();
+                    particlesArray[i].draw();
+                }
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+        
+        // Inicia partículas após o carregamento
+        setTimeout(initParticles, 500);
+
     </script>
 </body>
 </html>

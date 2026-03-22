@@ -39,10 +39,8 @@
             background-image: radial-gradient(circle at top right, rgba(30,58,138,0.08), transparent 40%), radial-gradient(circle at bottom left, rgba(16,185,129,0.04), transparent 40%); 
         }
         
-        /* Sistema de Partículas Canvas no Fundo */
         #particles-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; opacity: 0.6; }
 
-        /* Efeito Glassmorphism Premium com Mouse Tracking */
         .glass-card { 
             background: rgba(255, 255, 255, 0.8); 
             backdrop-filter: blur(20px); 
@@ -65,7 +63,6 @@
             box-shadow: 0 10px 40px 0 rgba(0,0,0,0.4); 
         }
 
-        /* Efeito de Luz Magnética (Injetado via JS no hover) */
         .glass-card::before {
             content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: inherit;
             background: radial-gradient(600px circle at var(--mouse-x, -500px) var(--mouse-y, -500px), rgba(56, 189, 248, 0.12), transparent 40%);
@@ -82,7 +79,6 @@
             transform: translateY(-4px);
         }
         
-        /* Menus Ativos */
         .menu-ativo { background: linear-gradient(90deg, rgba(56,189,248,0.1) 0%, transparent 100%); color: #0F172A; border-left: 4px solid #38BDF8; font-weight: 700; position: relative; overflow: hidden; }
         .menu-ativo::after { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 100%; background: linear-gradient(90deg, rgba(56,189,248,0.2), transparent); transform: translateX(-100%); animation: shine 2.5s infinite; pointer-events: none; }
         @keyframes shine { 100% { transform: translateX(100%); } }
@@ -93,17 +89,14 @@
         .menu-inativo:hover { color: #0F172A; padding-left: 1.75rem; }
         .dark .menu-inativo:hover { color: #E2E8F0; padding-left: 1.75rem; }
         
-        /* Elementos de UI fluidos */
         input, select, button { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
         select:hover { transform: scale(1.02); }
         
-        /* Scrollbar Cyberpunk */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.3); border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(56, 189, 248, 0.6); }
 
-        /* Garante que o conteúdo fique por cima do efeito de luz do card */
         .glass-card > * { position: relative; z-index: 1; }
     </style>
 </head>
@@ -126,7 +119,9 @@
 
     <div id="tela-conectar-ml" class="flex w-full h-full items-center justify-center hidden animate-fade-in">
         <div class="glass-card p-12 rounded-3xl w-full max-w-lg text-center hover:shadow-2xl">
-            <div class="text-6xl mb-6 animate-bounce drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]">⚡</div>
+            <div class="mb-6 flex justify-center animate-bounce drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]">
+                <svg class="w-16 h-16 text-yellow-400" fill="currentColor" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            </div>
             <h2 class="text-3xl font-extrabold mb-2 tracking-tight">Sincronização Ativa</h2>
             <p class="text-slate-500 dark:text-slate-400 mb-8 font-medium">Conecte a API do Mercado Livre para ligar o motor do Irving.</p>
             <button onclick="iniciarAuthML()" class="w-full py-4 bg-yellow-400 hover:bg-yellow-300 text-yellow-950 font-extrabold rounded-xl transition-all duration-300 active:scale-95 shadow-[0_0_20px_rgba(250,204,21,0.4)] uppercase tracking-wider">Autorizar Mercado Livre</button>
@@ -158,19 +153,37 @@
                 </div>
 
                 <nav class="flex flex-col gap-1 mt-2 pb-6 px-4 relative z-10">
-                    <button onclick="mudarAba('visao_geral')" id="btn-visao_geral" class="menu-ativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">📊 Visão Central</button>
-                    <button onclick="mudarAba('custos')" id="btn-custos" class="menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">💰 Engine de Custos</button>
-                    <button onclick="mudarAba('estoque')" id="btn-estoque" class="menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">📦 Inventário Parado</button>
-                    <button onclick="mudarAba('radar')" id="btn-radar" class="menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">📡 Radar Supply Chain</button>
+                    <button onclick="mudarAba('visao_geral')" id="btn-visao_geral" class="menu-ativo flex items-center gap-3 text-left px-6 py-3.5 rounded-xl transition-all duration-300">
+                        <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg> Visão Central
+                    </button>
+                    <button onclick="mudarAba('custos')" id="btn-custos" class="menu-inativo flex items-center gap-3 text-left px-6 py-3.5 rounded-xl transition-all duration-300">
+                        <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Engine de Custos
+                    </button>
+                    <button onclick="mudarAba('estoque')" id="btn-estoque" class="menu-inativo flex items-center gap-3 text-left px-6 py-3.5 rounded-xl transition-all duration-300">
+                        <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7.523l-6.677 3.633M12 11.156l-6.677-3.633M12 11.156V19.6m0-8.444L3.323 7.523C2.527 7.087 2 6.273 2 5.385v-.06a2.003 2.003 0 012.825-1.841L12 6.75l7.175-3.266A2.003 2.003 0 0122 5.326v.06c0 .888-.527 1.702-1.323 2.138z"></path></svg> Inventário Parado
+                    </button>
+                    <button onclick="mudarAba('radar')" id="btn-radar" class="menu-inativo flex items-center gap-3 text-left px-6 py-3.5 rounded-xl transition-all duration-300">
+                        <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 011.06 0z"></path></svg> Radar Supply Chain
+                    </button>
                     
                     <div class="my-3 border-t border-slate-200/50 dark:border-slate-800/50 mx-4"></div>
                     
-                    <button onclick="mudarAba('calculadora')" id="btn-calculadora" class="menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">🧮 Calculadora BLM</button>
-                    <button onclick="mudarAba('diagnostico')" id="btn-diagnostico" class="menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">🧠 Diagnóstico do Preço</button>
-                    <button onclick="mudarAba('abc')" id="btn-abc" class="menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">📈 Curva ABC</button>
-                    <button onclick="mudarAba('kits')" id="btn-kits" class="menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300">🎁 Mapeador de Kits</button>
+                    <button onclick="mudarAba('calculadora')" id="btn-calculadora" class="menu-inativo flex items-center gap-3 text-left px-6 py-3.5 rounded-xl transition-all duration-300">
+                        <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 15.75V21m-7.5-5.25h7.5m-7.5-3h7.5m-7.5-3h7.5m-7.5-3h7.5m-7.5-3h7.5M4.5 3h15a2.25 2.25 0 012.25 2.25v15a2.25 2.25 0 01-2.25 2.25h-15A2.25 2.25 0 012.25 20.25v-15A2.25 2.25 0 014.5 3z"></path></svg> Calculadora BLM
+                    </button>
+                    <button onclick="mudarAba('diagnostico')" id="btn-diagnostico" class="menu-inativo flex items-center gap-3 text-left px-6 py-3.5 rounded-xl transition-all duration-300">
+                        <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"></path></svg> Diagnóstico do Preço
+                    </button>
+                    <button onclick="mudarAba('abc')" id="btn-abc" class="menu-inativo flex items-center gap-3 text-left px-6 py-3.5 rounded-xl transition-all duration-300">
+                        <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"></path></svg> Curva ABC
+                    </button>
+                    <button onclick="mudarAba('kits')" id="btn-kits" class="menu-inativo flex items-center gap-3 text-left px-6 py-3.5 rounded-xl transition-all duration-300">
+                        <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 109.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1114.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"></path></svg> Mapeador de Kits
+                    </button>
 
-                    <button onclick="mudarAba('clientes')" id="btn-clientes" class="hidden menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300 border-t border-slate-200/50 dark:border-slate-800/50 mt-3">👥 Terminal Master</button>
+                    <button onclick="mudarAba('clientes')" id="btn-clientes" class="hidden menu-inativo flex items-center gap-3 text-left px-6 py-3.5 rounded-xl transition-all duration-300 border-t border-slate-200/50 dark:border-slate-800/50 mt-3">
+                        <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"></path></svg> Terminal Master
+                    </button>
                 </nav>
             </div>
             <div class="p-8 border-t border-slate-200/50 dark:border-slate-800/50">
@@ -209,7 +222,7 @@
                     </button>
 
                     <button onclick="toggleWarRoom()" title="Modo War Room (Fullscreen)" class="p-2.5 rounded-xl border border-slate-300/50 dark:border-slate-700/50 bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 transition-all duration-300 active:scale-95 group backdrop-blur-md hover:-translate-y-0.5 shadow-sm">
-                        <span class="text-lg leading-none group-hover:scale-110 inline-block transition-transform">📺</span>
+                        <svg class="w-5 h-5 text-slate-700 dark:text-slate-200 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                     </button>
                 </div>
             </header>
@@ -259,47 +272,47 @@
                                 <div class="flex flex-col gap-3">
                                     <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
                                         <div class="lg:col-span-2 relative">
-                                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-cyan-500">🔍</span>
+                                            <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                                             <input type="text" id="filtro-raiox-busca" onkeyup="renderRaioX()" placeholder="Buscar Produto ou SKU..." class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 transition-all text-slate-700 dark:text-slate-200 shadow-sm font-medium">
                                         </div>
                                         <select id="filtro-raiox-status" onchange="renderRaioX()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer hover:border-cyan-400 transition-colors">
                                             <option value="todos">Qualquer Status</option>
-                                            <option value="saudavel">🔵 Saudável</option>
-                                            <option value="escalar">🟢 Escalar ADS</option>
-                                            <option value="alerta">⚠️ Alerta Margem/CMV</option>
-                                            <option value="erro">🔴 Erro de Preço</option>
+                                            <option value="saudavel">Saudável (Ideal)</option>
+                                            <option value="escalar">Escalar ADS</option>
+                                            <option value="alerta">Alerta Margem/CMV</option>
+                                            <option value="erro">Erro de Preço</option>
                                         </select>
                                         <select id="filtro-raiox-ordem" onchange="renderRaioX()" class="lg:col-span-2 w-full py-2.5 px-3 rounded-xl bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-cyan-700 dark:text-cyan-400 font-extrabold shadow-sm cursor-pointer hover:border-cyan-400 transition-colors">
-                                            <option value="faturamento_desc">⬇️ Ordenar: Maior Faturamento</option>
-                                            <option value="faturamento_asc">⬆️ Ordenar: Menor Faturamento</option>
-                                            <option value="giro_desc">⬇️ Ordenar: Maior Volume (Giro)</option>
-                                            <option value="giro_asc">⬆️ Ordenar: Menor Volume (Giro)</option>
-                                            <option value="margem_desc">⬇️ Ordenar: Maior Margem (R$)</option>
-                                            <option value="margem_asc">⬆️ Ordenar: Menor Margem (R$)</option>
-                                            <option value="ticket_desc">⬇️ Ordenar: Maior Ticket Médio</option>
-                                            <option value="ticket_asc">⬆️ Ordenar: Menor Ticket Médio</option>
-                                            <option value="promo_desc">⬇️ Ordenar: Maior Promo Limit</option>
-                                            <option value="frete_desc">⬇️ Ordenar: Maior Custo de Frete</option>
-                                            <option value="tarifa_desc">⬇️ Ordenar: Maior Tarifa ML</option>
+                                            <option value="faturamento_desc">Ordenar: Maior Faturamento</option>
+                                            <option value="faturamento_asc">Ordenar: Menor Faturamento</option>
+                                            <option value="giro_desc">Ordenar: Maior Volume (Giro)</option>
+                                            <option value="giro_asc">Ordenar: Menor Volume (Giro)</option>
+                                            <option value="margem_desc">Ordenar: Maior Margem (R$)</option>
+                                            <option value="margem_asc">Ordenar: Menor Margem (R$)</option>
+                                            <option value="ticket_desc">Ordenar: Maior Ticket Médio</option>
+                                            <option value="ticket_asc">Ordenar: Menor Ticket Médio</option>
+                                            <option value="promo_desc">Ordenar: Maior Promo Limit</option>
+                                            <option value="frete_desc">Ordenar: Maior Custo de Frete</option>
+                                            <option value="tarifa_desc">Ordenar: Maior Tarifa ML</option>
                                         </select>
                                     </div>
                                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                                         <select id="filtro-raiox-ads" onchange="renderRaioX()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer hover:border-cyan-400 transition-colors">
                                             <option value="todos">ADS: Todos</option>
-                                            <option value="on">📢 ADS: Ligado</option>
-                                            <option value="off">🔇 ADS: Desligado</option>
+                                            <option value="on">ADS: Ligado</option>
+                                            <option value="off">ADS: Desligado</option>
                                         </select>
                                         <select id="filtro-raiox-cat" onchange="renderRaioX()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer hover:border-cyan-400 transition-colors">
                                             <option value="todos">Catálogo: Todos</option>
-                                            <option value="sim">🏆 É Catálogo</option>
-                                            <option value="nao">⚪ S/ Catálogo</option>
+                                            <option value="sim">É Catálogo</option>
+                                            <option value="nao">S/ Catálogo</option>
                                         </select>
                                         <select id="filtro-raiox-margem" onchange="renderRaioX()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer hover:border-cyan-400 transition-colors">
                                             <option value="todos">Faixa de Margem: Todas</option>
-                                            <option value="negativa">🔴 Negativa (< 0%)</option>
-                                            <option value="baixa">🟡 Baixa (0% a 15%)</option>
-                                            <option value="media">🔵 Média (15% a 30%)</option>
-                                            <option value="alta">🟢 Alta (> 30%)</option>
+                                            <option value="negativa">Negativa (< 0%)</option>
+                                            <option value="baixa">Baixa (0% a 15%)</option>
+                                            <option value="media">Média (15% a 30%)</option>
+                                            <option value="alta">Alta (> 30%)</option>
                                         </select>
                                         <select id="filtro-raiox-giro" onchange="renderRaioX()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-cyan-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer hover:border-cyan-400 transition-colors">
                                             <option value="todos">Faixa de Vendas: Todas</option>
@@ -382,7 +395,7 @@
                     <div class="glass-card rounded-2xl p-8 mb-8 w-full animate-slide-up">
                         <div class="flex justify-between items-center mb-6">
                             <div>
-                                <h3 class="text-2xl font-extrabold flex items-center gap-3"><span class="w-2 h-6 bg-slate-400 rounded-full"></span> Inventário Paralisado</h3>
+                                <h3 class="text-2xl font-extrabold flex items-center gap-3"><span class="w-2 h-6 bg-slate-400 rounded-full"></span> Inventário Parado</h3>
                                 <p class="text-sm text-slate-500 dark:text-slate-400 mt-1.5 font-medium">Anúncios ativos que não geraram vendas no período. Descubra quais estão a drenar o seu orçamento de ADS sem dar retorno.</p>
                             </div>
                         </div>
@@ -407,12 +420,15 @@
                     <div class="glass-card rounded-2xl p-8 mb-8 w-full animate-slide-up border border-red-500/20 bg-gradient-to-b from-red-500/5 to-transparent">
                         <div class="flex justify-between items-center mb-8 flex-wrap gap-4">
                             <div>
-                                <h3 class="text-2xl font-extrabold flex items-center gap-3"><span class="text-3xl animate-pulse">📡</span> Radar Supply Chain</h3>
+                                <h3 class="text-2xl font-extrabold flex items-center gap-3">
+                                    <svg class="w-8 h-8 text-red-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 011.06 0z"></path></svg>
+                                    Radar Supply Chain
+                                </h3>
                                 <p class="text-sm text-slate-500 dark:text-slate-400 mt-1.5 font-medium">O algoritmo cruza o tempo de entrega do fornecedor com o seu giro diário para sugerir compras exatas para 30 dias.</p>
                             </div>
                             <button onclick="gerarPedidoFornecedor()" class="px-6 py-3 bg-red-500 hover:bg-red-400 text-white font-extrabold rounded-xl transition-all shadow-[0_0_15px_rgba(239,68,68,0.4)] flex items-center gap-2 active:scale-95 uppercase tracking-wide text-sm hover:-translate-y-1">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                                Gerar Pedido (WhatsApp)
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 0C5.385 0 0 5.385 0 12.031c0 2.126.551 4.197 1.6 6.022L.15 24l6.101-1.428c1.761.947 3.75 1.447 5.78 1.447 6.646 0 12.031-5.385 12.031-12.031S18.677 0 12.031 0zm4.276 17.15c-.172.483-.984.922-1.42.966-.41.04-.984.143-3.23-.787-2.7-1.115-4.43-3.864-4.562-4.04-.131-.176-1.088-1.45-1.088-2.766 0-1.317.683-1.967.926-2.23.243-.263.528-.328.704-.328.176 0 .352 0 .506.007.161.007.375-.06.574.42.206.495.704 1.725.768 1.855.064.131.106.284.02.46-.085.176-.131.284-.263.438-.132.153-.277.337-.395.46-.131.143-.273.298-.12.56.152.263.678 1.12 1.454 1.815.998.892 1.84 1.173 2.103 1.304.263.131.417.11.57-.06.153-.171.658-.768.834-1.031.176-.263.351-.22.594-.132.243.088 1.536.725 1.799.856.263.131.44.197.505.306.065.11.065.636-.107 1.119z"/></svg>
+                                Gerar Pedido
                             </button>
                         </div>
                         <div class="overflow-x-auto">
@@ -472,32 +488,32 @@
                             <div class="flex flex-col gap-3">
                                 <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
                                     <div class="lg:col-span-2 relative">
-                                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-amber-500">🔍</span>
+                                        <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                                         <input type="text" id="filtro-abc-busca" onkeyup="renderCurvaABC()" placeholder="Buscar Produto ou SKU..." class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-amber-500 transition-all text-slate-700 dark:text-slate-200 shadow-sm font-medium">
                                     </div>
                                     <select id="filtro-abc-classe" onchange="renderCurvaABC()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-amber-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer hover:border-amber-400 transition-colors">
                                         <option value="todos">Classe ABC: Todas</option>
-                                        <option value="A">⭐ Apenas Curva A (80%)</option>
-                                        <option value="B">🟢 Apenas Curva B (15%)</option>
-                                        <option value="C">⚪ Apenas Curva C (5%)</option>
+                                        <option value="A">[A] Apenas Curva A (80%)</option>
+                                        <option value="B">[B] Apenas Curva B (15%)</option>
+                                        <option value="C">[C] Apenas Curva C (5%)</option>
                                     </select>
                                     <select id="filtro-abc-ordem" onchange="renderCurvaABC()" class="lg:col-span-2 w-full py-2.5 px-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-sm outline-none focus:ring-2 focus:ring-amber-500 text-amber-700 dark:text-amber-400 font-extrabold shadow-sm cursor-pointer hover:border-amber-400 transition-colors">
-                                        <option value="faturamento_desc">⬇️ Ordenar: Peso Financeiro (Fat)</option>
-                                        <option value="giro_desc">⬇️ Ordenar: Volume (Unidades Vendidas)</option>
-                                        <option value="ticket_desc">⬇️ Ordenar: Maior Ticket</option>
-                                        <option value="percentual_desc">⬇️ Ordenar: Maior % do Todo</option>
+                                        <option value="faturamento_desc">Ordenar: Peso Financeiro (Fat)</option>
+                                        <option value="giro_desc">Ordenar: Volume (Unidades Vendidas)</option>
+                                        <option value="ticket_desc">Ordenar: Maior Ticket</option>
+                                        <option value="percentual_desc">Ordenar: Maior % do Todo</option>
                                     </select>
                                 </div>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <select id="filtro-abc-ads" onchange="renderCurvaABC()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-amber-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer hover:border-amber-400 transition-colors">
                                         <option value="todos">Filtro de ADS: Todos</option>
-                                        <option value="on">📢 Somente com ADS Ligado</option>
-                                        <option value="off">🔇 Somente com ADS Desligado</option>
+                                        <option value="on">Somente com ADS Ligado</option>
+                                        <option value="off">Somente com ADS Desligado</option>
                                     </select>
                                     <select id="filtro-abc-cat" onchange="renderCurvaABC()" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm outline-none focus:ring-2 focus:ring-amber-500 text-slate-700 dark:text-slate-200 font-bold shadow-sm cursor-pointer hover:border-amber-400 transition-colors">
                                         <option value="todos">Filtro de Catálogo: Todos</option>
-                                        <option value="sim">🏆 É de Catálogo</option>
-                                        <option value="nao">⚪ Não é Catálogo</option>
+                                        <option value="sim">É de Catálogo</option>
+                                        <option value="nao">Não é Catálogo</option>
                                     </select>
                                 </div>
                             </div>
@@ -525,7 +541,10 @@
                 <div id="aba-kits" class="hidden w-full">
                     <div class="glass-card rounded-2xl p-8 mb-8 w-full animate-slide-up border border-fuchsia-500/30 bg-gradient-to-r from-fuchsia-500/5 to-transparent">
                         <div class="mb-8">
-                            <h3 class="text-2xl font-extrabold flex items-center gap-3"><span class="text-fuchsia-500 animate-bounce">🎁</span> Mapeador Inteligente de Kits (Bundling)</h3>
+                            <h3 class="text-2xl font-extrabold flex items-center gap-3">
+                                <svg class="w-8 h-8 text-fuchsia-500 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 109.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1114.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"></path></svg>
+                                Mapeador Inteligente de Kits (Bundling)
+                            </h3>
                             <p class="text-sm text-slate-500 dark:text-slate-400 mt-1.5 font-medium">A IA rastreou os carrinhos dos seus clientes. Estes são os produtos frequentemente comprados juntos. Crie anúncios de kits com eles para monopolizar a BuyBox, economizar no frete e aumentar o Ticket Médio.</p>
                         </div>
                         <div class="overflow-x-auto">
@@ -548,7 +567,10 @@
                 <div id="aba-clientes" class="hidden w-full">
                     <div class="glass-card rounded-2xl p-8 mb-8 w-full max-w-5xl animate-slide-up border border-indigo-500/30">
                         <div class="flex justify-between items-center mb-8">
-                            <h3 class="text-2xl font-extrabold flex items-center gap-3"><span class="text-indigo-500">🛡️</span> Terminal Root (Multi-Contas)</h3>
+                            <h3 class="text-2xl font-extrabold flex items-center gap-3">
+                                <svg class="w-8 h-8 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                                Terminal Root (Multi-Contas)
+                            </h3>
                             <button onclick="carregarClientes()" class="px-5 py-2.5 bg-slate-200 dark:bg-slate-800 text-sm font-bold rounded-xl transition-all active:scale-95 shadow-sm uppercase tracking-wide hover:-translate-y-0.5">↻ Atualizar</button>
                         </div>
                         <div class="overflow-x-auto">
@@ -596,7 +618,6 @@
 
         Chart.defaults.font.family = "'Outfit', sans-serif";
 
-        // --- SISTEMA DE MOTION DESIGN: Rastreamento do Mouse ---
         document.getElementById('tela-dashboard').addEventListener('mousemove', e => {
             for(const card of document.querySelectorAll('.glass-card')) {
                 const rect = card.getBoundingClientRect(), x = e.clientX - rect.left, y = e.clientY - rect.top;
@@ -605,20 +626,16 @@
             }
         });
 
-        // --- SISTEMA DE MOTION DESIGN: Animação de Números Fluida ---
         function animarContador(id, endValue, prefix = '', suffix = '') {
             const obj = document.getElementById(id);
             if (!obj) return;
-            
-            // Efeito de "Scramble/Blur" leve no inicio da transição
             obj.style.filter = "blur(2px)";
             obj.style.transform = "scale(0.95)";
-            
             setTimeout(() => {
                 obj.style.filter = "blur(0px)";
                 obj.style.transform = "scale(1)";
                 obj.textContent = prefix + endValue + suffix;
-            }, 150); // Troca super rápida mas orgânica
+            }, 150); 
         }
 
         onAuthStateChanged(auth, (user) => {
@@ -736,7 +753,7 @@
             abas.forEach(a => {
                 document.getElementById(`aba-${a}`).classList.add('hidden');
                 if(document.getElementById(`btn-${a}`)) {
-                    document.getElementById(`btn-${a}`).className = "menu-inativo text-left px-6 py-3.5 rounded-xl transition-all duration-300" + (a==='calculadora'||a==='clientes' ? " border-t border-slate-200/50 dark:border-slate-800/50 mt-3" : "");
+                    document.getElementById(`btn-${a}`).className = "menu-inativo flex items-center gap-3 text-left px-6 py-3.5 rounded-xl transition-all duration-300" + (a==='calculadora'||a==='clientes' ? " border-t border-slate-200/50 dark:border-slate-800/50 mt-3" : "");
                 }
             });
             
@@ -772,7 +789,6 @@
             gradientBar.addColorStop(0, 'rgba(34, 211, 238, 0.8)'); 
             gradientBar.addColorStop(1, 'rgba(59, 130, 246, 0.4)'); 
             
-            // Motion Design no Gráfico: Easing elástico suave
             graficoInstancia = new Chart(ctx, { 
                 type: 'bar', 
                 data: { 
@@ -784,7 +800,7 @@
                 }, 
                 options: { 
                     responsive: true, maintainAspectRatio: false, 
-                    animation: { duration: 1500, easing: 'easeOutQuart' }, // Efeito fluido
+                    animation: { duration: 1500, easing: 'easeOutQuart' }, 
                     interaction: { mode: 'index', intersect: false }, 
                     scales: { 
                         y: { beginAtZero: true, grid: { color: gridColor, drawBorder: false }, ticks: { color: textColor, padding: 10, font: {family: 'Outfit', weight: '600'} } }, 
@@ -829,24 +845,35 @@
                 if (graficoInstancia) graficoInstancia.destroy(); return;
             }
 
-            document.getElementById('input-imposto').value = data.kpis.imposto_padrao;
-            document.getElementById('lbl-periodo').textContent = "Dados Sincronizados: " + data.kpis.periodo_nome;
-            
-            // Applica Motion Design nos números (em vez de troca seca)
-            animarContador('kpi-unidades', data.kpis.unidades);
-            animarContador('kpi-fat', data.kpis.faturamento);
-            animarContador('kpi-lucro', data.kpis.lucro);
-            animarContador('kpi-ads', data.kpis.ads);
-            animarContador('kpi-alertas', data.kpis.alertas_criticos);
-
-            atualizarGrafico(data.grafico);
-
             dadosAPI = data.tabela;
             dadosEstoque = data.estoque_parado || []; 
             dadosABC = data.abc || [];
             dadosDiagnostico = data.diagnosticos || [];
             dadosRadar = data.radar || []; 
             dadosKits = data.kits || [];
+
+            // A MÁGICA DE CORREÇÃO AQUI: Forçar o cálculo direto da tabela exibida no Frontend!
+            let calcFat = 0;
+            let calcUnidades = 0;
+            let calcLucro = 0;
+
+            dadosAPI.forEach(item => {
+                calcFat += (item.Faturamento || 0);
+                calcUnidades += (item.Giro || 0);
+                calcLucro += (item.Margem_Contribuicao || 0);
+            });
+
+            document.getElementById('input-imposto').value = data.kpis.imposto_padrao;
+            document.getElementById('lbl-periodo').textContent = "Dados Sincronizados: " + data.kpis.periodo_nome;
+            
+            // Injeta os valores recalculados com segurança matemática
+            animarContador('kpi-unidades', calcUnidades.toLocaleString('pt-BR') + ' un');
+            animarContador('kpi-fat', calcFat.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}));
+            animarContador('kpi-lucro', calcLucro.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}));
+            animarContador('kpi-ads', data.kpis.ads); 
+            animarContador('kpi-alertas', data.kpis.alertas_criticos);
+
+            atualizarGrafico(data.grafico);
             
             renderRaioX();
             renderTabelaCustos();
@@ -861,7 +888,6 @@
             const tbody = document.getElementById('tabela-corpo'); tbody.innerHTML = '';
             if(!dadosAPI || dadosAPI.length === 0) return;
 
-            // Lê os filtros
             const termoBusca = document.getElementById('filtro-raiox-busca') ? document.getElementById('filtro-raiox-busca').value.toLowerCase() : '';
             const filtroStatus = document.getElementById('filtro-raiox-status') ? document.getElementById('filtro-raiox-status').value : 'todos';
             const filtroAds = document.getElementById('filtro-raiox-ads') ? document.getElementById('filtro-raiox-ads').value : 'todos';
@@ -870,7 +896,6 @@
             const filtroGiro = document.getElementById('filtro-raiox-giro') ? document.getElementById('filtro-raiox-giro').value : 'todos';
             const filtroOrdem = document.getElementById('filtro-raiox-ordem') ? document.getElementById('filtro-raiox-ordem').value : 'faturamento_desc';
 
-            // Aplica Filtros
             let dadosFiltrados = dadosAPI.filter(row => {
                 if (termoBusca && !row.Produto.toLowerCase().includes(termoBusca) && !row.ID.toLowerCase().includes(termoBusca)) return false;
                 if (filtroStatus !== 'todos') {
@@ -901,7 +926,6 @@
                 return true;
             });
 
-            // Aplica Ordenação
             dadosFiltrados.sort((a, b) => {
                 const [campo, direcao] = filtroOrdem.split('_');
                 let valA = 0, valB = 0;
@@ -923,9 +947,6 @@
             }
 
             dadosFiltrados.forEach((row, index) => {
-                let statusColor = row.Status.includes('🔴') || row.Status.includes('⚠️') ? 'text-red-500 dark:text-red-400 font-extrabold' : 'text-emerald-600 dark:text-emerald-400 font-extrabold shadow-[0_0_10px_rgba(16,185,129,0.1)]';
-                if(row.Status.includes('🔵')) statusColor = 'text-blue-600 dark:text-blue-400 font-extrabold';
-                
                 const p = row.Desconto_Max_Grafico; const cor = p > 15 ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' : (p > 5 ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]');
                 const espacoPromo = row.Sem_Custo ? `<span class="text-xs text-slate-500 font-bold uppercase tracking-wider">Aguardando CMV</span>` : `<div class="flex items-center gap-3"><div class="w-full bg-slate-200/50 dark:bg-slate-700/50 rounded-full h-1.5 overflow-hidden"><div class="${cor} h-1.5 rounded-full transition-all duration-1000 ease-out" style="width: ${Math.min(p, 100)}%"></div></div><span class="text-[10px] font-black tracking-widest">${p.toFixed(1)}%</span></div>`;
                 const margemValor = row.Sem_Custo ? `<span class="text-slate-500 text-xs font-bold uppercase tracking-wider">Pendente</span>` : `<span class="font-extrabold text-lg block tracking-tight">R$ ${row.Margem_Contribuicao.toFixed(2)}</span><span class="inline-block mt-0.5">${formatarTrend(row.MC_Trend)}</span>`;
@@ -937,11 +958,11 @@
 
                 const custosHTML = `
                     <div class="flex flex-col gap-1.5 w-52 bg-slate-50/50 dark:bg-slate-800/30 p-2.5 rounded-lg border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-sm hover:border-cyan-500/30 transition-colors">
-                        <div class="flex justify-between items-center text-[11px]"><span class="text-slate-500 font-semibold flex items-center gap-1.5">📦 CMV</span> <span class="font-bold text-slate-800 dark:text-slate-200">R$ ${row.Custo_CMV.toFixed(2)}</span></div>
-                        <div class="flex justify-between items-center text-[11px]"><span class="text-slate-500 font-semibold flex items-center gap-1.5">🏷️ Tarifa ML</span> <span class="font-bold text-amber-600 dark:text-amber-400">R$ ${tarifaMLUn}</span></div>
-                        <div class="flex justify-between items-center text-[11px]"><span class="text-slate-500 font-semibold flex items-center gap-1.5">🚚 Frete</span> <span class="font-bold text-slate-800 dark:text-slate-200">R$ ${freteUn}</span></div>
-                        <div class="flex justify-between items-center text-[11px]"><span class="text-slate-500 font-semibold flex items-center gap-1.5">🏛️ Imposto</span> <span class="font-bold text-slate-800 dark:text-slate-200">R$ ${impostoUn}</span></div>
-                        <div class="flex justify-between items-center text-[11px] border-t border-slate-200/50 dark:border-slate-700/50 pt-1.5 mt-0.5"><span class="text-slate-500 font-semibold flex items-center gap-1.5">📢 ADS (Méd)</span> <span class="font-bold text-purple-600 dark:text-purple-400">R$ ${adsUn}</span></div>
+                        <div class="flex justify-between items-center text-[11px]"><span class="text-slate-500 font-semibold flex items-center gap-1.5"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7.523l-6.677 3.633M12 11.156l-6.677-3.633M12 11.156V19.6m0-8.444L3.323 7.523C2.527 7.087 2 6.273 2 5.385v-.06a2.003 2.003 0 012.825-1.841L12 6.75l7.175-3.266A2.003 2.003 0 0122 5.326v.06c0 .888-.527 1.702-1.323 2.138z"></path></svg> CMV</span> <span class="font-bold text-slate-800 dark:text-slate-200">R$ ${row.Custo_CMV.toFixed(2)}</span></div>
+                        <div class="flex justify-between items-center text-[11px]"><span class="text-slate-500 font-semibold flex items-center gap-1.5"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg> Tarifa ML</span> <span class="font-bold text-amber-600 dark:text-amber-400">R$ ${tarifaMLUn}</span></div>
+                        <div class="flex justify-between items-center text-[11px]"><span class="text-slate-500 font-semibold flex items-center gap-1.5"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"></path></svg> Frete</span> <span class="font-bold text-slate-800 dark:text-slate-200">R$ ${freteUn}</span></div>
+                        <div class="flex justify-between items-center text-[11px]"><span class="text-slate-500 font-semibold flex items-center gap-1.5"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg> Imposto</span> <span class="font-bold text-slate-800 dark:text-slate-200">R$ ${impostoUn}</span></div>
+                        <div class="flex justify-between items-center text-[11px] border-t border-slate-200/50 dark:border-slate-700/50 pt-1.5 mt-0.5"><span class="text-slate-500 font-semibold flex items-center gap-1.5"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path></svg> ADS (Méd)</span> <span class="font-bold text-purple-600 dark:text-purple-400">R$ ${adsUn}</span></div>
                     </div>`;
 
                 const badgeAds = row.Ads_Ativo 
@@ -951,11 +972,10 @@
                 let badgeCat = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-500/10 text-slate-500 dark:text-slate-400 border border-slate-500/20">S/ Catálogo</span>';
                 if(row.Is_Catalog) {
                     badgeCat = row.Catalog_Status === 'Ganhando' 
-                        ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shadow-[0_0_8px_rgba(16,185,129,0.2)]">🏆 Ganha BuyBox</span>'
-                        : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30">⚠️ Perde BuyBox</span>';
+                        ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shadow-[0_0_8px_rgba(16,185,129,0.2)] flex items-center gap-1 w-fit"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Ganha BuyBox</span>'
+                        : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30 flex items-center gap-1 w-fit"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg> Perde BuyBox</span>';
                 }
 
-                // Ajuste no delay para uma cascata fluida e elegante
                 const animDelay = Math.min(index * 0.05, 1.5); 
                 tbody.innerHTML += `
                     <tr class="border-b border-slate-100/50 dark:border-slate-800/50 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-colors animate-slide-up opacity-0" style="animation-delay: ${animDelay}s; animation-fill-mode: forwards;">
@@ -1023,8 +1043,8 @@
                 let badgeCat = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-500/10 text-slate-500 dark:text-slate-400 border border-slate-500/20">S/ Catálogo</span>';
                 if(row.Is_Catalog) {
                     badgeCat = row.Catalog_Status === 'Ganhando' 
-                        ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shadow-[0_0_8px_rgba(16,185,129,0.2)]">🏆 Ganha BuyBox</span>'
-                        : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30">⚠️ Perde BuyBox</span>';
+                        ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shadow-[0_0_8px_rgba(16,185,129,0.2)] flex items-center gap-1 w-fit"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Ganha BuyBox</span>'
+                        : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30 flex items-center gap-1 w-fit"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg> Perde BuyBox</span>';
                 }
 
                 const animDelay = Math.min(index * 0.05, 1.5);
@@ -1032,7 +1052,7 @@
                     <tr class="border-b border-slate-100/50 dark:border-slate-800/50 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-colors animate-slide-up opacity-0" style="animation-delay: ${animDelay}s; animation-fill-mode: forwards;">
                         <td class="py-4 align-middle group cursor-default"><p class="font-bold text-sm w-56 truncate text-slate-800 dark:text-slate-200 group-hover:text-amber-500 transition-colors" title="${row.Produto}">${row.Produto}</p><p class="text-[10px] text-slate-400 uppercase tracking-widest mt-1">ID: ${row.ID}</p></td>
                         <td class="py-4 align-middle"><span class="px-3 py-1 rounded-lg text-xs font-black transition-all ${corBadge}">Curva ${row.Classe}</span></td>
-                        <td class="py-4 align-middle whitespace-nowrap">${badgeAds}${badgeCat}</td>
+                        <td class="py-4 align-middle whitespace-nowrap"><div class="flex flex-col gap-1 items-start">${badgeAds}${badgeCat}</div></td>
                         <td class="py-4 align-middle font-bold text-slate-600 dark:text-slate-400">R$ ${(row.Ticket_Medio || 0).toFixed(2).replace('.',',')}</td>
                         <td class="py-4 align-middle font-black text-slate-700 dark:text-slate-300 text-lg">${row.Giro} <span class="text-[10px] uppercase font-bold text-slate-400">un</span></td>
                         <td class="py-4 align-middle font-extrabold text-slate-800 dark:text-slate-200">R$ ${row.Faturamento.toFixed(2).replace('.',',')}</td>
@@ -1045,26 +1065,26 @@
             const container = document.getElementById('lista-diagnostico');
             container.innerHTML = '';
             if(dadosDiagnostico.length === 0 && dadosAPI.length > 0) {
-                container.innerHTML = `<div class="col-span-1 md:col-span-2 p-10 text-center rounded-2xl border border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-900/20 backdrop-blur-md"><span class="text-5xl mb-4 block drop-shadow-[0_0_15px_rgba(52,211,153,0.5)]">✨</span><h4 class="font-extrabold text-emerald-600 dark:text-emerald-400 text-xl">Integridade 100%</h4><p class="text-sm text-slate-600 dark:text-slate-400 mt-2 font-medium">Histórico isento de anomalias críticas de precificação.</p></div>`;
+                container.innerHTML = `<div class="col-span-1 md:col-span-2 p-10 text-center rounded-2xl border border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-900/20 backdrop-blur-md"><span class="text-emerald-500 mb-4 flex justify-center drop-shadow-[0_0_15px_rgba(52,211,153,0.5)]"><svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></span><h4 class="font-extrabold text-emerald-600 dark:text-emerald-400 text-xl">Integridade 100%</h4><p class="text-sm text-slate-600 dark:text-slate-400 mt-2 font-medium">Histórico isento de anomalias críticas de precificação.</p></div>`;
                 return;
             }
             dadosDiagnostico.forEach((diag, index) => {
                 let corBorder = 'border-amber-400/50 bg-amber-50/50 dark:bg-amber-900/20 hover:border-amber-400/80';
                 let corTexto = 'text-amber-600 dark:text-amber-400';
-                let icone = '⚠️';
+                let icone = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
                 
                 if (diag.tipo === 'escala') {
                     corBorder = 'border-blue-400/50 bg-blue-50/50 dark:bg-blue-900/20 hover:border-blue-400/80';
                     corTexto = 'text-blue-600 dark:text-blue-400';
-                    icone = '🚀';
+                    icone = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>';
                 } else if (diag.tipo === 'prejuizo') {
                     corBorder = 'border-red-500/50 bg-red-50/50 dark:bg-red-900/20 hover:border-red-500/80 shadow-[0_0_15px_rgba(239,68,68,0.15)]';
                     corTexto = 'text-red-600 dark:text-red-400';
-                    icone = '🔴';
+                    icone = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
                 }
 
                 container.innerHTML += `<div class="p-6 rounded-2xl border ${corBorder} transition-all duration-300 hover:-translate-y-2 hover:shadow-lg animate-slide-up opacity-0 backdrop-blur-md cursor-default" style="animation-delay: ${index * 0.1}s; animation-fill-mode: forwards;">
-                    <div class="flex items-center gap-3 mb-3"><span class="text-2xl">${icone}</span><h4 class="font-extrabold tracking-tight text-lg ${corTexto}">${diag.titulo}</h4></div>
+                    <div class="flex items-center gap-3 mb-3"><span class="${corTexto}">${icone}</span><h4 class="font-extrabold tracking-tight text-lg ${corTexto}">${diag.titulo}</h4></div>
                     <p class="font-bold text-slate-800 dark:text-slate-200 text-sm mb-2 truncate" title="${diag.produto}">${diag.produto}</p>
                     <p class="text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed">${diag.mensagem}</p>
                 </div>`;
@@ -1209,7 +1229,8 @@
             dadosRadar.forEach((row, index) => {
                 const isCritico = row.Dias_Restantes <= row.Lead_Time;
                 let corStatus = isCritico ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.2)] animate-pulse' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30';
-                let textoStatus = isCritico ? '⚠️ Pedir Fornecedor' : `Seguro por ${row.Dias_Restantes}d`;
+                let textoStatus = isCritico ? 'Pedir Fornecedor' : `Seguro por ${row.Dias_Restantes}d`;
+                let iconStatus = isCritico ? `<svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>` : `<svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
                 
                 const animDelay = Math.min(index * 0.05, 1.5);
                 tbody.innerHTML += `
@@ -1222,7 +1243,7 @@
                                 <button onclick="salvarLeadTime('${row.ID}')" id="btn-lt-${row.ID}" class="px-3 py-2 bg-slate-200/50 dark:bg-slate-800/50 hover:bg-cyan-500/20 text-slate-600 dark:text-slate-300 hover:text-cyan-600 rounded-lg text-xs font-bold transition-all active:scale-95">OK</button>
                             </div>
                         </td>
-                        <td class="py-5 align-middle"><span class="px-3 py-1.5 rounded-lg text-[10px] uppercase tracking-widest font-black shadow-sm transition-all ${corStatus}">${textoStatus}</span><p class="text-[10px] text-slate-500 mt-1 font-bold ml-1">${row.Estoque} un. físicas</p></td>
+                        <td class="py-5 align-middle"><span class="px-3 py-1.5 rounded-lg text-[10px] uppercase tracking-widest font-black shadow-sm transition-all flex items-center w-fit ${corStatus}">${iconStatus} ${textoStatus}</span><p class="text-[10px] text-slate-500 mt-1 font-bold ml-1">${row.Estoque} un. físicas</p></td>
                         <td class="py-5 align-middle font-black text-cyan-600 dark:text-cyan-400 text-lg">${row.Sugestao_Compra} <span class="text-xs text-slate-400 uppercase tracking-widest font-bold">un</span></td>
                     </tr>`;
             });
@@ -1265,7 +1286,6 @@
             });
         };
 
-        // --- SISTEMA DE MOTION DESIGN: Partículas Background (Data Flow) ---
         function initParticles() {
             const canvas = document.getElementById('particles-bg');
             const ctx = canvas.getContext('2d');
@@ -1317,7 +1337,6 @@
             animate();
         }
         
-        // Inicia partículas após o carregamento
         setTimeout(initParticles, 500);
 
     </script>
